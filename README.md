@@ -1,4 +1,6 @@
-# galaxyEmulator
+# galaxyGenius
+
+**Galaxy** **Gen**erator from **I**ll**u**strisTNG Simulations using **S**KIRT Radiative Transfer Project
 
 Galaxy emulation from [IllustrisTNG](https://www.tng-project.org/) using [SKIRT](https://skirt.ugent.be/root/_home.html) for various observations.
 

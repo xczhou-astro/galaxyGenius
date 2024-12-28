@@ -1,7 +1,7 @@
 import os
 import argparse
-from galaxyEmulator.utils import split
-from galaxyEmulator.config import Configuration
+from galaxyGenius.utils import split
+from galaxyGenius.config import Configuration
 
 def none(value):
     if value == 'None':
