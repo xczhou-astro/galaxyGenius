@@ -7,9 +7,9 @@ Galaxy Generator from [IllustrisTNG](https://www.tng-project.org/) Simulations u
 ![SEDs](assets/SEDs.png)  
 ### HSC
 ![HSC](assets/HSC_combined.png)  
-### HST
+### HST WFC3
 ![HST](assets/HST_combined.png)  
-### JWST
+### JWST NIRCam
 ![JWST](assets/JWST_combined.png)  
 ### CSST
 ![CSST](assets/JWST_combined.png)  
@@ -57,15 +57,14 @@ Other packages:
 ```
 
 ## Filters and PSFs
-Filters and PSFs of specific survey are saved in `Data/filters/(survey)` and `Data/PSFs/(survey)` directories.  
+Filter throughputs and PSFs of specific surveys are saved in `Data/filters/(survey)` and `Data/PSFs/(survey)` directories.  
 The format of filters are recommended to be plain text file with extension `.fil`, including two columns: wavelength (in angstrom) and throughputs.  
-PSFs are recommended to be `numpy.array`, and can be opened by `numpy.loadtxt` or `numpy.load`.  
-Please make sure that the filters and PSFs exist in correct directories and formats before running galaxyEmulator.
+PSFs are recommended to be in `numpy.array`, and can be opened by `numpy.loadtxt` or `numpy.load`.  
+Please make sure that the filters and PSFs exist in correct directories and formats before running galaxyGenius.
 
 ## Sky backgrounds  
-Instrumental noises are calculated based on the throughput of each filter and sky emission curve.  
-We provide a helper notebook for calculation of instrumental noises in [Notebooks/calc_sky_bkg.ipynb](https://github.com/xczhou-astro/galaxyEmulator/blob/main/Notebooks/calc_sky_bkg.ipynb).  
-Please use with caution.  
+Sky background noises are calculated based on the throughput of each filter and sky emission curve.  
+We provide a helper notebook for calculation of instrumental noises in [Notebooks/calc_sky_bkg.ipynb](https://github.com/xczhou-astro/galaxyGenius/blob/main/Notebooks/calc_sky_bkg.ipynb).  
 
 ## Usage
 ### Initialization
@@ -76,7 +75,7 @@ python init.py --workspace=workspace --surveys="CSST,HST"
 
 if `surveys` are not specified, `postPostprocessing` will be set as False. However, for consistency, `PostProcess` class must be initialized, and only data cube files will be saved.  
 
-Currently, throughputs and PSFs of filters for CSST, HST, JWST, Roman and HSC are all uploaded. For Euclid, we only upload the throughputs, since the PSF files cannot be found. (Nov 30, 2024)  
+Currently, throughputs and PSFs of filters for CSST, HST, JWST, Roman and HSC are all uploaded. For Euclid, we only upload the throughputs, since the PSF files cannot be accessed.  
 
 ### Run
 Enter workspace, and create a python file named emulator.py
@@ -86,9 +85,9 @@ Enter workspace, and create a python file named emulator.py
 import sys
 sys.path.append('..')
 
-from galaxyEmulator.config import Configuration
-from galaxyEmulator.preprocess import PreProcess
-from galaxyEmulator.postprocess import PostProcess
+from galaxyGenius.config import Configuration
+from galaxyGenius.preprocess import PreProcess
+from galaxyGenius.postprocess import PostProcess
 
 config = Configuration() # initialize Configuration class
 conf = config.get_config() # read config from current directory
@@ -108,7 +107,7 @@ for ID in subhaloIDs:
 ```  
 then, `python emulator.py`.  
 
-Or you can interactively run by specifying the subhaloIDs in jupyter as illustrated in [Notebooks/tutorial.ipynb](https://github.com/xczhou-astro/galaxyEmulator/blob/main/Notebooks/tutorial.ipynb).  
+Or you can interactively run by specifying the subhaloIDs in jupyter as illustrated in [Notebooks/tutorial.ipynb](https://github.com/xczhou-astro/galaxyGenius/blob/main/Notebooks/tutorial.ipynb).  
 ### Outputs
 `./dataCubes` are the dataCubes of **SubhaloID** generated from SKIRT, if `saveDataCube == True`  
 `./mock_CSST` are the bandpass images of **SubhaloID** for CSST  
@@ -125,7 +124,8 @@ mock_{survey}/
     ├── galaxy_view_{v}.png # Images in different views, if imgDisplay_{survey} == True
     ├── quenched_stars.txt # File for stars older than 10 Myr
     ├── skirt_parameters.xml # SKIRT parameters
-    └── starforming_stars.txt # File for stars younger than 10 Myr
+    ├── starforming_stars.txt # File for stars younger than 10 Myr
+    └── properties.pkl # Properties used for postprocessing
 ```
 
 Bandpass images are saved in pages of fits file, and each page includes images in different views.
@@ -192,9 +192,8 @@ Run SKIRT.
 
 ### PostProcess
 ```Python
-postprocess = PostProcess(properties, config)
-```
-`properties`: `dict`: properties from `PreProcess`, can be obtained by `PreProcess.get_properties()` or `PreProcess.properties`.  
+postprocess = PostProcess(config)
+```  
 `config`: `dict`: configurations.  
 ```Python
 postprocess.runPostProcess(showImages=False)
@@ -203,7 +202,7 @@ postprocess.runPostProcess(showImages=False)
 
 ## Config.ini
 `dataDir`:  
-`str`, Data directory of galaxyEmulator.  
+`str`, Data directory of galaxyGenius.  
 
 `filePath`:  
 `str`, Directory for TNG simulation.  
@@ -378,7 +377,7 @@ Config_\[survey\].ini is generated if `postProcessing=True` and `surveys` are pr
 
 `skyBkg`, `darkCurrent`, `readOut`:  
 `float (N,)` or `float (1,)`: sky backgrounds, dark currents, and read-out noise, required for calculating instrumental noise.  
-Please refer to notebook [Notebooks/calc_sky_bkg.ipynb](https://github.com/xczhou-astro/galaxyEmulator/blob/main/Notebooks/calc_sky_bkg.ipynb) for calculating `skyBkg`.  
+Please refer to notebook [Notebooks/calc_sky_bkg.ipynb](https://github.com/xczhou-astro/galaxyGenius/blob/main/Notebooks/calc_sky_bkg.ipynb) for calculating `skyBkg`.  
 
 `imgDisplay`:  
 `bool`, If display galaxy images.  
