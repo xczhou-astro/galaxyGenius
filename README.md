@@ -1,8 +1,18 @@
 # galaxyGenius
 
-**Galaxy** **Gen**erator from **I**ll**u**strisTNG Simulations using **S**KIRT Radiative Transfer Project
+Galaxy Generator from [IllustrisTNG](https://www.tng-project.org/) Simulations using [SKIRT](https://skirt.ugent.be) Radiative Transfer Project. 
 
-Galaxy emulation from [IllustrisTNG](https://www.tng-project.org/) using [SKIRT](https://skirt.ugent.be/root/_home.html) for various observations.
+## Results  
+### SEDs
+![SEDs](assets/SEDs.png)  
+### HSC
+![HSC](assets/HSC_combined.png)  
+### HST
+![HST](assets/HST_combined.png)  
+### JWST
+![JWST](assets/JWST_combined.png)  
+### CSST
+![CSST](assets/JWST_combined.png)  
 
 ## Dependence
 Python verison:  
@@ -24,13 +34,13 @@ Python packages:
 
 Other packages:  
 [`illustris_python`](https://github.com/illustristng/illustris_python)  
-[`SKIRT`](https://skirt.ugent.be/root/_installation_guide.html)  
+[`SKIRT9`](https://skirt.ugent.be/root/_installation_guide.html)  
 
 ## Recommended folder tree
 ```bash
-├── galaxyEmulator/  
+├── galaxyGenius/  
 │   ├── Data/  
-│   ├── galaxyEmulator/  
+│   ├── galaxyGenius/  
 │   ├── Notebooks/  
 │   └── (workspace)/  
 ├── TNG-100/  
