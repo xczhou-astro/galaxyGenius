@@ -102,7 +102,7 @@ for ID in subhaloIDs:
 
     preprocess.runSKIRT() # run SKIRT
 
-    postprocess = PostProcess(properties=preprocess.properties, config=conf) # initialize PostProcess class
+    postprocess = PostProcess(config=conf) # initialize PostProcess class
     postprocess.runPostprocess() # run postprocessing
 ```  
 then, `python emulator.py`.  
