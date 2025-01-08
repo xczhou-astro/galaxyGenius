@@ -4,6 +4,7 @@ import os
 import illustris_python as ill
 from astropy.cosmology import Planck15
 import astropy.units as u
+import astropy.constants as const
 import subprocess
 from .utils import *
 from scipy.spatial import cKDTree
