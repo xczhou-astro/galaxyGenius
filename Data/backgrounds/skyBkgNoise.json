@@ -1,0 +1,75 @@
+{
+    "CSST": {
+        "CSST_bands": "NUV,u,g,r,i,z,y",
+        "CSST_sky_bkg": "0.0042,0.0317,0.2803,0.3591,0.3708,0.2168,0.0638",
+        "CSST_aperture": "2.0",
+        "CSST_pixelscale": "0.074",
+        "CSST_Bdark": "0.02",
+        "CSST_Readout": "5",
+        "CSST_numExposures": "4,2,2,2,2,2,4"
+    },
+    "HST_UV": {
+        "HST_UV_bands": "UV_F225W,UV_F275W,UV_F336W,UV_F390W,UV_F438W,UV_F467M,UV_F555W,UV_F606W,UV_F775W,UV_F814W",
+        "HST_UV_sky_bkg": "0.0001,0.0004,0.0039,0.0181,0.0175,0.0076,0.0674,0.1018,0.0435,0.0562",
+        "HST_UV_aperture": "2.4",
+        "HST_UV_pixelscale": "0.04",
+        "HST_UV_Bdark": "0.001",
+        "HST_UV_Readout": "3.1"
+    },
+    "HST_IR": {
+        "HST_IR_bands": "IR_F105W,IR_F110W,IR_F125W,IR_F140W,IR_F160W",
+        "HST_IR_sky_bkg": "1.9397,3.2075,1.8718,2.2485,1.3786",
+        "HST_IR_aperture": "2.4",
+        "HST_IR_pixelscale": "0.13",
+        "HST_IR_Bdark": "0.048",
+        "HST_IR_Readout": "21"
+    },
+    "JWST_Long": {
+        "JWST_Long_bands": "F250M,F277W,F300M,F322W2,F323N,F335M,F356W,F360M,F405N,F410M,F430M,F444W,F460M,F466N,F470N,F480M",
+        "JWST_Long_sky_bkg": "0.3319,1.1002,0.4286,2.3296,0.0305,0.4334,1.1707,0.5105,0.0681,0.8645,0.5457,3.2627,0.75,0.1348,0.1297,1.2129",
+        "JWST_Long_aperture": "6.5",
+        "JWST_Long_pixelscale": "0.063",
+        "JWST_Long_Bdark": "0.034",
+        "JWST_Long_Readout": "13.25"
+    },
+    "JWST_Short": {
+        "JWST_Short_bands": "F070W,F090W,F115W,F140M,F150W2,F150W,F162M,F164N,F182M,F187N,F200W,F210M,F212N,WLP4",
+        "JWST_Short_sky_bkg": "0.3307,0.4487,0.4273,0.2171,1.6239,0.4721,0.2133,0.0212,0.2502,0.0206,0.4326,0.1744,0.0187,0.0425",
+        "JWST_Short_aperture": "6.5",
+        "JWST_Short_pixelscale": "0.031",
+        "JWST_Short_Bdark": "0.002",
+        "JWST_Short_Readout": "15.77"
+    },
+    "Roman": {
+        "Roman_bands": "F062,F087,F106,F129,F158,F184,F213,F146",
+        "Roman_sky_bkg": "7.1684,6.6275,7.0874,7.1373,7.0349,4.1791,3.515,21.3173",
+        "Roman_aperture": "2.36",
+        "Roman_pixelscale": "0.11",
+        "Roman_Bdark": "0.1",
+        "Roman_Readout": "20"
+    },
+    "Euclid_VIS": {
+        "Euclid_VIS_bands": "VIS",
+        "Euclid_VIS_sky_bkg": "0.7162",
+        "Euclid_VIS_aperture": "1.2",
+        "Euclid_VIS_pixelscale": "0.1",
+        "Euclid_VIS_Bdark": "0.005",
+        "Euclid_VIS_Readout": "2.2"
+    },
+    "Euclid_NISP": {
+        "Euclid_NISP_bands": "Y,J,H",
+        "Euclid_NISP_sky_bkg": "3.6863,4.4556,3.8228",
+        "Euclid_NISP_aperture": "1.2",
+        "Euclid_NISP_pixelscale": "0.3",
+        "Euclid_NISP_Bdark": "0.02",
+        "Euclid_NISP_Readout": "6"
+    },
+    "HSC": {
+        "HSC_bands": "g,r,i,z,y,nb816,nb921",
+        "HSC_sky_bkg": "49.983,79.8137,91.8011,107.205,198.5708,6.8434,25.0379",
+        "HSC_aperture": "8.2",
+        "HSC_pixelscale": "0.168",
+        "HSC_Bdark": "0",
+        "HSC_Readout": "4.5"
+    }
+}
