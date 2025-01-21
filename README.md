@@ -40,7 +40,7 @@ Other packages:
 A new Python environment is recommended  
 
 ```Python
-conda create -n galaxyGenius python==3.11.10  
+conda create -n galaxyGenius python=3.11.10  
 
 conda activate galaxyGenius  
 
