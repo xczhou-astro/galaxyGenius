@@ -28,10 +28,10 @@ html_static_path = ['_static']
 autodoc_member_order = 'bysource'
 
 # GitHub Pages Configuration
-html_baseurl = 'https://yourusername.github.io/galaxygenius/'
+html_baseurl = 'https://xczhou-astro.github.io/galaxygenius/'
 html_context = {
     'display_github': True,
-    'github_user': 'yourusername',
+    'github_user': 'xczhou-astro',
     'github_repo': 'galaxygenius',
     'github_version': 'main/docs/source/',
-} 
+}
