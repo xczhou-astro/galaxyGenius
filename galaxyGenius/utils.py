@@ -113,6 +113,7 @@ def custom_serialier(obj):
         return int(obj)
     elif isinstance(obj, np.ndarray):
         return obj.tolist()
+    elif isinstance(obj, object):
+        return str(obj)
     else:
         return obj
-

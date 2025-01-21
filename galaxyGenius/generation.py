@@ -25,6 +25,8 @@ class DataGeneration:
                 os.path.join(directory ,'properties.json'))
         copyfile(os.path.join(self.workingDir, 'skirt_log.txt'),
                 os.path.join(directory, 'skirt_log.txt'))
+        copyfile(os.path.join(self.workingDir, 'config.json'),
+                os.path.join(directory, 'config.json'))
         
     def __saveDataCube(self):
         numViews = int(self.properties['numViews'])

@@ -10,7 +10,7 @@ import requests
 import json
 import tempfile
 from scipy.interpolate import interp1d
-import json
+from typing import Union
 
 class Galaxy:
     def __init__(self, position: np.ndarray, smoothLength: np.ndarray, 
@@ -41,7 +41,7 @@ class PreProcess:
         self.dataDir = self.config['dataDir']
         
         # TNG100-1 is the main high-resolution IllustrisTNG100 run including the full TNG physics model.
-        self.simulation = self.config['simulation'] + '-1' 
+        self.simulation = self.config['simulation']
         
         if 'TNG' in self.config['simulation']:
             name = 'tng'
@@ -216,9 +216,9 @@ class PreProcess:
         return fage
     
     def __calculate_angular_momentum_and_angles(self) -> tuple:
-        # Initialize total angular momentum vector
         
-        print('------Calculating face-on and edge viewing angles------')
+        
+        print('------Calculating face-on and edge-on viewing angles------')
         
         stars = np.loadtxt(self.workingDir + '/stars.txt')
         
@@ -226,6 +226,7 @@ class PreProcess:
         velocities = stars[:, 7:10] # velocities
         masses = stars[:, 10] # current mass
         
+        # Initialize total angular momentum vector
         total_angular_momentum = np.zeros(3)
         
         mask = np.where((np.abs(positions[:, 0]) < 30) \
@@ -279,15 +280,31 @@ class PreProcess:
         
         return incs, azis
         
+    def __get_value(self, key, castType=None):
+        
+        if hasattr(self, key):
+            value = getattr(self, key)
+        else:
+            value = self.config[key]
+        
+        if castType is not None:
+            value = castType(value)
+        
+        return value
+        
         
     def __get_particles(self):
         
         print('Retrieving Stellar and Gas particles.')
         
-        self.boxLength = self.radius * np.float32(self.config['boxLengthScale'])
-        self.boxLength = np.min([self.boxLength, np.float32(self.config['maxBoxLength'])])
+        boxLengthScale = self.__get_value('boxLengthScale', np.float32)
+        maxBoxLength = self.__get_value('maxBoxLength', np.float32)
 
-        region = self.boxLength / 2.
+        boxLength = self.radius * boxLengthScale
+        boxLength = np.min([boxLength, maxBoxLength])
+        self.boxLength = boxLength
+        
+        region = boxLength / 2.
 
         fields = ['GFM_InitialMass', 'GFM_Metallicity', 'GFM_StellarFormationTime',
                 'Coordinates', 'Velocities', 'Masses']
@@ -310,9 +327,13 @@ class PreProcess:
                     starPart = {key: f[f'PartType4/{key}'][:] for key in fields}
             
             starPart['count'] = starPart['Coordinates'].shape[0]
-        
-        stellar_smoothLength_dict = {'TNG50': 288, 'TNG100': 740, 'TNG300': 1480} # in pc, physical
-        stellar_smoothLength = stellar_smoothLength_dict[self.config['simulation']]
+            
+        if 'TNG50' in self.simulation:
+            stellar_smoothLength = 288
+        elif 'TNG100' in self.simulation:
+            stellar_smoothLength = 740
+        elif 'TNG300' in self.simulation:
+            stellar_smoothLength = 1480
 
         if self.snapz <= 1:
             # z = 0 ~ 1, smoothing length are changing
@@ -334,15 +355,8 @@ class PreProcess:
         starPart['age'] = snapshot_age - self.fage(1/starPart['GFM_StellarFormationTime'] - 1) # in Myr
         g = Galaxy(starPart['Coordinates'], starPart['smoothLength'], starPart['GFM_InitialMass'],
                    self.pos, a=self.a, h=self.h)
-        
-        ageThreshold = np.float32(self.config['ageThreshold'])
-        
-        # if self.config['faceAndEdge']:
-        #     # g.pos is in central coordinates
-        #     incs, azis = self.__calculate_angular_momentum_and_angles(g.pos, starPart['Velocities'],
-        #                                                               starPart['Masses'])
-        #     self.inclinations = incs
-        #     self.azimuths = azis
+
+        ageThreshold = self.__get_value('ageThreshold', np.float32)
             
 
         part = {}
@@ -359,16 +373,22 @@ class PreProcess:
         part['smoothLength'] = g.smoothLength[mask] # smoothing length in kpc
         part['sfr'] = g.mass[mask] / (ageThreshold * 10**6) # constant SFR in Msun/yr
         part['Z'] = starPart['GFM_Metallicity'][mask]
-        part['compactness'] = np.random.normal(loc=np.float32(self.config['logCompactnessMean']), 
-                                               scale=np.float32(self.config['logCompactnessStd']), size=size) # from Kapoor et al. 2021
-        pressure = (10**np.float32(self.config['logPressure']) * const.k_B) * (u.J * u.cm**-3).to(u.J * u.m**-3) # J * m**3 == Pa
+        logCompactnessMean = self.__get_value('logCompactnessMean', np.float32)
+        logCompactnessStd = self.__get_value('logCompactnessStd', np.float32)
+        part['compactness'] = np.random.normal(loc=logCompactnessMean, 
+                                               scale=logCompactnessStd, size=size) # from Kapoor et al. 2021
+        logPressure = self.__get_value('logPressure', np.float32)
+        pressure = (10**logPressure * const.k_B) * (u.J * u.cm**-3).to(u.J * u.m**-3) # J * m**3 == Pa
         pressure = pressure.value
         part['pressure'] = np.array([pressure] * size)
         age = starPart['age'][mask] # in Myr
-        if self.config['constantCoveringFactor']:
-            part['covering'] = np.array([np.float32(self.config['coveringFactor'])] * size)
+        constantCoveringFactor = self.__get_value('constantCoveringFactor', bool)
+        if constantCoveringFactor:
+            coveringFactor = self.__get_value('coveringFactor', np.float32)
+            part['covering'] = np.array([coveringFactor] * size)
         else:
-            part['covering'] = np.array(np.exp(-age / np.float32(self.config['PDRClearingTimescale']))) # from Baes, M., et al. 2024
+            PDRClearingTimescale = self.__get_value('PDRClearingTimescale', np.float32)
+            part['covering'] = np.array(np.exp(-age / PDRClearingTimescale)) # from Baes, M., et al. 2024
             
         part['velocities'] = starPart['Velocities'][mask] * np.sqrt(self.a) # in km/s
         part['masses'] = starPart['Masses'][mask] * 10**10 / self.h # Msun
@@ -436,7 +456,8 @@ class PreProcess:
         np.savetxt(self.workingDir + '/stars.txt', info, header=header)
         
         part = {}
-        if self.config['includeDust']:
+        includeDust = self.__get_value('includeDust', bool)
+        if includeDust:
             try:
                 fields = ['GFM_Metallicity', 'Coordinates', 'Masses',
                             'InternalEnergy', 'StarFormationRate', 'ElectronAbundance', 
@@ -474,14 +495,14 @@ class PreProcess:
                             & (np.abs(gas.pos[:, 1]) < region)\
                             & (np.abs(gas.pos[:, 2]) < region))[0]
                 
-                if self.config['DISMModel'] == 'Camps_2016':
-        
+                DISMModel = self.__get_value('DISMModel', str)
+                if DISMModel == 'Camps_2016':
+                    temperatureThreshold = self.__get_value('temperatureThreshold', np.float32)
                     othermask = np.where((gasPart['StarFormationRate'] > 0) \
-                                    | (gasPart['Temperature'] < np.float32(self.config['temperatureThreshold'])))[0]
+                                    | (gasPart['Temperature'] < temperatureThreshold))[0]
                     mask = np.intersect1d(spatialmask, othermask)
                     size = mask.shape[0]
-                
-                elif self.config['DISMModel'] == 'Torrey_2012':
+                elif DISMModel == 'Torrey_2012':
                     # Density from (10^10 Msun/h) / (ckpc/h)^3 to 10^10 h^2 Msun / kpc^3
                     density = gasPart['Density'] * self.a**-3
                     othermask = np.where(np.log10(gasPart['Temperature']) < (6 + 0.25 * np.log10(density)))[0]
@@ -538,21 +559,20 @@ class PreProcess:
         
     def __get_properties_survey(self, distance: float, properties: dict) -> dict:
         
-        if self.config['postProcessing']:
-            
-            surveys = self.config['surveys']
-            
+        postProcessing = self.__get_value('postProcessing', bool)
+        if postProcessing:
+            surveys = self.__get_value('surveys', list)
             spatialResols = []
             for survey in surveys:
-                filters = self.config[f'filters_{survey}']
+                filters = self.__get_value(f'filters_{survey}', list)
                 numfilters = len(filters)
-                if self.config[f'resolFromPix_{survey}']:
-                    pixelScales = self.config[f'pixelScales_{survey}']
+                if self.__get_value(f'resolFromPix_{survey}', bool):
+                    pixelScales = self.__get_value(f'pixelScales_{survey}')
                     pixelScales = extend(pixelScales, numfilters)
                     resol = [distance * 10**6 * np.deg2rad(ang / 3600) for ang in pixelScales]
                     ps_in_sr = [(ps**2 * u.arcsec**2).to(u.sr).value for ps in pixelScales]
                 else:
-                    resol = self.config[f'resolution_{survey}']
+                    resol = self.__get_value(f'resolution_{survey}')
                     resol = extend(resol, numfilters)
                     pixelScales = [np.rad2deg(res / (distance * 10**6)) * 3600 for res in resol]
                     ps_in_sr = [(ps**2 * u.arcsec**2).to(u.sr).value for ps in pixelScales]
@@ -563,15 +583,15 @@ class PreProcess:
 
                 spatialResols += resol
 
-                numExposure = self.config[f'numExposure_{survey}']
+                numExposure = self.__get_value(f'numExposure_{survey}')
                 numExposure = extend(numExposure, numfilters)
                 properties[f'numExposure_{survey}'] = numExposure
                 
-                exposureTime = self.config[f'exposureTime_{survey}']
+                exposureTime = self.__get_value(f'exposureTime_{survey}')
                 exposureTime = extend(exposureTime, numfilters)
                 properties[f'exposureTime_{survey}'] = exposureTime
                 
-                aperture = np.float32(self.config[f'aperture_{survey}'])
+                aperture = self.__get_value(f'aperture_{survey}', np.float32)
                 properties[f'aperture_{survey}'] = aperture
                 
                 properties[f'numfilters_{survey}'] = numfilters
@@ -584,7 +604,7 @@ class PreProcess:
                 properties[f'ratios_{survey}'] = ratios
             
         else:
-            spatialResol = np.float32(self.config['spatialResol'])
+            spatialResol = self.__get_value('spatialResol', np.float32)
         
         properties['baseRes'] = spatialResol
         
@@ -601,26 +621,32 @@ class PreProcess:
         
         properties = self.__get_properties_survey(distance, properties)
         
-        # given angle = angle from faceAndEdge > angle from config
+        faceAndEdge = self.__get_value('faceAndEdge', bool)
+        
         if hasattr(self, 'inclinations') and hasattr(self, 'azimuths'):
+            
             inclinations = self.inclinations
             azimuths = self.azimuths
-            numViews = 2
-
-        elif self.config['faceAndEdge']:
+            numViews = len(self.inclinations)
+            self.numViews = numViews
+            
+        if faceAndEdge:
             inclinations, azimuths = self.__calculate_angular_momentum_and_angles()
             numViews = 2
-        else:
-            numViews = self.config['numViews']
+            self.numViews = numViews
             
-            randomViews = self.config['randomViews']
+        if not faceAndEdge and not hasattr(self, 'inclinations') and not hasattr(self, 'azimuths'):
+            
+            numViews = self.__get_value('numViews', np.int32)
+            randomViews = self.__get_value('randomViews', bool)
+            
             if randomViews:
                 inclinations = np.random.uniform(0, 180, numViews).tolist()
                 azimuths = np.random.uniform(-360, 360, numViews).tolist()
             else:
                 inclinations = self.config['inclinations']
                 azimuths = self.config['azimuths']
-        
+            
         properties['numViews'] = numViews
         properties['inclinations'] = inclinations
         properties['azimuths'] = azimuths
@@ -633,7 +659,7 @@ class PreProcess:
         
         print('Creating .ski file.')
         
-        mode = self.config['simulationMode']
+        mode = self.__get_value('simulationMode', str)
         ski_file = os.path.join(self.dataDir,  f'ski_templates/{mode}_template.ski')
         
         with open(ski_file, 'r') as file:
@@ -660,11 +686,11 @@ class PreProcess:
         data = data.replace('BruzualCharlotSEDFamily', SEDFamily)
         data = data.replace('Chabrier', initialMassFunction)
         
-        numPackets = np.float32(self.config['numPackets'])
+        numPackets = self.__get_value('numPackets', np.float32)
         data = data.replace('numPackets="1e7"', f'numPackets="{numPackets}"')
         
-        minWavelength = np.float32(self.config['minWavelength']) * (1 + self.snapz)
-        maxWavelength = np.float32(self.config['maxWavelength']) * (1 + self.snapz)
+        minWavelength = self.__get_value('minWavelength', np.float32) * (1 + self.snapz)
+        maxWavelength = self.__get_value('maxWavelength', np.float32) * (1 + self.snapz)
         
         data = data.replace('minWavelength="0.01 micron"', f'minWavelength="{minWavelength} micron"')
         data = data.replace('maxWavelength="1.2 micron"', f'maxWavelength="{maxWavelength} micron"')
@@ -672,22 +698,22 @@ class PreProcess:
         self.properties['minWavelength'] = minWavelength # micron
         self.properties['maxWavelength'] = maxWavelength # micron    
 
-        massFraction = np.float32(self.config['massFraction'])
+        massFraction = self.__get_value('massFraction', np.float32)
         data = data.replace('massFraction="0.3"', f'massFraction="{massFraction}"')
         dustConfig = '<ZubkoDustMix numSilicateSizes="15" numGraphiteSizes="15" numPAHSizes="15"/>'
-        dustModel = self.config['dustModel']
-        numSilicateSizes = np.int32(self.config['numSilicateSizes'])
-        numGraphiteSizes = np.int32(self.config['numGraphiteSizes'])
-        numPAHSizes = np.int32(self.config['numPAHSizes'])
-        numHydrocarbonSizes = np.int32(self.config['numHydrocarbonSizes'])
+        dustModel = self.__get_value('dustModel', str)
+        numSilicateSizes = self.__get_value('numSilicateSizes', np.int32)
+        numGraphiteSizes = self.__get_value('numGraphiteSizes', np.int32)
+        numPAHSizes = self.__get_value('numPAHSizes', np.int32)
+        numHydrocarbonSizes = self.__get_value('numHydrocarbonSizes', np.int32)
         if dustModel == 'ThemisDustMix':
             dustConfigNew = f'<{dustModel} numHydrocarbonSizes="{numHydrocarbonSizes}" numSilicateSizes="{numSilicateSizes}"/>'
         else:
             dustConfigNew = f'<{dustModel} numSilicateSizes="{numSilicateSizes}" numGraphiteSizes="{numGraphiteSizes}" numPAHSizes="{numPAHSizes}"/>'
         data = data.replace(dustConfig, dustConfigNew)
 
-        minLevel = np.int32(self.config['minLevel'])
-        maxLevel = np.int32(self.config['maxLevel'])
+        minLevel = self.__get_value('minLevel', np.int32)
+        maxLevel = self.__get_value('maxLevel', np.int32)
         data = data.replace('minLevel="8"', f'minLevel="{minLevel}"')
         data = data.replace('maxLevel="12"', f'maxLevel="{maxLevel}"')
         
@@ -699,13 +725,13 @@ class PreProcess:
         data = data.replace('minZ="-5e4 pc"', f'minZ="{-spatialRange} pc"')
         data = data.replace('maxZ="5e4 pc"', f'maxZ="{spatialRange} pc"')
         
-        wavelengthGrid = self.config['wavelengthGrid']
+        wavelengthGrid = self.__get_value('wavelengthGrid', str)
         grid_type = {'Linear': 'LinWavelengthGrid',
                 'Log': 'LogWavelengthGrid'}
         grid_type = grid_type[wavelengthGrid]
         data = data.replace('LinWavelengthGrid', grid_type)
         
-        numWavelengths = np.int32(self.config['numWavelengths'])
+        numWavelengths = self.__get_value('numWavelengths', np.int32)
         data = data.replace('numWavelengths="1000"', f'numWavelengths="{numWavelengths}"')
 
         begin_str = '<FullInstrument'
@@ -731,7 +757,7 @@ class PreProcess:
 
         numPixels = int(fov / spatialResol)
 
-        recordComponents = 'true' if self.config['recordComponents'] else 'false'
+        recordComponents = 'true' if self.__get_value('recordComponents', bool) else 'false'
         
         insert_begin_idx = idx_begin
         for i, (inclination, azimuth) in enumerate(zip(inclinations, azimuths)):
@@ -759,16 +785,39 @@ class PreProcess:
         print(f'numViews: {numViews}')
         print(f'numSpatialPixels: {numPixels}')
         print(f'numWavelengthPixels: {numWavelengths}')
-        factor = 7 if self.config['recordComponents'] else 1
+        factor = 7 if recordComponents else 1
         numPixels = np.float64(numPixels) # avoid overflow
         dataCubeSize = np.int64(numPixels ** 2 * numWavelengths * numViews)
         dataSize_in_GB = np.around(dataCubeSize * 8 * factor * 1e-9, 3)
         print(f'Estimated memory usage: {dataSize_in_GB} GB')
+        
+    def __get_attributes(self, directory):
+        
+        attributes = vars(self)
+        attr_keys = list(attributes.keys())
+        
+        config = attributes['config']
+        attr_keys.remove('config')
+        
+        for key in attr_keys:
+            if key in config.keys():
+                config[key] = attributes[key]
+
+        with open(os.path.join(directory, 'config.json'), 'w') as file:
+            json.dump(config, file, default=custom_serialier, indent=4)
     
-    def prepare(self):
+    def prepare(self, data: Union[dict, NoneType]=None):
+        
+        if data is not None:
+            exist_keys = self.config.keys()
+            for key, value in data.items():
+                if key in exist_keys:
+                    setattr(self, key, value)
+            
         os.makedirs(self.workingDir, exist_ok=True)
         self.__get_particles()
         self.__create_ski()
+        self.__get_attributes(self.workingDir)
         
     def inputs(self, data: dict):
         '''
@@ -780,10 +829,10 @@ class PreProcess:
         data['stellarMass']: float
         data['subhaloID']: int
         data['boxLength']: float
-        data['inclinations']: list, optional
-        data['azimuths']: list, optional
         
         '''
+        
+        keys = data.keys()
         
         self.snapz = data['snapRedshift'] # include
         self.a = 1 / (1 + self.snapz)
@@ -792,9 +841,15 @@ class PreProcess:
         self.id = data['subhaloID'] # include
         self.boxLength = data['boxLength'] # include
         
-        if 'inclinations' in data and 'azimuths' in data:
-            self.inclinations = data['inclinations'] # optional
-            self.azimuths = data['azimuths'] # optional
+        keys.remove('snapRedshift')
+        keys.remove('cosmology')
+        keys.remove('stellarMass')
+        keys.remove('subhaloID')
+        keys.remove('boxLength')
+        
+        # reset attributes
+        for key in keys:
+            setattr(self, key, data[key])
         
         mass_in_10 = np.log10(self.mass)
         
@@ -802,3 +857,4 @@ class PreProcess:
         
         os.makedirs(self.workingDir, exist_ok=True)
         self.__create_ski()
+        self.__get_attributes(self.workingDir)
