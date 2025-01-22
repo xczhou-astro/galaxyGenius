@@ -1,52 +1,44 @@
 ### Paths
 
-# Data directory
-dataDir = ../Data
-
 # if process subhalos on the fly using requests
-requests = False
+requests = false
 
 # your api key for TNG simulations
-apiKey = abcde
+apiKey = "abcde"
 
 # simulation name
-simulation = TNG-100
+simulation = "TNG100"
 
 # the home path for TNG simulations
-filePath = ../../TNG-100
+TNGPath = "../../TNG100"
+
+# the home path for postprocessing of TNG simulations
+# Both TNGPath and postprocessingPath are needed. 
+postprocessingPath = '../../postprocessing'
 
 # working directory for running SKIRT
-workingDir = run
+workingDir = "run"
 
 ### Settings for SKIRT
 
 # simulation mode for SKIRT, can be ExtinctionOnly or DustEmission
 # DustEmission are used when near- or mid- infrared bands are considered
-simulationMode = ExtinctionOnly
+simulationMode = "ExtinctionOnly"
 
 # if dusts are considered
 # Be True if simulationMode is DustEmission
-includeDust = False
+includeDust = false
 
 # dust emission type: Equilibrium or Stochastic, if simulationMode is DustEmission
-dustEmissionType = Equilibrium
+dustEmissionType = "Equilibrium"
 
 # dust model, ZubkoDustMix, DraineLiDustMix or ThemisDustMix
-dustModel = ZubkoDustMix
+dustModel = "ZubkoDustMix"
 
 # wavelength range considered, in micron
 # maxWavelength should be larger than the maximum wavelength of filters considered
 minWavelength = 0.1
 maxWavelength = 1.2
-
-# if smoothing length are derived from neighbors, else they are derived from simulation
-smoothLengthFromNeighbors = False
-
-# Nth nearest neighbor for smoothing length, if smoothLengthFromNeighbors is True
-NthNeighbor = 32
-
-# max smoothing length, in kpc, if smoothLengthFromNeighbors is True
-maxSmoothingLength = 0.8
 
 # particles are included in halfStellarMassRadius * boxLengthScale
 boxLengthScale = 20
@@ -55,7 +47,7 @@ boxLengthScale = 20
 maxBoxLength = 300
 
 # wavelength grid type for SKIRT calculation, Linear or Log
-wavelengthGrid = Linear
+wavelengthGrid = "Linear"
 
 # wavelength bins for SKIRT calculation
 numWavelengths = 300
@@ -68,12 +60,12 @@ maxLevel = 10
 numPackets = 1e7
 
 # SED family for quenched star particles (> 10 Myr), BC03 or FSPS
-SEDFamily = BC03
+SEDFamily = "BC03"
 
 # Initial mass function for quenched star particles
 # Chabrier or Salpeter for BC03 SED family
 # Chabrier, Kroupa or Salpeter for FSPS family
-initialMassFunction = Chabrier
+initialMassFunction = "Chabrier"
 
 # stellar mass range for subhalos in Msun, inf for infinite
 minStellarMass = 1e10
@@ -81,49 +73,45 @@ maxStellarMass = inf
 
 ### Settings for instruments
 
+# if use face-on and edge-on angles derived by angular momentum
+faceAndEdge = true
+
 # num of instrument views
 numViews = 3
 
 # if generate views from uniform distribution
-randomViews = True
+randomViews = true
 
 # should be filled when randomViews is False, separated by commas
-inclinations = 0,90,180
-azimuths = 0,90,180
-
-# ratio of field of view, FoV = boxLength * FoVboxLengthRatio
-FoVboxLengthRatio = 1
+inclinations = [0, 90, 180]
+azimuths = [0, 90, 180]
 
 # if perform postprocessing
-postProcessing = True
-
-# if save data cubes
-saveDataCube = True
+postProcessing = true
 
 # base spatial resolution, must be provided if postprocessing if False
 spatialResol = 100
 
 # unit type of image output, can be electron or flux
-imageUnit = electron
+imageUnit = "electron"
 
 # filters
-# surveys = CSST,HST,JWST
-surveys = CSST
+# surveys = ["HST", "JWST", "Euclid"]
+surveys = ["CSST"]
 
 # if display SED
-displaySED = True
+displaySED = true
 
 # if display SED in logscale for wavelength
-displaySEDxlogscale = True
+displaySEDxlogscale = true
 
 ### settings for simulation
 
 # snapshot ID
 snapNum = 94
 
-# fixedRedshift should equal to the redshift of the snapshot
-# but fixedRedshift of snapNum 99 should be larger than 0 to avoid error
-fixedRedshift = 0.06
+# snapshot redshift
+snapRedshift = 0.06
 
 # number of threads
 numThreads = 12
@@ -133,7 +121,7 @@ numThreads = 12
 # record individual components including transparent, primary direct, primary scattered
 # and secondarytransparent, secondarydirect, secondaryscattered, apart from total
 # Memory cosumptions are 7 times if True
-recordComponents = False
+recordComponents = false
 
 # age threshold for discriminating star-forming or quenched star particles, in Myr
 ageThreshold = 10  
@@ -146,7 +134,8 @@ logCompactnessStd = 0.4
 # for star-forming star particles, log10[(Pressure/k_B)/cm^-3 K] = logPressure
 logPressure = 5
 
-constantCoveringFactor = True
+# if use constant covering factor
+constantCoveringFactor = false
 
 # constant covering factor, if constantCoveringFactor is True
 # from Groves et al. 2008
@@ -157,16 +146,17 @@ coveringFactor = 0.2
 PDRClearingTimescale = 3
 
 # in K, temperature of gas particles lower than temperatureThreshold will be considered as dust
-temperatureThreshold = 10000
+temperatureThreshold = 8000
 
 # Fraction of the metallic gas locked up in dust
 massFraction = 0.3
 
 # dust-containing ISM (DISM) model, can be Camps_2016 or Torrey_2012
-DISMModel = Camps_2016
+DISMModel = "Camps_2016"
 
 # number of bins for dust grains
 numSilicateSizes=15
 numGraphiteSizes=15
 numPAHSizes=15
 numHydrocarbonSizes = 15
+

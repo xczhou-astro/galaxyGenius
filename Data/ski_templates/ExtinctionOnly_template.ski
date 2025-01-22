@@ -14,7 +14,7 @@
         <sourceSystem type="SourceSystem">
             <SourceSystem minWavelength="0.01 micron" maxWavelength="1.2 micron" wavelengths="0.55 micron" sourceBias="0.5">
                 <sources type="Source">
-                    <ParticleSource filename="quenched_stars.txt" importVelocity="false" importVelocityDispersion="false" importCurrentMass="false" useColumns="" sourceWeight="1" wavelengthBias="0.5">
+                    <ParticleSource filename="stars.txt" importVelocity="false" importVelocityDispersion="false" importCurrentMass="false" useColumns="" sourceWeight="1" wavelengthBias="0.5">
                         <smoothingKernel type="SmoothingKernel">
                             <CubicSplineSmoothingKernel/>
                         </smoothingKernel>
@@ -25,7 +25,7 @@
                             <DefaultWavelengthDistribution/>
                         </wavelengthBiasDistribution>
                     </ParticleSource>
-                    <ParticleSource filename="starforming_stars.txt" importVelocity="false" importVelocityDispersion="false" importCurrentMass="false" useColumns="" sourceWeight="1" wavelengthBias="0.5">
+                    <ParticleSource filename="starforming_regions.txt" importVelocity="false" importVelocityDispersion="false" importCurrentMass="false" useColumns="" sourceWeight="1" wavelengthBias="0.5">
                         <smoothingKernel type="SmoothingKernel">
                             <CubicSplineSmoothingKernel/>
                         </smoothingKernel>

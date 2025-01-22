@@ -4,7 +4,7 @@ A Mock Galaxy Image Generator for Various Telescopes from Hydrodynamical Simulat
 
 ## Results  
 ### SEDs
-![SEDs](assets/SEDs.png)  
+![SEDs](assets/fiducial_SED.png)  
 ### HSC
 ![HSC](assets/HSC_combined.png)  
 ### HST WFC3
@@ -12,7 +12,7 @@ A Mock Galaxy Image Generator for Various Telescopes from Hydrodynamical Simulat
 ### JWST NIRCam
 ![JWST](assets/JWST_combined.png)  
 ### CSST
-![CSST](assets/JWST_combined.png)  
+![CSST](assets/CSST_combined.png)  
 
 ## Dependence
 Python verison:  

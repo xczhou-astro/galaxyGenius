@@ -1,8 +1,8 @@
 # considered filter for survey
-filters = NUV,u,g,r,i,z,y
+filters = ["NUV", "u", "g", "r", "i", "z", "y"]
 
 # if use resolution from pixel scale
-resolFromPix = True
+resolFromPix = true
 
 # resolution, in pc must be provided when resolFromPix is False
 
@@ -12,7 +12,7 @@ resolution = 0
 pixelScales = 0.074
 
 # typical number exposure for considered filters
-numExposure = 4,2,2,2,2,2,4
+numExposure = [4, 2, 2, 2, 2, 2, 4]
 
 # exposure time
 exposureTime = 150
@@ -21,27 +21,27 @@ exposureTime = 150
 aperture = 2.0
 
 # if include PSF effects
-includePSF = True
+includePSF = true
 
 # if PSFs are from images
-PSFFromFile = True
+PSFFromFile = true
 
 # FWHMs of PSFs
 PSFFWHM = 0
 
 # if include background
-includeBkg = True
+includeBkg = true
 
 # if add background as Gaussian distribution
-gaussianNoise = False
+gaussianNoise = false
 
 # required instrumental parameters for background
-skyBkg = 0.0042,0.0317,0.2803,0.3591,0.3708,0.2168,0.0638
+skyBkg = [0.0042, 0.0317, 0.2803, 0.3591, 0.3708, 0.2168, 0.0638]
 darkCurrent = 0.02
 readOut = 5
 
 # display options
-imgDisplay = True
-RGBImg = True
-RGBFilters = g,r,z
-displayFilter = r
+imgDisplay = true
+RGBImg = true
+RGBFilters = ["g", "r", "z"]
+displayFilter = "r"

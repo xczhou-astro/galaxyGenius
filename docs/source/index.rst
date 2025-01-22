@@ -1,16 +1,14 @@
-Welcome to GalaxyGenius's documentation!
-======================================
+GalaxyGenius Documentation
+=========================
 
-GalaxyGenius is a Python package for processing and analyzing galaxy simulation data.
+GalaxyGenius is Mock Galaxy Image Generator for Various Telescopes from Hydrodynamical Simulations
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
-   installation
-   usage
-   api
-   modules
+   classes
+   configuration
 
 Indices and tables
 ==================
