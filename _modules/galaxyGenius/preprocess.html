@@ -154,6 +154,17 @@
 <div class="viewcode-block" id="PreProcess.get_subhalos">
 <a class="viewcode-back" href="../../classes.html#galaxyGenius.preprocess.PreProcess.get_subhalos">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_subhalos</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Retrieves subhalos from the simulation data based on the specified stellar mass range in configuration.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict: A dictionary containing the following keys:</span>
+<span class="sd">                - subhaloNum (int): The number of subhalos retrieved.</span>
+<span class="sd">                - subhaloIDs (np.ndarray, list): An array of IDs for the retrieved subhalos.</span>
+<span class="sd">                - subhaloSFR (np.ndarray, list): An array of star formation rates for the retrieved subhalos.</span>
+<span class="sd">                - units (list): A list of strings representing the units of the returned values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         
         <span class="n">minStellarMass</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;minStellarMass&#39;</span><span class="p">])</span>
         <span class="n">maxStellarMass</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;maxStellarMass&#39;</span><span class="p">])</span>
@@ -260,6 +271,13 @@
 <div class="viewcode-block" id="PreProcess.subhalo">
 <a class="viewcode-back" href="../../classes.html#galaxyGenius.preprocess.PreProcess.subhalo">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">subhalo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subhaloID</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="w">        </span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Retrieves subhalo data based on the specified subhalo ID.</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">            subhaloID (int): The ID of the subhalo to retrieve.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;requests&#39;</span><span class="p">]:</span>
             <span class="n">idx</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subhaloIDs</span><span class="p">)</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">subhaloID</span><span class="p">)</span>
@@ -890,6 +908,17 @@
 <div class="viewcode-block" id="PreProcess.prepare">
 <a class="viewcode-back" href="../../classes.html#galaxyGenius.preprocess.PreProcess.prepare">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">dict</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">]</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Prepare the SKIRT input files and SKIRT executable files.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data : dict, optional</span>
+<span class="sd">            A dictionary for dynamical modification of parameters.</span>
+<span class="sd">            If provided, the method will update the instance&#39;s </span>
+<span class="sd">            attributes with the values from this dictionary.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         
         <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">exist_keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
@@ -906,17 +935,19 @@
 <div class="viewcode-block" id="PreProcess.inputs">
 <a class="viewcode-back" href="../../classes.html#galaxyGenius.preprocess.PreProcess.inputs">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        Inputs for custom hydrodynamical simulations</span>
-<span class="sd">        </span>
-<span class="sd">        data: dict</span>
-<span class="sd">        data[&#39;snapRedshift&#39;]: float</span>
-<span class="sd">        data[&#39;cosmology&#39;]: astropy.cosmology.Cosmology</span>
-<span class="sd">        data[&#39;stellarMass&#39;]: float</span>
-<span class="sd">        data[&#39;subhaloID&#39;]: int</span>
-<span class="sd">        data[&#39;boxLength&#39;]: float</span>
-<span class="sd">        </span>
-<span class="sd">        &#39;&#39;&#39;</span>
+<span class="w">        </span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Inputs for custom hydrodynamical simulations.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data : dict</span>
+<span class="sd">            A dictionary containing the following keys:</span>
+<span class="sd">                - subhaloNum (int): The number of subhalos retrieved</span>
+<span class="sd">                - subhaloIDs (np.ndarray, list): An array of IDs for the retrieved subhalos</span>
+<span class="sd">                - subhaloSFR (np.ndarray, list): An array of star formation rates for the retrieved subhalos</span>
+<span class="sd">                - units (list): A list of strings representing the units of the returned values</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         
         <span class="n">keys</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
         
