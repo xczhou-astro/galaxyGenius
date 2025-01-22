@@ -409,6 +409,15 @@ class PostProcess:
 
     def runPostprocess(self, showImages: bool=False):
         
+        """
+        This method performs the post-processing of the mock observations for the specified subhalo.
+        
+        Parameters
+        ----------
+        showImages : bool, optional
+            If True, displays the generated images, and can only work in Jupyter environment.
+    
+        """
         
         if self.config['postProcessing']:
             

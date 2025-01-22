@@ -64,6 +64,13 @@ class DataGeneration:
         os.chdir(base)
     
     def runSKIRT(self):
+        
+        """
+        This method runs the SKIRT radiative transfer simulation using the 
+        configuration specified in the working directory. After execution, 
+        it saves the resulting data cubes and cleans up the working directory.
+        """
+        
         self.__run_skirt()
         self.__saveDataCube()
         

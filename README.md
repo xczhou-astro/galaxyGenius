@@ -175,4 +175,4 @@ mock_(survey)/
 Bandpass images are saved in pages of fits file, and each page includes images in different views.
 
 ## Documentaion
-For classes and configuration sets, please refer to documentation
+For classes and configuration sets, please refer to [documentation](https://xczhou-astro.github.io/galaxyGenius/)

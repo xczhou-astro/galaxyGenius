@@ -47,20 +47,37 @@
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Classes Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#configuration">Configuration</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#instance-methods">Instance Methods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#galaxyGenius.config.Configuration"><code class="docutils literal notranslate"><span class="pre">Configuration</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#galaxyGenius.config.Configuration.init"><code class="docutils literal notranslate"><span class="pre">Configuration.init()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#galaxyGenius.config.Configuration.add_survey"><code class="docutils literal notranslate"><span class="pre">Configuration.add_survey()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#galaxyGenius.config.Configuration.remove_survey"><code class="docutils literal notranslate"><span class="pre">Configuration.remove_survey()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#galaxyGenius.config.Configuration.save_config"><code class="docutils literal notranslate"><span class="pre">Configuration.save_config()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#galaxyGenius.config.Configuration.get_config"><code class="docutils literal notranslate"><span class="pre">Configuration.get_config()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#galaxyGenius.config.Configuration.check_config"><code class="docutils literal notranslate"><span class="pre">Configuration.check_config()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#preprocess">PreProcess</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#id1">Instance Methods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#galaxyGenius.preprocess.PreProcess"><code class="docutils literal notranslate"><span class="pre">PreProcess</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#galaxyGenius.preprocess.PreProcess.get_subhalos"><code class="docutils literal notranslate"><span class="pre">PreProcess.get_subhalos()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#galaxyGenius.preprocess.PreProcess.subhalo"><code class="docutils literal notranslate"><span class="pre">PreProcess.subhalo()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#galaxyGenius.preprocess.PreProcess.prepare"><code class="docutils literal notranslate"><span class="pre">PreProcess.prepare()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#galaxyGenius.preprocess.PreProcess.inputs"><code class="docutils literal notranslate"><span class="pre">PreProcess.inputs()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#datageneration">DataGeneration</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#id2">Instance Methods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#galaxyGenius.generation.DataGeneration"><code class="docutils literal notranslate"><span class="pre">DataGeneration</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#galaxyGenius.generation.DataGeneration.runSKIRT"><code class="docutils literal notranslate"><span class="pre">DataGeneration.runSKIRT()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#postprocess">PostProcess</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#id3">Instance Methods</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#galaxyGenius.preprocess.PreProcess"><code class="docutils literal notranslate"><span class="pre">PreProcess</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#galaxyGenius.postprocess.PostProcess"><code class="docutils literal notranslate"><span class="pre">PostProcess</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#galaxyGenius.postprocess.PostProcess.runPostprocess"><code class="docutils literal notranslate"><span class="pre">PostProcess.runPostprocess()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -98,77 +115,80 @@
 <h1>Classes Reference<a class="headerlink" href="#classes-reference" title="Link to this heading"></a></h1>
 <section id="configuration">
 <h2>Configuration<a class="headerlink" href="#configuration" title="Link to this heading"></a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">config.Configuration(surveys=None)</span></code></p>
-<dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">surveys</span></code> (list)</dt><dd><p>considered surveys. If None, configs will be read from current directory, or <code class="docutils literal notranslate"><span class="pre">config.toml</span></code> files will be created from template if there is no config files.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="galaxyGenius.config.Configuration">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">galaxyGenius.config.</span></span><span class="sig-name descname"><span class="pre">Configuration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">surveys</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/galaxyGenius/config.html#Configuration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#galaxyGenius.config.Configuration" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="galaxyGenius.config.Configuration.init">
+<span class="sig-name descname"><span class="pre">init</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/galaxyGenius/config.html#Configuration.init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#galaxyGenius.config.Configuration.init" title="Link to this definition"></a></dt>
+<dd><p>Initialize configuration. Only use by init.py</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="galaxyGenius.config.Configuration.add_survey">
+<span class="sig-name descname"><span class="pre">add_survey</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">surveys</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/galaxyGenius/config.html#Configuration.add_survey"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#galaxyGenius.config.Configuration.add_survey" title="Link to this definition"></a></dt>
+<dd><p>Add surveys. Call <code class="docutils literal notranslate"><span class="pre">get_config()</span></code> to get the updated configs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>surveys</strong> (<em>str</em><em> or </em><em>list</em><em>[</em><em>str</em><em>] or </em><em>None</em>) – Survey names to add. If None, no surveys will be added.</p>
 </dd>
 </dl>
-<section id="instance-methods">
-<h3>Instance Methods<a class="headerlink" href="#instance-methods" title="Link to this heading"></a></h3>
-<dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">conf</span> <span class="pre">=</span> <span class="pre">config.get_config()</span></code></dt><dd><p>update and return configs.</p>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">config.add_survey(surveys)</span></code></dt><dd><p><code class="docutils literal notranslate"><span class="pre">surveys</span></code> (list), surveys will be added. Call <code class="docutils literal notranslate"><span class="pre">config.get_config()</span></code> to get the updated configs.</p>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">config.remove_survey(surveys)</span></code></dt><dd><p><code class="docutils literal notranslate"><span class="pre">surveys</span></code> (list), surveys will be removed. Call <code class="docutils literal notranslate"><span class="pre">config.get_config()</span></code> to get the updated configs.</p>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">config.save_config(conf)</span></code></dt><dd><p><code class="docutils literal notranslate"><span class="pre">conf</span></code> (dict), save the current config to <code class="docutils literal notranslate"><span class="pre">config.toml</span></code> and <code class="docutils literal notranslate"><span class="pre">config_(survey).toml</span></code>.</p>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">config.check_config()</span></code></dt><dd><p>check if config has conflicts.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="galaxyGenius.config.Configuration.remove_survey">
+<span class="sig-name descname"><span class="pre">remove_survey</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">surveys</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/galaxyGenius/config.html#Configuration.remove_survey"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#galaxyGenius.config.Configuration.remove_survey" title="Link to this definition"></a></dt>
+<dd><p>Remove surveys. Call <code class="docutils literal notranslate"><span class="pre">get_config()</span></code> to get the updated configs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>surveys</strong> (<em>str</em><em> or </em><em>list</em><em>[</em><em>str</em><em>] or </em><em>None</em>) – Survey names to remove. If None, no surveys will be removed.</p>
 </dd>
 </dl>
-</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="galaxyGenius.config.Configuration.save_config">
+<span class="sig-name descname"><span class="pre">save_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/galaxyGenius/config.html#Configuration.save_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#galaxyGenius.config.Configuration.save_config" title="Link to this definition"></a></dt>
+<dd><p>Manually save the current configuration to the specified TOML files.</p>
+<p>Parameters:
+conf (dict, optional): A dictionary containing configuration
+values.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="galaxyGenius.config.Configuration.get_config">
+<span class="sig-name descname"><span class="pre">get_config</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/galaxyGenius/config.html#Configuration.get_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#galaxyGenius.config.Configuration.get_config" title="Link to this definition"></a></dt>
+<dd><p>Update and return the current configuration.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The updated configuration dictionary.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="galaxyGenius.config.Configuration.check_config">
+<span class="sig-name descname"><span class="pre">check_config</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="_modules/galaxyGenius/config.html#Configuration.check_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#galaxyGenius.config.Configuration.check_config" title="Link to this definition"></a></dt>
+<dd><p>Check the configuration for any inconsistencies and issues.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The number of issues found in the configuration.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </section>
 <section id="preprocess">
 <h2>PreProcess<a class="headerlink" href="#preprocess" title="Link to this heading"></a></h2>
-<dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">preprocess</span> <span class="pre">=</span> <span class="pre">PreProcess(config)</span></code></dt><dd><p><code class="docutils literal notranslate"><span class="pre">config</span></code> (dict), configuration.</p>
-</dd>
-</dl>
-<section id="id1">
-<h3>Instance Methods<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
-<dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">subhalos</span> <span class="pre">=</span> <span class="pre">preprocess.get_subhalos()</span></code></dt><dd><p>return subhalos including <code class="docutils literal notranslate"><span class="pre">subhaloNum</span></code>, <code class="docutils literal notranslate"><span class="pre">subhaloIDs</span></code> and <code class="docutils literal notranslate"><span class="pre">subhaloSFR</span></code>.</p>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">preprocess.subhalo(subhaloID)</span></code></dt><dd><p><code class="docutils literal notranslate"><span class="pre">subhaloID</span></code> (int), subhalo ID. Specify a subhalo.</p>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">preprocess.prepare(data=None)</span></code></dt><dd><p><code class="docutils literal notranslate"><span class="pre">data</span></code> (dict), For dynamical modification of parameters.
-Prepare stars, star-forming regions and dusts for current subhalo, and create SKIRT execution file.</p>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">preprocess.inputs(data)</span></code></dt><dd><p><code class="docutils literal notranslate"><span class="pre">data</span></code> (dict), Inputs for hydro-simulation except IllustrisTNG.
-data must include <code class="docutils literal notranslate"><span class="pre">snapRedshift</span></code>, <code class="docutils literal notranslate"><span class="pre">cosmology</span></code>, <code class="docutils literal notranslate"><span class="pre">stellarMass</span></code>, <code class="docutils literal notranslate"><span class="pre">subhaloID</span></code>, and <code class="docutils literal notranslate"><span class="pre">boxLength</span></code> used to select particles.</p>
-</dd>
-</dl>
-</section>
-</section>
-<section id="datageneration">
-<h2>DataGeneration<a class="headerlink" href="#datageneration" title="Link to this heading"></a></h2>
-<dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">dataGeneration</span> <span class="pre">=</span> <span class="pre">DataGeneration(config)</span></code></dt><dd><p><code class="docutils literal notranslate"><span class="pre">config</span></code> (dict), configuration.</p>
-</dd>
-</dl>
-<section id="id2">
-<h3>Instance Methods<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
-<dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">dataGeneration.runSKIRT()</span></code></dt><dd><p>Perform SKIRT radiative transfer.</p>
-</dd>
-</dl>
-</section>
-</section>
-<section id="postprocess">
-<h2>PostProcess<a class="headerlink" href="#postprocess" title="Link to this heading"></a></h2>
-<dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">postprocess</span> <span class="pre">=</span> <span class="pre">PostProcess(subhaloID,</span> <span class="pre">config)</span></code></dt><dd><p><code class="docutils literal notranslate"><span class="pre">subhaloID</span></code> (int), subhalo ID.
-<code class="docutils literal notranslate"><span class="pre">config</span></code> (dict), configuration.</p>
-</dd>
-</dl>
-<section id="id3">
-<h3>Instance Methods<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
-<dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">postprocess.runPostprocess(showImage=False)</span></code></dt><dd><p><code class="docutils literal notranslate"><span class="pre">showImage</span></code> (bool), show image. Only work in jupyter environment.
-Postprocess to perform mock observation.</p>
-</dd>
-</dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="galaxyGenius.preprocess.PreProcess">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">galaxyGenius.preprocess.</span></span><span class="sig-name descname"><span class="pre">PreProcess</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/galaxyGenius/preprocess.html#PreProcess"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#galaxyGenius.preprocess.PreProcess" title="Link to this definition"></a></dt>
@@ -176,33 +196,109 @@ Postprocess to perform mock observation.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="galaxyGenius.preprocess.PreProcess.get_subhalos">
 <span class="sig-name descname"><span class="pre">get_subhalos</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="_modules/galaxyGenius/preprocess.html#PreProcess.get_subhalos"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#galaxyGenius.preprocess.PreProcess.get_subhalos" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Retrieves subhalos from the simulation data based on the specified stellar mass range in configuration.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><dl class="simple">
+<dt>A dictionary containing the following keys:</dt><dd><ul class="simple">
+<li><p>subhaloNum (int): The number of subhalos retrieved.</p></li>
+<li><p>subhaloIDs (np.ndarray, list): An array of IDs for the retrieved subhalos.</p></li>
+<li><p>subhaloSFR (np.ndarray, list): An array of star formation rates for the retrieved subhalos.</p></li>
+<li><p>units (list): A list of strings representing the units of the returned values.</p></li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="galaxyGenius.preprocess.PreProcess.subhalo">
 <span class="sig-name descname"><span class="pre">subhalo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subhaloID</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/galaxyGenius/preprocess.html#PreProcess.subhalo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#galaxyGenius.preprocess.PreProcess.subhalo" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Retrieves subhalo data based on the specified subhalo ID.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>subhaloID</strong> (<em>int</em>) – The ID of the subhalo to retrieve.</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="galaxyGenius.preprocess.PreProcess.prepare">
 <span class="sig-name descname"><span class="pre">prepare</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/galaxyGenius/preprocess.html#PreProcess.prepare"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#galaxyGenius.preprocess.PreProcess.prepare" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Prepare the SKIRT input files and SKIRT executable files.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> (<em>dict</em><em>, </em><em>optional</em>) – A dictionary for dynamical modification of parameters.
+If provided, the method will update the instance’s
+attributes with the values from this dictionary.</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="galaxyGenius.preprocess.PreProcess.inputs">
 <span class="sig-name descname"><span class="pre">inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/galaxyGenius/preprocess.html#PreProcess.inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#galaxyGenius.preprocess.PreProcess.inputs" title="Link to this definition"></a></dt>
-<dd><p>Inputs for custom hydrodynamical simulations</p>
-<p>data: dict
-data[‘snapRedshift’]: float
-data[‘cosmology’]: astropy.cosmology.Cosmology
-data[‘stellarMass’]: float
-data[‘subhaloID’]: int
-data[‘boxLength’]: float</p>
+<dd><p>Inputs for custom hydrodynamical simulations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> (<em>dict</em>) – <dl class="simple">
+<dt>A dictionary containing the following keys:</dt><dd><ul class="simple">
+<li><p>subhaloNum (int): The number of subhalos retrieved</p></li>
+<li><p>subhaloIDs (np.ndarray, list): An array of IDs for the retrieved subhalos</p></li>
+<li><p>subhaloSFR (np.ndarray, list): An array of star formation rates for the retrieved subhalos</p></li>
+<li><p>units (list): A list of strings representing the units of the returned values</p></li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
 
 </section>
+<section id="datageneration">
+<h2>DataGeneration<a class="headerlink" href="#datageneration" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="galaxyGenius.generation.DataGeneration">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">galaxyGenius.generation.</span></span><span class="sig-name descname"><span class="pre">DataGeneration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/galaxyGenius/generation.html#DataGeneration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#galaxyGenius.generation.DataGeneration" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="galaxyGenius.generation.DataGeneration.runSKIRT">
+<span class="sig-name descname"><span class="pre">runSKIRT</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/galaxyGenius/generation.html#DataGeneration.runSKIRT"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#galaxyGenius.generation.DataGeneration.runSKIRT" title="Link to this definition"></a></dt>
+<dd><p>This method runs the SKIRT radiative transfer simulation using the
+configuration specified in the working directory. After execution,
+it saves the resulting data cubes and cleans up the working directory.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="postprocess">
+<h2>PostProcess<a class="headerlink" href="#postprocess" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="galaxyGenius.postprocess.PostProcess">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">galaxyGenius.postprocess.</span></span><span class="sig-name descname"><span class="pre">PostProcess</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subhaloID</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/galaxyGenius/postprocess.html#PostProcess"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#galaxyGenius.postprocess.PostProcess" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="galaxyGenius.postprocess.PostProcess.runPostprocess">
+<span class="sig-name descname"><span class="pre">runPostprocess</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">showImages</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/galaxyGenius/postprocess.html#PostProcess.runPostprocess"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#galaxyGenius.postprocess.PostProcess.runPostprocess" title="Link to this definition"></a></dt>
+<dd><p>This method performs the post-processing of the mock observations for the specified subhalo.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>showImages</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, displays the generated images, and can only work in Jupyter environment.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </section>
 </section>
 

@@ -60,11 +60,26 @@ class Configuration:
             
             
     def init(self):
+        
+        """
+        Initialize configuration. Only use by init.py
+        """
+        
         self.__update_config()
         self.check_config()
         self.save_config()
         
     def add_survey(self, surveys: Union[str, list[str], NoneType] = None):
+        
+        '''
+        Add surveys. Call ``get_config()`` to get the updated configs.
+
+        Parameters
+        ----------
+        surveys : str or list[str] or None
+            Survey names to add. If None, no surveys will be added.
+        '''
+        
         if surveys is not None:
             if isinstance(surveys, str):
                 surveys_add = split(surveys)
@@ -85,6 +100,15 @@ class Configuration:
         self.surveys += added_surveys
     
     def remove_survey(self, surveys: Union[str, list[str], NoneType] = None):
+        
+        '''
+        Remove surveys. Call ``get_config()`` to get the updated configs.
+
+        Parameters
+        ----------
+        surveys : str or list[str] or None
+            Survey names to remove. If None, no surveys will be removed.
+        '''
         
         if surveys is not None:
             if isinstance(surveys, str):
@@ -182,6 +206,14 @@ class Configuration:
     
     def save_config(self, conf: Union[dict, NoneType] = None):
         
+        """
+        Manually save the current configuration to the specified TOML files.
+
+        Parameters:
+        conf (dict, optional): A dictionary containing configuration 
+        values.
+        """
+        
         if conf is not None:
         
             for key in list(self.config.keys()):
@@ -205,6 +237,14 @@ class Configuration:
         
                 
     def get_config(self):
+        
+        """
+        Update and return the current configuration.
+
+        Returns:
+            dict: The updated configuration dictionary.
+        """
+        
         self.__update_config()
         self.check_config()
         config = self.__config_to_dict()
@@ -400,6 +440,13 @@ class Configuration:
             return True
 
     def check_config(self) -> int:
+        
+        """
+        Check the configuration for any inconsistencies and issues.
+
+        Returns:
+            int: The number of issues found in the configuration.
+        """
         
         self.all_config = self.__config_to_dict()
         

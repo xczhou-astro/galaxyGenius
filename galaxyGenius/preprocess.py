@@ -78,6 +78,17 @@ class PreProcess:
     
     def get_subhalos(self) -> dict:
         
+        """
+        Retrieves subhalos from the simulation data based on the specified stellar mass range in configuration.
+
+        Returns:
+            dict: A dictionary containing the following keys:
+                - subhaloNum (int): The number of subhalos retrieved.
+                - subhaloIDs (np.ndarray, list): An array of IDs for the retrieved subhalos.
+                - subhaloSFR (np.ndarray, list): An array of star formation rates for the retrieved subhalos.
+                - units (list): A list of strings representing the units of the returned values.
+        """
+        
         minStellarMass = np.float32(self.config['minStellarMass'])
         maxStellarMass = np.float32(self.config['maxStellarMass'])
         
@@ -180,6 +191,13 @@ class PreProcess:
 
     
     def subhalo(self, subhaloID: int):
+        
+        """
+        Retrieves subhalo data based on the specified subhalo ID.
+
+        Parameters:
+            subhaloID (int): The ID of the subhalo to retrieve.
+        """
         
         if not self.config['requests']:
             idx = list(self.subhaloIDs).index(subhaloID)
@@ -808,6 +826,17 @@ class PreProcess:
     
     def prepare(self, data: Union[dict, NoneType]=None):
         
+        """
+        Prepare the SKIRT input files and SKIRT executable files.
+
+        Parameters
+        ----------
+        data : dict, optional
+            A dictionary for dynamical modification of parameters.
+            If provided, the method will update the instance's 
+            attributes with the values from this dictionary.
+        """
+        
         if data is not None:
             exist_keys = self.config.keys()
             for key, value in data.items():
@@ -820,17 +849,19 @@ class PreProcess:
         self.__get_attributes(self.workingDir)
         
     def inputs(self, data: dict):
-        '''
-        Inputs for custom hydrodynamical simulations
         
-        data: dict
-        data['snapRedshift']: float
-        data['cosmology']: astropy.cosmology.Cosmology
-        data['stellarMass']: float
-        data['subhaloID']: int
-        data['boxLength']: float
-        
-        '''
+        """
+        Inputs for custom hydrodynamical simulations.
+
+        Parameters
+        ----------
+        data : dict
+            A dictionary containing the following keys:
+                - subhaloNum (int): The number of subhalos retrieved
+                - subhaloIDs (np.ndarray, list): An array of IDs for the retrieved subhalos
+                - subhaloSFR (np.ndarray, list): An array of star formation rates for the retrieved subhalos
+                - units (list): A list of strings representing the units of the returned values
+        """
         
         keys = data.keys()
         

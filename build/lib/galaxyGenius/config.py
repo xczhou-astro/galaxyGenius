@@ -25,7 +25,7 @@ class Configuration:
             print('GALAXYGENIUS_DATA_DIR not set. ' + 'Data directory falling to default path: ../Data')
             self.dataDir = '../Data'
             if not os.path.exists(self.dataDir):
-                self.__issue('Data directory not found. Please set GALAXYGENIUS_DATA_DIR environment variable.')
+                print('Data directory not found. Please set GALAXYGENIUS_DATA_DIR environment variable.')
                 sys.exit()
             
         
