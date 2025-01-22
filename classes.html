@@ -1,0 +1,240 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Classes Reference &mdash; GalaxyGenius  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+    <link rel="canonical" href="https://xczhou-astro.github.io/galaxyGenius/classes.html" />
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Configuration" href="configuration.html" />
+    <link rel="prev" title="GalaxyGenius Documentation" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            GalaxyGenius
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Classes Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#configuration">Configuration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#instance-methods">Instance Methods</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#preprocess">PreProcess</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id1">Instance Methods</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#datageneration">DataGeneration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id2">Instance Methods</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#postprocess">PostProcess</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id3">Instance Methods</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#galaxyGenius.preprocess.PreProcess"><code class="docutils literal notranslate"><span class="pre">PreProcess</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">GalaxyGenius</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Classes Reference</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/xczhou-astro/galaxygenius/blob/main/docs/source/classes.rst" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="classes-reference">
+<h1>Classes Reference<a class="headerlink" href="#classes-reference" title="Link to this heading"></a></h1>
+<section id="configuration">
+<h2>Configuration<a class="headerlink" href="#configuration" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">config.Configuration(surveys=None)</span></code></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">surveys</span></code> (list)</dt><dd><p>considered surveys. If None, configs will be read from current directory, or <code class="docutils literal notranslate"><span class="pre">config.toml</span></code> files will be created from template if there is no config files.</p>
+</dd>
+</dl>
+<section id="instance-methods">
+<h3>Instance Methods<a class="headerlink" href="#instance-methods" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">conf</span> <span class="pre">=</span> <span class="pre">config.get_config()</span></code></dt><dd><p>update and return configs.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">config.add_survey(surveys)</span></code></dt><dd><p><code class="docutils literal notranslate"><span class="pre">surveys</span></code> (list), surveys will be added. Call <code class="docutils literal notranslate"><span class="pre">config.get_config()</span></code> to get the updated configs.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">config.remove_survey(surveys)</span></code></dt><dd><p><code class="docutils literal notranslate"><span class="pre">surveys</span></code> (list), surveys will be removed. Call <code class="docutils literal notranslate"><span class="pre">config.get_config()</span></code> to get the updated configs.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">config.save_config(conf)</span></code></dt><dd><p><code class="docutils literal notranslate"><span class="pre">conf</span></code> (dict), save the current config to <code class="docutils literal notranslate"><span class="pre">config.toml</span></code> and <code class="docutils literal notranslate"><span class="pre">config_(survey).toml</span></code>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">config.check_config()</span></code></dt><dd><p>check if config has conflicts.</p>
+</dd>
+</dl>
+</section>
+</section>
+<section id="preprocess">
+<h2>PreProcess<a class="headerlink" href="#preprocess" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">preprocess</span> <span class="pre">=</span> <span class="pre">PreProcess(config)</span></code></dt><dd><p><code class="docutils literal notranslate"><span class="pre">config</span></code> (dict), configuration.</p>
+</dd>
+</dl>
+<section id="id1">
+<h3>Instance Methods<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">subhalos</span> <span class="pre">=</span> <span class="pre">preprocess.get_subhalos()</span></code></dt><dd><p>return subhalos including <code class="docutils literal notranslate"><span class="pre">subhaloNum</span></code>, <code class="docutils literal notranslate"><span class="pre">subhaloIDs</span></code> and <code class="docutils literal notranslate"><span class="pre">subhaloSFR</span></code>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">preprocess.subhalo(subhaloID)</span></code></dt><dd><p><code class="docutils literal notranslate"><span class="pre">subhaloID</span></code> (int), subhalo ID. Specify a subhalo.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">preprocess.prepare(data=None)</span></code></dt><dd><p><code class="docutils literal notranslate"><span class="pre">data</span></code> (dict), For dynamical modification of parameters.
+Prepare stars, star-forming regions and dusts for current subhalo, and create SKIRT execution file.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">preprocess.inputs(data)</span></code></dt><dd><p><code class="docutils literal notranslate"><span class="pre">data</span></code> (dict), Inputs for hydro-simulation except IllustrisTNG.
+data must include <code class="docutils literal notranslate"><span class="pre">snapRedshift</span></code>, <code class="docutils literal notranslate"><span class="pre">cosmology</span></code>, <code class="docutils literal notranslate"><span class="pre">stellarMass</span></code>, <code class="docutils literal notranslate"><span class="pre">subhaloID</span></code>, and <code class="docutils literal notranslate"><span class="pre">boxLength</span></code> used to select particles.</p>
+</dd>
+</dl>
+</section>
+</section>
+<section id="datageneration">
+<h2>DataGeneration<a class="headerlink" href="#datageneration" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">dataGeneration</span> <span class="pre">=</span> <span class="pre">DataGeneration(config)</span></code></dt><dd><p><code class="docutils literal notranslate"><span class="pre">config</span></code> (dict), configuration.</p>
+</dd>
+</dl>
+<section id="id2">
+<h3>Instance Methods<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">dataGeneration.runSKIRT()</span></code></dt><dd><p>Perform SKIRT radiative transfer.</p>
+</dd>
+</dl>
+</section>
+</section>
+<section id="postprocess">
+<h2>PostProcess<a class="headerlink" href="#postprocess" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">postprocess</span> <span class="pre">=</span> <span class="pre">PostProcess(subhaloID,</span> <span class="pre">config)</span></code></dt><dd><p><code class="docutils literal notranslate"><span class="pre">subhaloID</span></code> (int), subhalo ID.
+<code class="docutils literal notranslate"><span class="pre">config</span></code> (dict), configuration.</p>
+</dd>
+</dl>
+<section id="id3">
+<h3>Instance Methods<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">postprocess.runPostprocess(showImage=False)</span></code></dt><dd><p><code class="docutils literal notranslate"><span class="pre">showImage</span></code> (bool), show image. Only work in jupyter environment.
+Postprocess to perform mock observation.</p>
+</dd>
+</dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="galaxyGenius.preprocess.PreProcess">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">galaxyGenius.preprocess.</span></span><span class="sig-name descname"><span class="pre">PreProcess</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/galaxyGenius/preprocess.html#PreProcess"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#galaxyGenius.preprocess.PreProcess" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="galaxyGenius.preprocess.PreProcess.get_subhalos">
+<span class="sig-name descname"><span class="pre">get_subhalos</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="_modules/galaxyGenius/preprocess.html#PreProcess.get_subhalos"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#galaxyGenius.preprocess.PreProcess.get_subhalos" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="galaxyGenius.preprocess.PreProcess.subhalo">
+<span class="sig-name descname"><span class="pre">subhalo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subhaloID</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/galaxyGenius/preprocess.html#PreProcess.subhalo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#galaxyGenius.preprocess.PreProcess.subhalo" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="galaxyGenius.preprocess.PreProcess.prepare">
+<span class="sig-name descname"><span class="pre">prepare</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/galaxyGenius/preprocess.html#PreProcess.prepare"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#galaxyGenius.preprocess.PreProcess.prepare" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="galaxyGenius.preprocess.PreProcess.inputs">
+<span class="sig-name descname"><span class="pre">inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/galaxyGenius/preprocess.html#PreProcess.inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#galaxyGenius.preprocess.PreProcess.inputs" title="Link to this definition"></a></dt>
+<dd><p>Inputs for custom hydrodynamical simulations</p>
+<p>data: dict
+data[‘snapRedshift’]: float
+data[‘cosmology’]: astropy.cosmology.Cosmology
+data[‘stellarMass’]: float
+data[‘subhaloID’]: int
+data[‘boxLength’]: float</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="GalaxyGenius Documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="configuration.html" class="btn btn-neutral float-right" title="Configuration" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Xingchen Zhou.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
