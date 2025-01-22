@@ -6,9 +6,9 @@ sys.path.insert(0, os.path.abspath('../..'))
 
 # -- Project information -----------------------------------------------------
 project = 'GalaxyGenius'
-copyright = '2024, Your Name'
-author = 'Your Name'
-
+copyright = '2024, Xingchen Zhou'
+author = 'Xingchen Zhou'
+    
 # -- General configuration ---------------------------------------------------
 extensions = [
     'sphinx.ext.autodoc',
@@ -29,7 +29,7 @@ html_static_path = ['_static']
 autodoc_member_order = 'bysource'
 
 # GitHub Pages Configuration
-html_baseurl = 'https://xczhou-astro.github.io/galaxygenius/'
+html_baseurl = 'https://xczhou-astro.github.io/galaxyGenius/'
 html_context = {
     'display_github': True,
     'github_user': 'xczhou-astro',
