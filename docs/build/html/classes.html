@@ -59,7 +59,10 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#postprocess">PostProcess</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#id3">Instance Methods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id3">Instance Methods</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#galaxyGenius.preprocess.PreProcess"><code class="docutils literal notranslate"><span class="pre">PreProcess</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -166,6 +169,39 @@ data must include <code class="docutils literal notranslate"><span class="pre">s
 Postprocess to perform mock observation.</p>
 </dd>
 </dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="galaxyGenius.preprocess.PreProcess">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">galaxyGenius.preprocess.</span></span><span class="sig-name descname"><span class="pre">PreProcess</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/galaxyGenius/preprocess.html#PreProcess"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#galaxyGenius.preprocess.PreProcess" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="galaxyGenius.preprocess.PreProcess.get_subhalos">
+<span class="sig-name descname"><span class="pre">get_subhalos</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="_modules/galaxyGenius/preprocess.html#PreProcess.get_subhalos"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#galaxyGenius.preprocess.PreProcess.get_subhalos" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="galaxyGenius.preprocess.PreProcess.subhalo">
+<span class="sig-name descname"><span class="pre">subhalo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subhaloID</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/galaxyGenius/preprocess.html#PreProcess.subhalo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#galaxyGenius.preprocess.PreProcess.subhalo" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="galaxyGenius.preprocess.PreProcess.prepare">
+<span class="sig-name descname"><span class="pre">prepare</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/galaxyGenius/preprocess.html#PreProcess.prepare"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#galaxyGenius.preprocess.PreProcess.prepare" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="galaxyGenius.preprocess.PreProcess.inputs">
+<span class="sig-name descname"><span class="pre">inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/galaxyGenius/preprocess.html#PreProcess.inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#galaxyGenius.preprocess.PreProcess.inputs" title="Link to this definition"></a></dt>
+<dd><p>Inputs for custom hydrodynamical simulations</p>
+<p>data: dict
+data[‘snapRedshift’]: float
+data[‘cosmology’]: astropy.cosmology.Cosmology
+data[‘stellarMass’]: float
+data[‘subhaloID’]: int
+data[‘boxLength’]: float</p>
+</dd></dl>
+
+</dd></dl>
+
 </section>
 </section>
 </section>

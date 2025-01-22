@@ -1,5 +1,5 @@
 GalaxyGenius Documentation
-=========================
+==========================
 
 GalaxyGenius is Mock Galaxy Image Generator for Various Telescopes from Hydrodynamical Simulations
 

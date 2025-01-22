@@ -4,7 +4,7 @@ A Mock Galaxy Image Generator for Various Telescopes from Hydrodynamical Simulat
 
 ## Results  
 ### SEDs
-![SEDs](assets/fiducial_SED.png)  
+![SEDs](assets/fiducial_sed.png)  
 ### HSC
 ![HSC](assets/HSC_combined.png)  
 ### HST WFC3

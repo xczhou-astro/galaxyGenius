@@ -1,8 +1,8 @@
 Classes Reference
-===============
+=================
 
 Configuration
------------
+-------------
 
 ``config.Configuration(surveys=None)``
 
@@ -10,7 +10,7 @@ Configuration
     considered surveys. If None, configs will be read from current directory, or ``config.toml`` files will be created from template if there is no config files.
 
 Instance Methods
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 ``conf = config.get_config()``
     update and return configs.
@@ -29,14 +29,14 @@ Instance Methods
 
 
 PreProcess
---------------
+----------
 
 ``preprocess = PreProcess(config)``
     ``config`` (dict), configuration.
 
 
 Instance Methods
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 ``subhalos = preprocess.get_subhalos()``
     return subhalos including ``subhaloNum``, ``subhaloIDs`` and ``subhaloSFR``.
@@ -53,20 +53,20 @@ Instance Methods
     data must include ``snapRedshift``, ``cosmology``, ``stellarMass``, ``subhaloID``, and ``boxLength`` used to select particles.
 
 DataGeneration
-------------
+--------------
 
 ``dataGeneration = DataGeneration(config)``
     ``config`` (dict), configuration.
 
 
 Instance Methods
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 ``dataGeneration.runSKIRT()``
     Perform SKIRT radiative transfer. 
 
 PostProcess
-----------
+-----------
 
 ``postprocess = PostProcess(subhaloID, config)``
     ``subhaloID`` (int), subhalo ID.
@@ -74,7 +74,7 @@ PostProcess
 
 
 Instance Methods
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 ``postprocess.runPostprocess(showImage=False)``
     ``showImage`` (bool), show image. Only work in jupyter environment.

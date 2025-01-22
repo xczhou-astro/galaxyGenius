@@ -1,8 +1,8 @@
 Configuration
-===================
+=============
 
 Main config
-------------------
+-----------
 
 ``requests`` (bool):
     Whether to use Web-based API to retrieve data.
@@ -140,7 +140,7 @@ Main config
 
 
 Survey config
-------------------
+-------------
 
 ``filters`` (list):
     Considered filters for survey.
