@@ -41,7 +41,7 @@ class PreProcess:
         self.dataDir = self.config['dataDir']
         
         # TNG100-1 is the main high-resolution IllustrisTNG100 run including the full TNG physics model.
-        self.simulation = self.config['simulation']
+        self.simulation = self.config['simulation'] + '-1'
         
         if 'TNG' in self.config['simulation']:
             name = 'tng'
