@@ -140,7 +140,7 @@ Or you can interactively run in jupyter as illustrated in [Notebooks/tutorial.ip
 ### For hydrodynamical simulations except TNG
 Necessary particle data and properties need to be created and saved in `workingDir (run)` in advance, and call `preprocess.inputs(data)` and subsequent methods to perform the galaxy generation. An example for EAGLE simulation is provided in [EAGLE/eagle.ipynb](https://github.com/xczhou-astro/galaxyGenius/blob/main/EAGLE/eagle.ipynb).  
 data: `dict`  
-`snapRedshift`, `cosmology`, `stellarMass`, `subhaloID`, `boxLength` keys are required. List of `inclinations` and `azimuths` are optional.
+`snapRedshift`, `cosmology`, `stellarMass`, `subhaloID`, `boxLength` keys are required.
 
 
 ### Outputs
