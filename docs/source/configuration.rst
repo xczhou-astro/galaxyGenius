@@ -8,7 +8,7 @@ Main config
     Whether to use Web-based API to retrieve data.
 
 ``apiKey`` (str):
-    API key for IllustrisTNG.
+    API key for IllustrisTNG, required if ``requests`` is True.
 
 ``simulation`` (str):
     Simulation name. TNG50, TNG100, TNG300, etc.
@@ -53,7 +53,7 @@ Main config
     Octree min/max level refinement for dust calculation of SKIRT.
 
 ``numPackets`` (float):
-    Number of photo packets. Main parameter to affect the SNR of SKIRT calculation.
+    Number of photon packets. Main parameter to affect the SNR of SKIRT calculation.
 
 ``SEDFamily`` (str):
     SED family for quenched star particles. BC03 or FSPS.
@@ -98,7 +98,7 @@ Main config
     Snapshot ID.
 
 ``snapRedshift`` (float):
-    Snapshot redshift.
+    Snapshot redshift of Snapshot with ID.
 
 ``numThreads`` (int):
     Number of threads. No speedup for threads larger than 24.
@@ -133,7 +133,7 @@ Main config
     Fraction of the metallic gas locked up in dust.
 
 ``DISMModel`` (str):
-    Dust ISM recipe. `Camps 2016 <https://academic.oup.com/mnras/article/462/1/1057/2589990>`_ or `Torrey 2012 <https://academic.oup.com/mnras/article/427/3/2224/1099996>`_.
+    Dust ISM recipe. `Camps_2016 <https://academic.oup.com/mnras/article/462/1/1057/2589990>`_ or `Torrey_2012 <https://academic.oup.com/mnras/article/427/3/2224/1099996>`_.
 
 ``numSilicateSizes``, ``numGraphiteSizes``, ``numPAHSizes``, ``numHydrocarbonSizes`` (int):
     Number of bins for dust grains.
@@ -176,10 +176,10 @@ Survey config
     Whether to include background.
 
 ``gaussianNoise`` (bool):
-    Whether to add background as Gaussian distribution.
+    Whether to add background as Gaussian distribution, otherwise as Poisson distribution.
 
 ``skyBkg`` (list):
-    Background level for considered filters. Please refer to notebook `calc_sky_bkg.ipynb <https://github.com/xczhou-astro/galaxyGenius/blob/main/Notebooks/calc_sky_bkg.ipynb>`_ for calculating ``skyBkg``.
+    Background level for considered filters. Please refer to notebook `calc_sky_bkg.ipynb <https://github.com/xczhou-astro/galaxyGenius/blob/main/Notebooks/calc_sky_bkg.ipynb>`_ for calculating skyBkg.
 
 ``darkCurrent`` (float, list):
     Dark current.

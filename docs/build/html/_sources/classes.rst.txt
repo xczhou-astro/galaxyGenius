@@ -6,20 +6,20 @@ Configuration
 
 ``config.Configuration(surveys=None)``
 
-``surveys`` (List)
-    considered surveys. If None, configs will be read from current directory, or ``config.toml`` files will be created from template.
+``surveys`` (list)
+    considered surveys. If None, configs will be read from current directory, or ``config.toml`` files will be created from template if there is no config files.
 
 Instance Methods
 ~~~~~~~~~~~~~~
 
 ``conf = config.get_config()``
-    return configs
+    update and return configs.
 
 ``config.add_survey(surveys)``
-    ``surveys`` (List), surveys will be added. Call ``config.get_config()`` to get the updated configs.
+    ``surveys`` (list), surveys will be added. Call ``config.get_config()`` to get the updated configs.
 
 ``config.remove_survey(surveys)``
-    ``surveys`` (List), surveys will be removed. Call ``config.get_config()`` to get the updated configs.
+    ``surveys`` (list), surveys will be removed. Call ``config.get_config()`` to get the updated configs.
 
 ``config.save_config(conf)``
     ``conf`` (dict), save the current config to ``config.toml`` and ``config_(survey).toml``.
@@ -50,7 +50,7 @@ Instance Methods
 
 ``preprocess.inputs(data)``
     ``data`` (dict), Inputs for hydro-simulation except IllustrisTNG.
-    data must include ``snapRedshift``, ``cosmology``, ``stellarMass``, ``subhaloID``, and ``boxLength`` to select particles.
+    data must include ``snapRedshift``, ``cosmology``, ``stellarMass``, ``subhaloID``, and ``boxLength`` used to select particles.
 
 DataGeneration
 ------------
@@ -77,8 +77,8 @@ Instance Methods
 ~~~~~~~~~~~~~~
 
 ``postprocess.runPostprocess(showImage=False)``
-    ``showImage`` (bool), show image. Only work on jupyter environment.
-    Perform mock observation.
+    ``showImage`` (bool), show image. Only work in jupyter environment.
+    Postprocess to perform mock observation.
 
 .. autoclass:: galaxyGenius.preprocess.PreProcess
    :members:
