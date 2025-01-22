@@ -3,3 +3,7 @@ Data/config/.ipynb_checkpoints/
 galaxyGenius/__pycache__/
 script/
 GalaxyGenius.egg-info/
+.github/
+build/
+docs/
+.readthedocs.yml
