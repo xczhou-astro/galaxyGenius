@@ -11,6 +11,8 @@ import json
 import tempfile
 from scipy.interpolate import interp1d
 from typing import Union
+import sys
+import time
 
 class Galaxy:
     def __init__(self, position: np.ndarray, smoothLength: np.ndarray, 
@@ -55,16 +57,45 @@ class PreProcess:
             self.headers = {'api-key': self.config['apiKey']}
             self.results = self.__get_subhalos_remote()
             
-    def __get_snapz(self) -> float:
+    def make_request_with_retry(self, url: str, headers: dict = None, params: dict = None, max_retries: int = 5) -> requests.Response:
+        """
+        Make an HTTP request with retry logic.
         
-        if not self.config['requests']:
+        Args:
+            url: The URL to request
+            headers: Optional headers for the request
+            params: Optional parameters for the request
+            max_retries: Maximum number of retry attempts
+        
+        Returns:
+            Response object if successful
             
+        Raises:
+            SystemExit if all retries fail
+        """
+        for attempt in range(max_retries):
+            try:
+                response = requests.get(url, headers=headers, params=params)
+                response.raise_for_status()  # Raises an HTTPError for bad responses
+                return response
+            except requests.exceptions.RequestException as e:
+                if attempt == max_retries - 1:  # Last attempt
+                    print(f"Error: Failed to make request after {max_retries} attempts.")
+                    print(f"URL: {url}")
+                    print(f"Error message: {str(e)}")
+                    sys.exit(1)
+                else:
+                    print(f"Request failed (attempt {attempt + 1}/{max_retries}). Retrying...")
+                    time.sleep(2 ** attempt)  # Exponential backoff
+
+    def __get_snapz(self) -> float:
+        if not self.config['requests']:
             snap = h5py.File(os.path.join(self.config['TNGPath'],
                                       f'snapdir_{self.snapnum:03d}/snap_{self.snapnum:03d}.0.hdf5'), 'r')
             snapz = dict(snap['Header'].attrs.items())['Redshift']
         else:
             url = f'{self.base_url}{self.simulation}/snapshots/{self.snapnum}'
-            response = requests.get(url, headers=self.headers)
+            response = self.make_request_with_retry(url, headers=self.headers)
             data = response.json()
             snapz = data['redshift']
         
@@ -156,17 +187,16 @@ class PreProcess:
         return subhalos
     
     def __get_subhalos_remote(self) -> list:
-        
         cache_dir = os.path.join('.', 'cache')
         os.makedirs(cache_dir, exist_ok=True)
         
-        minStellarMass = np.float32(self.config['minStellarMass']) / 10**10 * self.h # in Msun / h
+        minStellarMass = np.float32(self.config['minStellarMass']) / 10**10 * self.h
         if self.config['maxStellarMass'] == np.inf:
             maxStellarMass = np.inf
             url = f'{self.base_url}{self.simulation}/snapshots/{self.snapnum}' \
                 + f'/subhalos/?mass_stars__gt={minStellarMass}&subhaloflag=1&limit=1000000'
+            
             filename = f'subhalos_snap_{self.snapnum}_mass_gt_{minStellarMass}_1e10_Msun_over_h_subhaloflag1.json'
-            cache_file = os.path.join(cache_dir, filename)
         else:
             maxStellarMass = np.float32(self.config['maxStellarMass']) / 10**10 * self.h
             url = f'{self.base_url}{self.simulation}/snapshots/{self.snapnum}' \
@@ -175,17 +205,15 @@ class PreProcess:
                 
             filename = f'subhalos_snap_{self.snapnum}_mass_gt_{minStellarMass}' \
                 + f'_lt_{maxStellarMass}_1e10_Msun_over_h_subhaloflag1.json'
-            cache_file = os.path.join(cache_dir, filename)
         
-        if os.path.exists(cache_file):
-            with open(cache_file, 'r') as f:
-                results = json.load(f)
-        else:
-            response = requests.get(url, headers=self.headers)
-            data = response.json()
-            results = data.get('results', [])
-            with open(cache_file, 'w') as f:
-                json.dump(results, f, indent=4)
+        cache_file = os.path.join(cache_dir, filename)
+        
+        response = self.make_request_with_retry(url, headers=self.headers)
+        data = response.json()
+        results = data.get('results', [])
+        
+        with open(cache_file, 'w') as f:
+            json.dump(results, f, indent=4)
         
         return results
 
@@ -215,7 +243,7 @@ class PreProcess:
             subhalo = self.results[idx]
             subhalo_url = subhalo['url']
             print('Subhalo URL: ', subhalo_url)
-            subhalo_response = requests.get(subhalo_url, headers=self.headers)
+            subhalo_response = self.make_request_with_retry(subhalo_url, headers=self.headers)
             self.data = subhalo_response.json()
             self.mass = self.data['mass_stars'] * 10**10 / self.h # Msun
             self.radius = self.data['halfmassrad_stars'] * self.a / self.h # kpc
@@ -310,7 +338,48 @@ class PreProcess:
         
         return value
         
+    def handle_temp_file_with_retry(self, response_content, partType='star', suffix='.hdf5', max_retries=5):
+        """
+        Handle temporary file operations with retry logic.
         
+        Args:
+            response_content: Content to write to temporary file
+            suffix: File suffix
+            max_retries: Maximum number of retry attempts
+        
+        Returns:
+            Dictionary containing the particle data
+            
+        Raises:
+            SystemExit if all retries fail
+        """
+        for attempt in range(max_retries):
+            try:
+                with tempfile.NamedTemporaryFile(suffix=suffix, dir=self.workingDir) as tmp:
+                    tmp.write(response_content)
+                    tmp.flush()
+                    
+                    with h5py.File(tmp.name, 'r') as f:
+                        # For stars
+                        if partType == 'star':
+                            particle_data = {key: f[f'PartType4/{key}'][:] for key in self.fields}
+                        # For gas
+                        elif partType == 'gas':
+                            particle_data = {key: f[f'PartType0/{key}'][:] for key in self.fields}
+                        else:
+                            raise ValueError(f"Invalid partType: {partType}")
+                            
+                    return particle_data
+                    
+            except (OSError, IOError) as e:
+                if attempt == max_retries - 1:  # Last attempt
+                    print(f"Error: Failed to handle temporary file after {max_retries} attempts.")
+                    print(f"Error message: {str(e)}")
+                    sys.exit(1)
+                else:
+                    print(f"Temporary file operation failed (attempt {attempt + 1}/{max_retries}). Retrying...")
+                    time.sleep(2 ** attempt)  # Exponential backoff
+
     def __get_particles(self):
         
         print('Retrieving Stellar and Gas particles.')
@@ -333,19 +402,13 @@ class PreProcess:
         else:
             cutout_url = f"{self.base_url}{self.simulation}/snapshots/{self.snapnum}/subhalos/{self.id}/cutout.hdf5"
             
+            self.fields = fields
             params = {'stars': ','.join(fields)}
-            response = requests.get(cutout_url, headers=self.headers, params=params)
+            response = self.make_request_with_retry(cutout_url, headers=self.headers, params=params)
             
-            with tempfile.NamedTemporaryFile(suffix='.hdf5') as tmp:
-                tmp.write(response.content)
-                tmp.flush()
-                
-                with h5py.File(tmp.name, 'r') as f:
-                    
-                    starPart = {key: f[f'PartType4/{key}'][:] for key in fields}
-            
+            starPart = self.handle_temp_file_with_retry(response.content, partType='star')
             starPart['count'] = starPart['Coordinates'].shape[0]
-            
+        
         if 'TNG50' in self.simulation:
             stellar_smoothLength = 288
         elif 'TNG100' in self.simulation:
@@ -486,18 +549,13 @@ class PreProcess:
                 else:
                     cutout_url = f"{self.base_url}{self.simulation}/snapshots/{self.snapnum}/subhalos/{self.id}/cutout.hdf5"
                     
+                    self.fields = fields
                     params = {'gas': ','.join(fields)}
-                    response = requests.get(cutout_url, headers=self.headers, params=params)
+                    response = self.make_request_with_retry(cutout_url, headers=self.headers, params=params)
                     
-                    with tempfile.NamedTemporaryFile(suffix='.hdf5') as tmp:
-                        tmp.write(response.content)
-                        tmp.flush()
-                        
-                        with h5py.File(tmp.name, 'r') as f:
-                            gasPart = {key: f[f'PartType0/{key}'][:] for key in fields}
-                            
+                    gasPart = self.handle_temp_file_with_retry(response.content, partType='gas') 
                     gasPart['count'] = gasPart['Coordinates'].shape[0]
-                            
+                
                 volumes = gasPart['Masses'] / gasPart['Density']
                 cellRadius = (3 * volumes / 4 / np.pi)**(1/3)
                 gasPart['smoothLength'] = 2.5 * cellRadius # in ckpc/h
@@ -820,6 +878,8 @@ class PreProcess:
         for key in attr_keys:
             if key in config.keys():
                 config[key] = attributes[key]
+                
+        # config['maxStellarMass'] = np.inf
 
         with open(os.path.join(directory, 'config.json'), 'w') as file:
             json.dump(config, file, default=custom_serialier, indent=4)
@@ -837,7 +897,7 @@ class PreProcess:
             attributes with the values from this dictionary.
         """
         
-        if data is not None:
+        if data:
             exist_keys = self.config.keys()
             for key, value in data.items():
                 if key in exist_keys:

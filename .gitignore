@@ -7,3 +7,5 @@ GalaxyGenius.egg-info/
 build/
 docs/
 .readthedocs.yaml
+check_psf.ipynb
+PSF_plots/

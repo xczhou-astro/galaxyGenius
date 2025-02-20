@@ -21,6 +21,10 @@ class ParsecDimension(_Dimension):
     def __init__(self):
         super().__init__('pc')
         self.add_units('kpc', 1000)
+        
+class AngleDimension(_Dimension):
+    def __init__(self):
+        super().__init__(r'${^{\prime\prime}}$')
 
 class PostProcess:
 
