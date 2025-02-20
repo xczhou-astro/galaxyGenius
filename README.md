@@ -14,6 +14,9 @@ A Mock Galaxy Image Generator for Various Telescopes from Hydrodynamical Simulat
 ### CSST
 ![CSST](assets/CSST_combined.png)  
 
+## Updates
+- 2025-02-20: Add check and retry features for requests to handle failure of Web-based API.
+
 ## Dependence
 Python verison:  
 `python==3.11.10`  
