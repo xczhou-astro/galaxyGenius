@@ -188,7 +188,7 @@ class PostProcess:
             images_with_psf = []
             for i, img in enumerate(bandpass_images):
                 # print(img.shape, PSFs[i].shape)
-                images_with_psf.append(convolve_fft(img, PSFs[i]))
+                images_with_psf.append(convolve_fft(img, PSFs[i], normalize_kernel=True))
             
             bandpass_images = images_with_psf
 
