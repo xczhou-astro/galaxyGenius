@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- A SKIRT parameter file © Astronomical Observatory, Ghent University -->
+<skirt-simulation-hierarchy type="MonteCarloSimulation" format="9" producer="SKIRT v9.0 (git 382ad4b built on 15/08/2024 at 01:46:45)" time="2025-04-17T13:52:35.282">
+    <MonteCarloSimulation userLevel="Regular" simulationMode="NoMedium" iteratePrimaryEmission="false" iterateSecondaryEmission="false" numPackets="1e7">
+        <random type="Random">
+            <Random seed="0"/>
+        </random>
+        <units type="Units">
+            <ExtragalacticUnits wavelengthOutputStyle="Wavelength" fluxOutputStyle="Frequency"/>
+        </units>
+        <cosmology type="Cosmology">
+            <FlatUniverseCosmology redshift="0.008" reducedHubbleConstant="0.6774" matterDensityFraction="0.3075"/>
+        </cosmology>
+        <sourceSystem type="SourceSystem">
+            <SourceSystem minWavelength="0.01 micron" maxWavelength="1.2 micron" wavelengths="0.55 micron" sourceBias="0.5">
+                <sources type="Source">
+                    <ParticleSource filename="stars.txt" importVelocity="false" importVelocityDispersion="false" importCurrentMass="false" useColumns="" sourceWeight="1" wavelengthBias="0.5">
+                        <smoothingKernel type="SmoothingKernel">
+                            <CubicSplineSmoothingKernel/>
+                        </smoothingKernel>
+                        <sedFamily type="SEDFamily">
+                            <BruzualCharlotSEDFamily imf="Chabrier" resolution="High"/>
+                        </sedFamily>
+                        <wavelengthBiasDistribution type="WavelengthDistribution">
+                            <DefaultWavelengthDistribution/>
+                        </wavelengthBiasDistribution>
+                    </ParticleSource>
+                    <ParticleSource filename="starforming_regions.txt" importVelocity="false" importVelocityDispersion="false" importCurrentMass="false" useColumns="" sourceWeight="1" wavelengthBias="0.5">
+                        <smoothingKernel type="SmoothingKernel">
+                            <CubicSplineSmoothingKernel/>
+                        </smoothingKernel>
+                        <sedFamily type="SEDFamily">
+                            <MappingsSEDFamily/>
+                        </sedFamily>
+                        <wavelengthBiasDistribution type="WavelengthDistribution">
+                            <DefaultWavelengthDistribution/>
+                        </wavelengthBiasDistribution>
+                    </ParticleSource>
+                </sources>
+            </SourceSystem>
+        </sourceSystem>
+        <instrumentSystem type="InstrumentSystem">
+            <InstrumentSystem>
+                <defaultWavelengthGrid type="WavelengthGrid">
+                    <LinWavelengthGrid minWavelength="0.01 micron" maxWavelength="1.2 micron" numWavelengths="1000"/>
+                </defaultWavelengthGrid>
+                <instruments type="Instrument">
+                    <FullInstrument instrumentName="view" distance="0 Mpc" inclination="0 deg" azimuth="0 deg" roll="0 deg" fieldOfViewX="1e5 pc" numPixelsX="1000" centerX="0 pc" fieldOfViewY="1e5 pc" numPixelsY="1000" centerY="0 pc" recordComponents="false" numScatteringLevels="0" recordPolarization="false" recordStatistics="false">
+                        <wavelengthGrid type="WavelengthGrid">
+                            <LinWavelengthGrid minWavelength="0.01 micron" maxWavelength="1.2 micron" numWavelengths="1000"/>
+                        </wavelengthGrid>
+                    </FullInstrument>
+                </instruments>
+            </InstrumentSystem>
+        </instrumentSystem>
+        <probeSystem type="ProbeSystem">
+            <ProbeSystem/>
+        </probeSystem>
+    </MonteCarloSimulation>
+</skirt-simulation-hierarchy>

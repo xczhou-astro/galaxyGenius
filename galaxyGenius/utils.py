@@ -28,11 +28,13 @@ def convert_to_rgb(bandpassImage: Union[np.ndarray, list], idx: list=[2, 3, 5]) 
     
     # RGB -- long -> short wavelength
 
-    bandpassImage = np.array(bandpassImage)
+    # bandpassImage = np.array(bandpassImage)
 
     img_red = bandpassImage[idx[2]]
     img_green = bandpassImage[idx[1]]
     img_blue = bandpassImage[idx[0]]
+    
+    
     
     pctl = 99.5
     maxv = 0

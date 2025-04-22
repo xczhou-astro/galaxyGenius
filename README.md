@@ -3,19 +3,30 @@
 A Mock Galaxy Image Generator for Various Telescopes from Hydrodynamical Simulations
 
 ## Results  
+### Workflow
+![workflow](assets/galaxyGenius.png)
 ### SEDs
 ![SEDs](assets/fiducial_sed.png)  
 ### HSC
 ![HSC](assets/HSC_combined.png)  
-### HST WFC3
-![HST](assets/HST_combined.png)  
 ### JWST NIRCam
 ![JWST](assets/JWST_combined.png)  
 ### CSST
 ![CSST](assets/CSST_combined.png)  
+### Euclid
+![Euclid](assets/Euclid_combined.png)  
+
 
 ## Updates
-- 2025-02-20: Add check and retry features for requests to handle failure of Web-based API.
+- 2025-02-20:  
+Add check and retry features for requests to handle failure of Web-based API.  
+
+- 2025-04-22:   
+1. Add support for local cosmology, and view distance for instrument  
+2. Add check for hydrodynamic solver: VoronoiMesh (TNG) and smoothParticle (EAGLE)  
+3. Replace ExtinctionOnly simulation mode to NoMedium  
+4. Add support for field of view instead of setting it equal boxlength  
+5. Add support for only output SEDs  
 
 ## Dependence
 Python verison:  

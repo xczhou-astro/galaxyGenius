@@ -1,5 +1,8 @@
 ### Paths
 
+# PATH of SKIRT, PATH if set in .bashrc, else provide the absolute path
+skirtPath = "PATH"
+
 # if process subhalos on the fly using requests
 requests = false
 
@@ -8,6 +11,9 @@ apiKey = "abcde"
 
 # simulation name
 simulation = "TNG100"
+
+# hydrodynamic solve, VoronoiMesh or smoothParticle for gas particles
+hydrodynamicSolver = "VoronoiMesh"
 
 # the home path for TNG simulations
 TNGPath = "../../TNG100"
@@ -21,9 +27,9 @@ workingDir = "run"
 
 ### Settings for SKIRT
 
-# simulation mode for SKIRT, can be ExtinctionOnly or DustEmission
+# simulation mode for SKIRT, can be NoMedium or DustEmission
 # DustEmission are used when near- or mid- infrared bands are considered
-simulationMode = "ExtinctionOnly"
+simulationMode = "NoMedium"
 
 # if dusts are considered
 # Be True if simulationMode is DustEmission
@@ -40,11 +46,14 @@ dustModel = "ZubkoDustMix"
 minWavelength = 0.1
 maxWavelength = 1.2
 
-# particles are included in halfStellarMassRadius * boxLengthScale
+# particles are selected in a box with boxLength = halfStellarMassRadius * boxLengthScale
 boxLengthScale = 20
 
 # maximum boxlength, in kpc
 maxBoxLength = 300
+
+# field of view in arcsec, equals to boxLength if 0
+fieldOfView = 0
 
 # wavelength grid type for SKIRT calculation, Linear or Log
 wavelengthGrid = "Linear"
@@ -89,7 +98,7 @@ azimuths = [0, 90, 180]
 # if perform postprocessing
 postProcessing = true
 
-# base spatial resolution, must be provided if postprocessing if False
+# base spatial resolution, in pc, must be provided if postprocessing is False
 spatialResol = 100
 
 # unit type of image output, can be electron or flux
@@ -105,13 +114,22 @@ displaySED = true
 # if display SED in logscale for wavelength
 displaySEDxlogscale = true
 
+# if output SED only
+outputSEDOnly = false
+
 ### settings for simulation
 
 # snapshot ID
 snapNum = 94
 
-# snapshot redshift
+# snapshot redshift, must be provided if inLocal is False
 snapRedshift = 0.06
+
+# if view galaxy in local
+inLocal = false
+
+# viewing distance, in Mpc, must be provided if inLocal is True
+viewDistance = 50
 
 # number of threads
 numThreads = 12

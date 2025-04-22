@@ -13,12 +13,18 @@ from scipy.interpolate import interp1d
 from typing import Union
 import sys
 import time
+    
 
 class Galaxy:
     def __init__(self, position: np.ndarray, smoothLength: np.ndarray, 
                  mass: np.ndarray, subhaloPos: np.ndarray, a: float, h: float):
         self.pos = position * a / h - subhaloPos
         self.smoothLength = smoothLength * a / h
+        self.mass = mass * 10**10 / h
+        
+class PartNoSmoothing():
+    def __init__(self, position: np.ndarray, mass: np.ndarray, subhaloPos: np.ndarray, a: float, h: float):
+        self.pos = position * a / h - subhaloPos
         self.mass = mass * 10**10 / h
 
 class PreProcess:
@@ -268,9 +274,27 @@ class PreProcess:
         
         stars = np.loadtxt(self.workingDir + '/stars.txt')
         
-        positions = stars[:, :3] # positions
-        velocities = stars[:, 7:10] # velocities
-        masses = stars[:, 10] # current mass
+        headers = []
+        with open(self.workingDir + '/stars.txt', 'r') as f:
+            for line in f:
+                if line.startswith('# Column'):
+                    headers.append(line)
+                
+        idx_coords = []
+        idx_vels = []
+        idx_masses = []
+        
+        for i, header in enumerate(headers):
+            if 'coordinate' in header.lower():
+                idx_coords.append(i)
+            elif 'velocity' in header.lower():
+                idx_vels.append(i)
+            elif 'Mass' in header:
+                idx_masses.append(i)
+                
+        positions = stars[:, idx_coords] # positions
+        velocities = stars[:, idx_vels] # velocities
+        masses = stars[:, idx_masses] # current mass
         
         # Initialize total angular momentum vector
         total_angular_momentum = np.zeros(3)
@@ -408,7 +432,8 @@ class PreProcess:
             
             starPart = self.handle_temp_file_with_retry(response.content, partType='star')
             starPart['count'] = starPart['Coordinates'].shape[0]
-        
+            
+            
         if 'TNG50' in self.simulation:
             stellar_smoothLength = 288
         elif 'TNG100' in self.simulation:
@@ -434,12 +459,11 @@ class PreProcess:
         
         snapshot_age = self.fage(self.snapz)
         starPart['age'] = snapshot_age - self.fage(1/starPart['GFM_StellarFormationTime'] - 1) # in Myr
-        g = Galaxy(starPart['Coordinates'], starPart['smoothLength'], starPart['GFM_InitialMass'],
-                   self.pos, a=self.a, h=self.h)
+        g = Galaxy(starPart['Coordinates'], starPart['smoothLength'], 
+                   starPart['GFM_InitialMass'], self.pos, a=self.a, h=self.h)
 
         ageThreshold = self.__get_value('ageThreshold', np.float32)
             
-
         part = {}
         mask = np.where((np.abs(g.pos[:, 0]) < region)\
                     & (np.abs(g.pos[:, 1]) < region)\
@@ -451,7 +475,7 @@ class PreProcess:
         part['x'] = g.pos[:, 0][mask] # in kpc
         part['y'] = g.pos[:, 1][mask]
         part['z'] = g.pos[:, 2][mask]
-        part['smoothLength'] = g.smoothLength[mask] # smoothing length in kpc
+        part['smoothLength'] = g.smoothLength[mask]
         part['sfr'] = g.mass[mask] / (ageThreshold * 10**6) # constant SFR in Msun/yr
         part['Z'] = starPart['GFM_Metallicity'][mask]
         logCompactnessMean = self.__get_value('logCompactnessMean', np.float32)
@@ -490,11 +514,10 @@ class PreProcess:
                 + 'Column 12: z-velocity (km/s)\n' \
                 + 'Column 13: Mass (Msun)'
 
-        info = np.column_stack((part['x'], part['y'], part['z'],
-                            part['smoothLength'], part['sfr'],
-                            part['Z'], part['compactness'],
+        info = np.column_stack((part['x'], part['y'], part['z'], part['smoothLength'],
+                            part['sfr'], part['Z'], part['compactness'],
                             part['pressure'], part['covering'],
-                            part['velocities'], part['masses'])) # 13 params
+                            part['velocities'], part['masses'])) # 10 params
 
         np.savetxt(self.workingDir + '/starforming_regions.txt', info, header=header)
         
@@ -509,7 +532,7 @@ class PreProcess:
         part['x'] = g.pos[:, 0][mask] # in kpc
         part['y'] = g.pos[:, 1][mask] # in kpc
         part['z'] = g.pos[:, 2][mask] # in kpc
-        part['smoothLength'] = g.smoothLength[mask] # smoothing length in kpc
+        part['smoothLength'] = g.smoothLength[mask]
         part['initialMass'] = g.mass[mask]
         part['Z'] = starPart['GFM_Metallicity'][mask]
         part['age'] = starPart['age'][mask]
@@ -530,19 +553,19 @@ class PreProcess:
                     + 'Column 10: z-velocity (km/s)\n' \
                     + 'Column 11: Mass (Msun)'
         
-        info = np.column_stack((part['x'], part['y'], part['z'],
-                                part['smoothLength'], part['initialMass'],
-                                part['Z'], part['age'],
+        info = np.column_stack((part['x'], part['y'], part['z'], part['smoothLength'],
+                                part['initialMass'], part['Z'], part['age'],
                                 part['velocities'], part['masses']))
         np.savetxt(self.workingDir + '/stars.txt', info, header=header)
         
         part = {}
         includeDust = self.__get_value('includeDust', bool)
+        
         if includeDust:
             try:
                 fields = ['GFM_Metallicity', 'Coordinates', 'Masses',
                             'InternalEnergy', 'StarFormationRate', 'ElectronAbundance', 
-                            'Density', 'Velocities']
+                             'Velocities', 'Density']
                 if not self.config['requests']:
                     gasPart = ill.snapshot.loadSubhalo(self.config['TNGPath'], 
                             self.snapnum, self.id, 'gas', fields)
@@ -556,15 +579,11 @@ class PreProcess:
                     gasPart = self.handle_temp_file_with_retry(response.content, partType='gas') 
                     gasPart['count'] = gasPart['Coordinates'].shape[0]
                 
-                volumes = gasPart['Masses'] / gasPart['Density']
-                cellRadius = (3 * volumes / 4 / np.pi)**(1/3)
-                gasPart['smoothLength'] = 2.5 * cellRadius # in ckpc/h
-                
                 gasPart['Temperature'] = u2temp(gasPart['InternalEnergy'], 
                                                 gasPart['ElectronAbundance'])
                 gasPart['velocities'] = gasPart['Velocities'] * np.sqrt(self.a) # in km/s
                 
-                gas = Galaxy(gasPart['Coordinates'], gasPart['smoothLength'], gasPart['Masses'], 
+                gas = PartNoSmoothing(gasPart['Coordinates'], gasPart['Masses'], 
                             self.pos, a=self.a, h=self.h)
                 
                 spatialmask = np.where((np.abs(gas.pos[:, 0]) < region)\
@@ -589,16 +608,15 @@ class PreProcess:
                 part['x'] = gas.pos[:, 0][mask] # in kpc
                 part['y'] = gas.pos[:, 1][mask]
                 part['z'] = gas.pos[:, 2][mask]
-                part['smoothLength'] = gas.smoothLength[mask]
                 part['mass'] = gas.mass[mask]
                 part['Z'] = gasPart['GFM_Metallicity'][mask]
                 part['Temperature'] = gasPart['Temperature'][mask]
                 part['velocities'] = gasPart['Velocities'][mask]
-            except:
+            except Exception as e:
+                print('Error when loading gas particles: ', e)
                 part['x'] = np.array([])
                 part['y'] = np.array([])
                 part['z'] = np.array([])
-                part['smoothLength'] = np.array([])
                 part['mass'] = np.array([])
                 part['Z'] = np.array([])
                 part['Temperature'] = np.array([])
@@ -608,7 +626,6 @@ class PreProcess:
             part['x'] = np.array([])
             part['y'] = np.array([])
             part['z'] = np.array([])
-            part['smoothLength'] = np.array([])
             part['mass'] = np.array([])
             part['Z'] = np.array([])
             part['Temperature'] = np.array([])
@@ -618,17 +635,15 @@ class PreProcess:
                 + 'Column 1: x-coordinate (kpc)\n' \
                 + 'Column 2: y-coordinate (kpc)\n' \
                 + 'Column 3: z-coordinate (kpc)\n' \
-                + 'Column 4: smoothing length (kpc)\n' \
-                + 'Column 5: mass (Msun)\n' \
-                + 'Column 6: metallicity (1)\n' \
-                + 'Column 7: temperature (K)\n' \
-                + 'Column 8: x-velocity (km/s)\n' \
-                + 'Column 9: y-velocity (km/s)\n' \
-                + 'Column 10: z-velocity (km/s)'
+                + 'Column 4: mass (Msun)\n' \
+                + 'Column 5: metallicity (1)\n' \
+                + 'Column 6: temperature (K)\n' \
+                + 'Column 7: x-velocity (km/s)\n' \
+                + 'Column 8: y-velocity (km/s)\n' \
+                + 'Column 9: z-velocity (km/s)'
                 
         info = np.column_stack((part['x'], part['y'], part['z'],
-                                part['smoothLength'], part['mass'],
-                                part['Z'], part['Temperature'],
+                                part['mass'], part['Z'], part['Temperature'],
                                 part['velocities']))
 
         np.savetxt(self.workingDir + '/dusts.txt', info, header=header)
@@ -692,7 +707,14 @@ class PreProcess:
         properties['subhaloID'] = self.id
         properties['stellarMass'] = np.log10(self.mass)
         properties['redshift'] = self.snapz
-        distance = self.cosmology.luminosity_distance(self.snapz).value
+        
+        if self.__get_value('inLocal'):
+            distance = self.__get_value('viewDistance', np.float32)
+            properties['cosmology'] = 'LocalUniverseCosmology'
+        else:
+            distance = self.cosmology.luminosity_distance(self.snapz).value
+            properties['cosmology'] = 'FlatUniverseCosmology'
+            
         properties['lumiDis'] = distance
         
         properties = self.__get_properties_survey(distance, properties)
@@ -722,12 +744,19 @@ class PreProcess:
             else:
                 inclinations = self.config['inclinations']
                 azimuths = self.config['azimuths']
+                
+        self.inclinations = inclinations
+        self.azimuths = azimuths
+        
+        print('Inclinations: ', inclinations)
+        print('Azimuths: ', azimuths)
             
         properties['numViews'] = numViews
         properties['inclinations'] = inclinations
         properties['azimuths'] = azimuths
-        fov = self.boxLength * 10**3
-        properties['FoV'] = fov
+        boxLength = self.boxLength * 10**3 # in pc
+        properties['boxLength'] = boxLength
+        properties['boxlength_in_arcsec'] = np.rad2deg(boxLength / (distance * 10**6)) * 3600 # in arcsec
         
         return properties
     
@@ -736,12 +765,57 @@ class PreProcess:
         print('Creating .ski file.')
         
         mode = self.__get_value('simulationMode', str)
+        
         ski_file = os.path.join(self.dataDir,  f'ski_templates/{mode}_template.ski')
         
         with open(ski_file, 'r') as file:
             data = file.read()
+            
+        if mode == 'DustEmission':
+            
+            begin_str = '<VoronoiMeshMedium'
+            end_str = '</VoronoiMeshMedium>'
+            offset = len(end_str)
+            
+            idx_begin = data.index(begin_str)
+            idx_end = data.index(end_str) + offset
+            
+            voronoiMeshMediumInfo = data[idx_begin: idx_end]
+            remainingInfo = data[idx_end:]
+            
+            if self.__get_value('hydrodynamicSolver') == 'smoothParticle':
+                replace_str = '<ParticleMedium filename="dusts.txt" '
+                replace_str += 'massType="Mass" massFraction="0.3" '
+                replace_str += 'importMetallicity="true" importTemperature="true" '
+                replace_str += 'maxTemperature="0 K" importVelocity="false" importMagneticField="false" importVariableMixParams="false" useColumns="">\n'
+                replace_str += '<smoothingKernel type="SmoothingKernel">\n'
+                replace_str += '<CubicSplineSmoothingKernel/>\n'
+                replace_str += '</smoothingKernel>\n'
+                replace_str += '<materialMix type="MaterialMix">\n'
+                replace_str += '<ZubkoDustMix numSilicateSizes="15" numGraphiteSizes="15" numPAHSizes="15"/>\n'
+                replace_str += '</materialMix>\n'
+                replace_str += '</ParticleMedium>\n'
+
+                data = data.replace(voronoiMeshMediumInfo, replace_str)
         
-        data = data.replace('redshift="0.008"', f'redshift="{self.snapz}"')
+        begin_str = '<cosmology'
+        end_str = '</cosmology>'
+        offset = len(end_str)
+        
+        idx_begin = data.index(begin_str)
+        idx_end = data.index(end_str) + offset
+        
+        cosmologyInfo = data[idx_begin: idx_end]
+        remainingInfo = data[idx_end:]
+        
+        if self.__get_value('inLocal'):
+            replace_str = '<cosmology type="Cosmology">\n'
+            replace_str += '<LocalUniverseCosmology/>\n'
+            replace_str += '</cosmology>\n'
+            
+            data = data.replace(cosmologyInfo, replace_str)
+        else:
+            data = data.replace('redshift="0.008"', f'redshift="{self.snapz}"')
         
         self.properties = self.__get_properties()
         
@@ -765,8 +839,12 @@ class PreProcess:
         numPackets = self.__get_value('numPackets', np.float32)
         data = data.replace('numPackets="1e7"', f'numPackets="{numPackets}"')
         
-        minWavelength = self.__get_value('minWavelength', np.float32) * (1 + self.snapz)
-        maxWavelength = self.__get_value('maxWavelength', np.float32) * (1 + self.snapz)
+        if self.__get_value('inLocal'):
+            minWavelength = self.__get_value('minWavelength', np.float32)
+            maxWavelength = self.__get_value('maxWavelength', np.float32)
+        else:
+            minWavelength = self.__get_value('minWavelength', np.float32) * (1 + self.snapz)
+            maxWavelength = self.__get_value('maxWavelength', np.float32) * (1 + self.snapz)
         
         data = data.replace('minWavelength="0.01 micron"', f'minWavelength="{minWavelength} micron"')
         data = data.replace('maxWavelength="1.2 micron"', f'maxWavelength="{maxWavelength} micron"')
@@ -801,12 +879,6 @@ class PreProcess:
         data = data.replace('minZ="-5e4 pc"', f'minZ="{-spatialRange} pc"')
         data = data.replace('maxZ="5e4 pc"', f'maxZ="{spatialRange} pc"')
         
-        wavelengthGrid = self.__get_value('wavelengthGrid', str)
-        grid_type = {'Linear': 'LinWavelengthGrid',
-                'Log': 'LogWavelengthGrid'}
-        grid_type = grid_type[wavelengthGrid]
-        data = data.replace('LinWavelengthGrid', grid_type)
-        
         numWavelengths = self.__get_value('numWavelengths', np.int32)
         data = data.replace('numWavelengths="1000"', f'numWavelengths="{numWavelengths}"')
 
@@ -822,8 +894,39 @@ class PreProcess:
         
         data = data.replace(instrumentInfo, '')
         
+        if self.__get_value('inLocal'):
+            distance = self.__get_value('viewDistance', np.float32)
+        else:
+            distance = self.cosmology.luminosity_distance(self.snapz).value
+            
+        fieldOfView = self.__get_value('fieldOfView', np.float32) # in arcsec
+        
+        if fieldOfView == 0: 
+            fovSize = self.boxLength * 10**3 # in pc
+            fieldOfView = np.rad2deg(fovSize / (distance * 10**6)) * 3600 # in arcsec
+        else:
+            fovSize = distance * 10**6 * np.deg2rad(fieldOfView / 3600) # in pc
+            
+        self.properties['fovSize'] = fovSize
+        self.properties['fieldOfView'] = fieldOfView
+            
+        if self.__get_value('outputSEDOnly'):
+            replace_str = '<SEDInstrument instrumentName="view" distance="0 Mpc" inclination="0 deg" azimuth="0 deg" '
+            replace_str += 'roll="0 deg" radius="0 pc" recordComponents="false" numScatteringLevels="0" recordPolarization="false" recordStatistics="false">\n'
+            replace_str += '<wavelengthGrid type="WavelengthGrid">\n'
+            replace_str += '<LinWavelengthGrid minWavelength="0.1 micron" maxWavelength="1.2 micron" numWavelengths="200"/>\n'
+            replace_str += '</wavelengthGrid>\n'
+            replace_str += '</SEDInstrument>\n'
+            
+            replace_str = replace_str.replace('minWavelength="0.1 micron"', f'minWavelength="{minWavelength} micron"')
+            replace_str = replace_str.replace('maxWavelength="1.2 micron"', f'maxWavelength="{maxWavelength} micron"')
+            replace_str = replace_str.replace('numWavelengths="200"', f'numWavelengths="{numWavelengths}"')
+            
+            replace_str = replace_str.replace('radius="0 pc"', f'radius="{fovSize / 2} pc"')
+            
+            instrumentInfo = replace_str
+
         instrumentInfo = '\n' + instrumentInfo + '\n'
-        fov = self.boxLength * 10**3 # in pc
 
         spatialResol = self.properties['baseRes']
         inclinations = self.properties['inclinations']
@@ -831,7 +934,7 @@ class PreProcess:
         
         numViews = self.properties['numViews']
 
-        numPixels = int(fov / spatialResol)
+        numPixels = int(fovSize / spatialResol)
 
         recordComponents = 'true' if self.__get_value('recordComponents', bool) else 'false'
         
@@ -840,8 +943,8 @@ class PreProcess:
             info = instrumentInfo.replace('view', f'view_{i:02d}')
             info = info.replace('inclination="0 deg"', f'inclination="{inclination} deg"')
             info = info.replace('azimuth="0 deg"', f'azimuth="{azimuth} deg"')
-            info = info.replace('fieldOfViewX="1e5 pc"', f'fieldOfViewX="{fov} pc"')
-            info = info.replace('fieldOfViewY="1e5 pc"', f'fieldOfViewY="{fov} pc"')
+            info = info.replace('fieldOfViewX="1e5 pc"', f'fieldOfViewX="{fovSize} pc"')
+            info = info.replace('fieldOfViewY="1e5 pc"', f'fieldOfViewY="{fovSize} pc"')
             info = info.replace('numPixelsX="1000"', f'numPixelsX="{numPixels}"')
             info = info.replace('numPixelsY="1000"', f'numPixelsY="{numPixels}"')
             info = info.replace('recordComponents="false"', f'recordComponents="{recordComponents}"')
@@ -849,7 +952,17 @@ class PreProcess:
             data = data[:insert_begin_idx] + info
             insert_begin_idx = insert_begin_idx + len(info)
 
+        if self.__get_value('inLocal'):
+            data = data.replace('distance="0 Mpc"', f'distance="{distance} Mpc"')
+
         data = data + remainingInfo
+        
+        wavelengthGrid = self.__get_value('wavelengthGrid', str)
+        grid_type = {'Linear': 'LinWavelengthGrid',
+                'Log': 'LogWavelengthGrid'}
+        grid_type = grid_type[wavelengthGrid]
+        data = data.replace('LinWavelengthGrid', grid_type)
+        
         with open(self.workingDir + '/skirt.ski', 'w') as file:
             file.write(data)
         
@@ -861,7 +974,8 @@ class PreProcess:
         print(f'numViews: {numViews}')
         print(f'numSpatialPixels: {numPixels}')
         print(f'numWavelengthPixels: {numWavelengths}')
-        factor = 7 if recordComponents else 1
+        
+        factor = 7 if recordComponents == 'true' else 1
         numPixels = np.float64(numPixels) # avoid overflow
         dataCubeSize = np.int64(numPixels ** 2 * numWavelengths * numViews)
         dataSize_in_GB = np.around(dataCubeSize * 8 * factor * 1e-9, 3)
@@ -878,8 +992,6 @@ class PreProcess:
         for key in attr_keys:
             if key in config.keys():
                 config[key] = attributes[key]
-                
-        # config['maxStellarMass'] = np.inf
 
         with open(os.path.join(directory, 'config.json'), 'w') as file:
             json.dump(config, file, default=custom_serialier, indent=4)
@@ -907,6 +1019,8 @@ class PreProcess:
         self.__get_particles()
         self.__create_ski()
         self.__get_attributes(self.workingDir)
+        
+        # return content
         
     def inputs(self, data: dict):
         

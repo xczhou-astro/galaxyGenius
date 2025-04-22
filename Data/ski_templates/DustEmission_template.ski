@@ -68,14 +68,11 @@
                     </DustEmissionOptions>
                 </dustEmissionOptions>
                 <media type="Medium">
-                    <ParticleMedium filename="dusts.txt" massType="Mass" massFraction="0.3" importMetallicity="true" importTemperature="true" maxTemperature="0 K" importVelocity="false" importMagneticField="false" importVariableMixParams="false" useColumns="">
-                        <smoothingKernel type="SmoothingKernel">
-                            <CubicSplineSmoothingKernel/>
-                        </smoothingKernel>
+                    <VoronoiMeshMedium filename="dusts.txt" minX="-5e4 pc" maxX="5e4 pc" minY="-5e4 pc" maxY="5e4 pc" minZ="-5e4 pc" maxZ="5e4 pc" massType="Mass" massFraction="0.3" importMetallicity="true" importTemperature="true" maxTemperature="0 K" importVelocity="false" importMagneticField="false" importVariableMixParams="false" useColumns="">
                         <materialMix type="MaterialMix">
                             <ZubkoDustMix numSilicateSizes="15" numGraphiteSizes="15" numPAHSizes="15"/>
                         </materialMix>
-                    </ParticleMedium>
+                    </VoronoiMeshMedium>
                 </media>
                 <samplingOptions type="SamplingOptions">
                     <SamplingOptions numDensitySamples="100" numPropertySamples="1" aggregateVelocity="Average"/>

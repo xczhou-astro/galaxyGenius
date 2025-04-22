@@ -7,6 +7,7 @@ from tomlkit import parse, dumps
 from typing import Union
 from copy import deepcopy
 from .utils import *
+import subprocess
 
 class Configuration:
     def __init__(self, surveys: Union[str, list[str], NoneType] = None):
@@ -22,7 +23,7 @@ class Configuration:
         if os.environ.get('GALAXYGENIUS_DATA_DIR') is not None:
             self.dataDir = os.environ.get('GALAXYGENIUS_DATA_DIR')
         else:
-            print('GALAXYGENIUS_DATA_DIR not set. ' + 'Data directory falling to default path: ../Data')
+            print('GALAXYGENIUS_DATA_DIR not set in environment variables. ' + 'Data directory falling to default path: ../Data')
             self.dataDir = '../Data'
             if not os.path.exists(self.dataDir):
                 self.__issue('Data directory not found. Please set GALAXYGENIUS_DATA_DIR environment variable.')
@@ -146,6 +147,8 @@ class Configuration:
             config = self.__read_config(f'config_{survey}.toml')
             
             self.survey_configs[survey] = config
+            
+        
         
             
         self.__modify_main_config()
@@ -244,13 +247,13 @@ class Configuration:
         Returns:
             dict: The updated configuration dictionary.
         """
-        
+
         self.__update_config()
         self.check_config()
         config = self.__config_to_dict()
         config['dataDir'] = self.dataDir
+        
         return dict(config)
-    
     
     def __adapt_survey(self, survey: str, survey_config: dict) -> dict:
         if survey == 'HST':
@@ -452,9 +455,32 @@ class Configuration:
         
         self.flag_count = 0
         
+        skirtPATH = self.__exist_return('skirtPath')
+        if skirtPATH == 'PATH':
+            sys_paths = os.environ['PATH'].split(':')
+            for path in sys_paths:
+                if 'SKIRT' in path:
+                    skirtPATH = path
+                    break
+                
+            if skirtPATH == 'PATH':
+                self.__issue('SKIRT not found in PATH. Please edit ~/.bashrc or provide the absolute path of SKIRT.')
+                self.flag_count += 1
+
+        executable = os.path.join(skirtPATH, 'skirt')
+        if not os.path.exists(executable):
+            self.__issue('SKIRT executable not found. SKIRT is not installed correctly.')
+            self.flag_count += 1
+            
+            
         simName = self.__exist_return('simulation')
         
         requests = self.__exist_return('requests')
+        
+        solver = self.__exist_return('hydrodynamicSolver')
+        if solver not in ['VoronoiMesh', 'smoothParticle']:
+            self.__issue('hydrodynamicSolver unrecognized.')
+            self.flag_count += 1
         
         if 'TNG' in simName:
             if requests:
@@ -480,25 +506,26 @@ class Configuration:
         
         self.__exist('workingDir')
         
+        if self.__exist('inLocal'):
+            self.__exist('viewDistance', 0)
+        
         simulationMode = self.__exist_return('simulationMode')
         if simulationMode:
-            if (simulationMode != 'ExtinctionOnly') & (simulationMode != 'DustEmission'):
+            if not simulationMode in ['NoMedium', 'DustEmission']:
                 self.__issue('simulationMode unrecognized.')
                 self.flag_count += 1
 
-            elif simulationMode == 'DustEmission':
-                includeDust = self.__exist_return('includeDust')
-                if not includeDust:
-                    self.__issue('includeDust should be True if simulationMode is DustEmission.')
-                    self.flag_count += 1
-                else:
+                if simulationMode == 'DustEmission':
+                    includeDust = self.__exist_return('includeDust')
+                    if not includeDust:
+                        self.__issue('includeDust should be True if simulationMode is DustEmission.')
+                        self.flag_count += 1
+                    
                     dustEmissionType = self.__exist_return('dustEmissionType')
                     if dustEmissionType:
-                        if (dustEmissionType != 'Equilibrium') & (dustEmissionType != 'Stochastic'):
+                        if not dustEmissionType in ['Equilibrium', 'Stochastic']:
                             self.__issue('dustEmissionType unrecognized.')
                             self.flag_count += 1
-            else:
-                pass
             
         
         dustModel = self.__exist_return('dustModel')
@@ -581,10 +608,9 @@ class Configuration:
             
         self.__exist('snapNum')
         
-        if not self.__exist_return('postProcessing'):
-            self.__exist('spatialResol')
+        self.__exist('spatialResol')
         
-        else:
+        if self.__exist_return('postProcessing'):
             surveys = self.__exist_return('surveys')
             pivots = []
             if surveys:
@@ -649,6 +675,14 @@ class Configuration:
                                             self.__issue(f'displayFilter not in {survey} filter set.')
                                             self.flag_count += 1
                         else:
+                            if self.__exist_return(f'includePSF_{survey}'):
+                                self.__issue(f'includePSF_{survey} can only be False if resolFromPix_{survey} is False.')
+                                self.flag_count += 1
+                            
+                            if self.__exist_return(f'includeBkg_{survey}'):
+                                self.__issue(f'includeBkg_{survey} can only be False if resolFromPix_{survey} is False.')
+                                self.flag_count += 1
+                            
                             resolution = self.__exist_return(f'resolution_{survey}', 0)
                             if resolution:
                                 self.__match(f'filters_{survey}', f'resolution_{survey}', True)
@@ -687,8 +721,9 @@ class Configuration:
                 if (max_pivot > 2 * 10**4) & (self.all_config['simulationMode'] != 'DustEmission'):
                     self.__issue('Filters reaching infrared, simulationMode should be DustEmission.')
             
-                                            
         
+        self.__exist('outputSEDOnly')
+        self.__exist('fieldOfView')
         
         if self.__exist('numThreads'):
             if self.all_config['numThreads'] > 24:
@@ -719,8 +754,9 @@ class Configuration:
         self.__exist('numHydrocarbonSizes')
 
         if self.flag_count == 0:
-            print(colored('No conflicts in config. ', 'green') + '\U0001F44D')
+            print(colored('No conflicts in configurations. ', 'green') + '\U0001F44D')
         else:
-            print('Conflicts exist in config. ' + '\U0001F914')
-
+            print(colored('Conflicts exist in configurations. ', 'red') + '\U0001F914')
+            sys.exit()
+        
         return self.flag_count

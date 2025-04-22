@@ -3,6 +3,8 @@ import subprocess
 import sys
 import json
 from shutil import copyfile, move, rmtree
+from types import NoneType
+from typing import Union
 
 class DataGeneration:
     
@@ -35,25 +37,61 @@ class DataGeneration:
         os.makedirs(dataCubeDir, exist_ok=True)
         self.__save_basics(dataCubeDir)
         for i in range(numViews):
-            move(os.path.join(self.workingDir, f'skirt_view_{i:02d}_total.fits'),
-                os.path.join(dataCubeDir, f'skirt_view_{i:02d}_total.fits'))
-            move(os.path.join(self.workingDir, f'skirt_view_{i:02d}_sed.dat'), 
-                os.path.join(dataCubeDir, f'skirt_view_{i:02d}_sed.dat'))
+            
+            if self.config['outputSEDOnly']:
+                move(os.path.join(self.workingDir, f'skirt_view_{i:02d}_sed.dat'), 
+                    os.path.join(dataCubeDir, f'skirt_view_{i:02d}_sed.dat'))
+            else:
+                move(os.path.join(self.workingDir, f'skirt_view_{i:02d}_total.fits'),
+                    os.path.join(dataCubeDir, f'skirt_view_{i:02d}_total.fits'))
+                move(os.path.join(self.workingDir, f'skirt_view_{i:02d}_sed.dat'), 
+                    os.path.join(dataCubeDir, f'skirt_view_{i:02d}_sed.dat'))
             
     def __get_properties(self) -> dict:
         with open(self.workingDir + '/properties.json', 'r') as file:
             properties = json.load(file)
         return properties
+    
+    def __check_files(self):
+        
+        if not os.path.exists(os.path.join(self.workingDir, 'stars.txt')):
+            print('stars.txt not found')
+            sys.exit()
+            
+        if not os.path.exists(os.path.join(self.workingDir, 'starforming_regions.txt')):
+            print('starforming_regions.txt not found')
+            sys.exit()
+            
+        if not os.path.exists(os.path.join(self.workingDir, 'dusts.txt')):
+            print('dusts.txt not found')
+            sys.exit()
+        else:
+            with open(os.path.join(self.workingDir, 'dusts.txt'), 'r') as file:
+                lines = ''
+                for _ in range(20):
+                    lines += file.readline()
+            
+            if self.config['hydrodynamicSolver'] == 'smoothParticle':
+                
+                if not 'smoothing length' in lines:
+                    print('Smoothing length must be provided for particle-based gas representation')
+                    sys.exit()
         
     def __run_skirt(self):
         print('Running SKIRT')
-
+        print('Subhalo ID: ', self.properties['subhaloID'])
+        
         base = os.getcwd()
+        if self.config['skirtPath'] == 'PATH':
+            executable = 'skirt'
+        else:
+            executable = self.config['skirtPath']
+        
         os.chdir(self.workingDir)
         numThreads = int(self.config['numThreads'])
         if numThreads > 24:
             numThreads = 24
-        command = f'skirt -t {numThreads} skirt.ski'
+        command = f'{executable} -t {numThreads} skirt.ski'
         try:
             result = subprocess.run(command, shell=True, check=True)
         except subprocess.CalledProcessError:
@@ -71,6 +109,7 @@ class DataGeneration:
         it saves the resulting data cubes and cleans up the working directory.
         """
         
+        self.__check_files()
         self.__run_skirt()
         self.__saveDataCube()
         

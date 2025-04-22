@@ -21,10 +21,11 @@ class ParsecDimension(_Dimension):
     def __init__(self):
         super().__init__('pc')
         self.add_units('kpc', 1000)
-        
+    
 class AngleDimension(_Dimension):
     def __init__(self):
         super().__init__(r'${^{\prime\prime}}$')
+        self.add_units(r'${^{\prime}}$', 60)
 
 class PostProcess:
 
@@ -102,6 +103,7 @@ class PostProcess:
             PSFs = []
             for std in stds:
                 size = std * 11
+                size = int(size)
                 if size % 2 == 0: # make sure the size is odd
                     size += 1
                 kernel = make_2dgaussian_kernel(std, size)
@@ -232,6 +234,8 @@ class PostProcess:
                 img = img * conversion_to_Jy[i]
                 images_in_unit.append(img)
         
+        self.conversion_to_Jy = conversion_to_Jy
+        
         return images_in_unit
 
             
@@ -245,11 +249,10 @@ class PostProcess:
         
         numfilters = self.properties[f'numfilters_{survey}']
         
-        unit_dict = {'electron': 'e', 'flux': 'Jy','magnitude': 'mag'}
+        unit_dict = {'electron': 'e', 'flux': 'Jy'}
         unit_comment_dict = {
             'electron': 'Unit of image, in electron counts',
             'flux': 'Unit of image, in Jy',
-            'magnitude': 'Unit of image, in AB magnitude'
         }
         unit_type = self.config['imageUnit']
         imageUnit = unit_dict[unit_type]
@@ -275,10 +278,19 @@ class PostProcess:
             header['APERTURE'] = (self.properties[f'aperture_{survey}'], 'Aperture size, in meter')
             header['UNIT'] = (imageUnit, imageUnitComment)
             header['REDSHIFT'] = (self.properties['redshift'], 'Redshift')
-            header['FoV'] = (self.properties['FoV'], 'Field of view, in pc')
-            header['lumiDis'] = (self.properties['lumiDis'], 'Luminosity distance, in Mpc')
+            header['COSMO'] = (self.properties['cosmology'], 'Cosmology')
+            header['BOXSIZE'] = (self.properties['boxLength'], 'Box size, in pc')
+            header['FOV'] = (self.properties['fieldOfView'], 'Field of view, in arcsec')
+            header['PHYFOV'] = (self.properties['fovSize'], 'Physical field of view, in pc')
+            header['LUMIDIS'] = (self.properties['lumiDis'], 'Luminosity distance, in Mpc')
             header['RESOL'] = (self.properties[f'resolution_{survey}'][i], 'Pixel scale, in pc')
             header['PS'] = (self.properties[f'angleRes_{survey}'][i], 'Pixel scale, in arcsec')
+            
+            if imageUnit == 'electron':
+                header['E2JY'] = (self.conversion_to_Jy[i], 'Conversion factor from electron to Jy')
+            
+            if imageUnit == 'flux':
+                header['JY2E'] = (1 / self.conversion_to_Jy[i], 'Conversion factor from Jy to electron')
 
             imgs_in_view = [images[nv][i] for nv in range(self.properties['numViews'])]
             imgs_in_view = np.stack(imgs_in_view, axis=0)
@@ -296,27 +308,36 @@ class PostProcess:
         
         for i in range(self.properties['numViews']):
             sed = np.loadtxt(sedFilenames[i])
-            shape = sed.shape
             
-            header = fits.Header()
+            # Create column definitions for the table
+            col1 = fits.Column(name='WAVELENGTH', format='E', unit='micron', array=sed[:, 0])
+            col2 = fits.Column(name='FLUX', format='E', unit='Jy', array=sed[:, 1])
+            
+            # Create the table HDU
+            cols = fits.ColDefs([col1, col2])
+            tbhdu = fits.BinTableHDU.from_columns(cols)
+            
+            # Add header information
+            header = tbhdu.header
             header['WUNIT'] = ('micron', 'Units of wavelength')
             header['FUNIT'] = ('Jy', 'Units of flux in F_nu')
             header['INCLI'] = (self.properties['inclinations'][i], 'Inclination angle, in deg')
             header['AZIMUTH'] = (self.properties['azimuths'][i], 'Azimuth angle, in deg')
             header['REDSHIFT'] = (self.properties['redshift'], 'Redshift')
             header['lumiDis'] = (self.properties['lumiDis'], 'luminosity distance, in Mpc')
-
-            hdu = fits.ImageHDU(data=sed, header=header)
-            hdulist.append(hdu)
+            header['FOV'] = (self.properties['fieldOfView'], 'Field of view, in arcsec')
+            header['PHYFOV'] = (self.properties['fovSize'], 'Physical field of view, in pc')
+            header['VIEW'] = (i, 'View index')
+            
+            hdulist.append(tbhdu)
             
         savedSEDName = f'mock_{survey}/Subhalo_{self.subhaloID}/galaxy_SEDs.fits'
         hdulist.writeto(savedSEDName, overwrite=True)
 
-    def __plot_image(self, image: np.ndarray, res: float,
+    def __plot_image(self, image: np.ndarray, pixelscale: float,
                      savedFilename: Union[str, NoneType]=None):
 
-
-        pixels = np.array(image).shape[0]
+        numPixels = np.array(image).shape[0]
         
         z = str(np.around(self.properties['redshift'], 2))
         logM = str(np.around(self.properties['stellarMass'], 1))
@@ -324,24 +345,27 @@ class PostProcess:
         fig, ax = plt.subplots()
         ax.axis('off')
         im = ax.imshow(image)
-        scalebarSize = 0.25 * pixels * res # in pc
-        if scalebarSize > 1000:
-            scalebarUnit = 'kpc'
-            scalebarSize = np.around(scalebarSize / 1000, 1)
+        
+        scalebarSize = 0.25 * numPixels * pixelscale
+        if scalebarSize > 60:
+            scalebarUnit = '${^{\prime}}$'
+            scalebarSize = np.around(scalebarSize / 60, 2)
+            ps = pixelscale / 60
         else:
-            scalebarUnit = 'pc'
-            scalebarSize = np.around(scalebarSize, 1)
+            scalebarUnit = '${^{\prime\prime}}$'
+            scalebarSize = np.around(scalebarSize, 2)
+            ps = pixelscale
+            
+        angle_dim = AngleDimension()
         
-        pc_dim = ParsecDimension()
-        
-        scalebar = ScaleBar(res, 'pc', dimension=pc_dim, 
+        scalebar = ScaleBar(ps, scalebarUnit, dimension=angle_dim, 
                             fixed_value=scalebarSize, fixed_units=scalebarUnit, frameon=False,
                             location='lower right', scale_loc='top',
                             color='white', font_properties={'size': 12})
         ax.add_artist(scalebar)
         ax.text(x=0.05, y=0.15, s=fr'${{\rm log}}M_{{\star}} = {logM}$',
                          fontsize=12, transform=ax.transAxes, color='white')
-        ax.text(x=0.05, y=0.1, s=fr'$z$={z}', fontsize=12,
+        ax.text(x=0.05, y=0.1, s=fr'$z$ = {z}', fontsize=12,
                 transform=ax.transAxes, color='white')
         ax.text(x=0.05, y=0.05, s=f'ID:{self.subhaloID}', fontsize=12,
                 transform=ax.transAxes, color='white')
@@ -433,108 +457,122 @@ class PostProcess:
                 
                 print(f'Begin postprocessing for {survey}')
                 
-                filters = self.properties[f'filters_{survey}']
-                saveBaseDir = f'mock_{survey}/Subhalo_{self.subhaloID}'
-                os.makedirs(saveBaseDir, exist_ok=True)
-
-                dataCubeFilenames = [os.path.join(self.dataCubeDir, f'skirt_view_{i:02d}_total.fits')
-                                     for i in range(self.properties['numViews'])]
-                
-                throughputs = self.__get_throughputs(survey)
-                PSFs = None
-                if self.config[f'includePSF_{survey}']:
-                    PSFs = self.__get_PSFs(survey)
-
-                bkgNoise = None
-                if self.config[f'includeBkg_{survey}']:
+                if self.config['outputSEDOnly']:
+                    sedFilenames = [self.dataCubeDir + f'/skirt_view_{i:02d}_sed.dat' 
+                                    for i in range(self.properties['numViews'])]
+                    self.__saveSEDs(sedFilenames, survey)
                     
-                    bkgNoise = {}
-                    skyBkg = self.config[f'skyBkg_{survey}']
-                    darkCurrent = self.config[f'darkCurrent_{survey}']
-                    readOut = self.config[f'readOut_{survey}']
+                else:
+        
+                    filters = self.properties[f'filters_{survey}']
+                    saveBaseDir = f'mock_{survey}/Subhalo_{self.subhaloID}'
+                    os.makedirs(saveBaseDir, exist_ok=True)
+
+                    dataCubeFilenames = [os.path.join(self.dataCubeDir, f'skirt_view_{i:02d}_total.fits')
+                                        for i in range(self.properties['numViews'])]
                     
-                    skyBkg = extend(skyBkg, len(filters))
-                    darkCurrent = extend(darkCurrent, len(filters))
-                    readOut = extend(readOut, len(filters))
-                    
-                    bkgNoise = {'skyBkg': skyBkg,
-                                'darkCurrent': darkCurrent,
-                                'readOut': readOut, 
-                                'exposureTime': self.properties[f'exposureTime_{survey}'],
-                                'numExposure': self.properties[f'numExposure_{survey}']}
-                    
-                    if self.config[f'gaussianNoise_{survey}']:
-                        bkgNoise['noiseType'] = 'Gaussian'
-                    else:
-                        bkgNoise['noiseType'] = 'Poisson'                        
+                    throughputs = self.__get_throughputs(survey)
+                    PSFs = None
+                    if self.config[f'includePSF_{survey}']:
+                        PSFs = self.__get_PSFs(survey)
 
-                images = []
-                for i in range(self.properties['numViews']):
-                    images.append(self.__bandpass_images(dataCubeFilenames[i], survey,
-                                                       throughputs, PSFs, bkgNoise))
-
-                self.__saveBandpassImages(images, survey)
-
-                sedFilenames = [self.dataCubeDir + f'/skirt_view_{i:02d}_sed.dat' 
-                                for i in range(self.properties['numViews'])]
-                self.__saveSEDs(sedFilenames, survey)
-
-                if self.config[f'imgDisplay_{survey}']:
-
-                    if self.config[f'RGBImg_{survey}']:
-                        RGBFilters = self.config[f'RGBFilters_{survey}']
-                        RGBidx = [filters.index(RGBFilters[i]) for i in range(3)]
-                        res = self.properties[f'resolution_{survey}'][RGBidx[0]]
-
-                        for i in range(self.properties['numViews']):
-                            RGBImg = convert_to_rgb(images[i], RGBidx)
-                            savedFilename = f'mock_{survey}/Subhalo_{self.subhaloID}/galaxy_view_{i:02d}.png'
-                            self.__plot_image(RGBImg, res, savedFilename=savedFilename)
-                    
-                    else:
-                        displayFilter = self.config[f'displayFilter_{survey}']
-                        filteridx = filters.index(displayFilter)
-                        res = self.properties[f'resolution_{survey}'][filteridx]
-                    
-                        for i in range(self.properties['numViews']):
-                            img = images[i][filteridx]
-                            savedFilename = f'mock_{survey}/Subhalo_{self.subhaloID}/galaxy_view_{i:02d}.png'
-                            self.__plot_image(img, res, savedFilename=savedFilename)
-
-                if self.config['displaySED']:
-                    
-                    for i in range(self.properties['numViews']):
+                    bkgNoise = None
+                    if self.config[f'includeBkg_{survey}']:
                         
-                        sed = np.loadtxt(sedFilenames[i])
-                        savedFilename = f'mock_{survey}/Subhalo_{self.subhaloID}/galaxy_SED_view_{i:02d}.png'
+                        bkgNoise = {}
+                        skyBkg = self.config[f'skyBkg_{survey}']
+                        darkCurrent = self.config[f'darkCurrent_{survey}']
+                        readOut = self.config[f'readOut_{survey}']
+                        
+                        skyBkg = extend(skyBkg, len(filters))
+                        darkCurrent = extend(darkCurrent, len(filters))
+                        readOut = extend(readOut, len(filters))
+                        
+                        bkgNoise = {'skyBkg': skyBkg,
+                                    'darkCurrent': darkCurrent,
+                                    'readOut': readOut, 
+                                    'exposureTime': self.properties[f'exposureTime_{survey}'],
+                                    'numExposure': self.properties[f'numExposure_{survey}']}
+                        
+                        if self.config[f'gaussianNoise_{survey}']:
+                            bkgNoise['noiseType'] = 'Gaussian'
+                        else:
+                            bkgNoise['noiseType'] = 'Poisson'                        
 
-                        logscale = self.config['displaySEDxlogscale']
-                        minWave = self.properties['minWavelength']
-                        maxWave = self.properties['maxWavelength']
-                        redshift = self.properties['redshift']
-                        minWave = minWave * 10**4 # angstrom
-                        maxWave = maxWave * 10**4 # angstrom
-                        # print(logscale)
-                        self.__plot_sed(sed,  waveRange=[minWave, maxWave], logscale=logscale,
-                                    savedFilename=savedFilename)
-                
-                env = self.__get_environment()
+                    images = []
+                    for i in range(self.properties['numViews']):
+                        images.append(self.__bandpass_images(dataCubeFilenames[i], survey,
+                                                        throughputs, PSFs, bkgNoise))
 
-                if showImages:
-                
-                    if env == 'CommandLine' or env == 'IPythonTerminal':
-                        print('Running in command line or IPython terminal, showImages can only be False.')
-                        showImages = False
-                    elif env == 'Jupyter':
-                        showImages = showImages
-                
-                if showImages:                        
+                    self.__saveBandpassImages(images, survey)
+
+                    sedFilenames = [self.dataCubeDir + f'/skirt_view_{i:02d}_sed.dat' 
+                                    for i in range(self.properties['numViews'])]
+                    self.__saveSEDs(sedFilenames, survey)
+
+                    if self.config[f'imgDisplay_{survey}']:
+
+                        if self.config[f'RGBImg_{survey}']:
+                            RGBFilters = self.config[f'RGBFilters_{survey}']
+                            RGBidx = [filters.index(RGBFilters[i]) for i in range(3)]
+                            # res = self.properties[f'resolution_{survey}'][RGBidx[0]]
+                            pixelscale = self.properties[f'angleRes_{survey}'][RGBidx[0]] # pixel scale in arcsec
+
+                            for i in range(self.properties['numViews']):
+                                
+                                # print(images[i][RGBidx[0]].shape)
+                                # print(images[i][RGBidx[1]].shape)
+                                # print(images[i][RGBidx[2]].shape)
+                                
+                                RGBImg = convert_to_rgb(images[i], RGBidx)
+                                savedFilename = f'mock_{survey}/Subhalo_{self.subhaloID}/galaxy_view_{i:02d}.png'
+                                self.__plot_image(RGBImg, pixelscale, savedFilename=savedFilename)
+                        
+                        else:
+                            displayFilter = self.config[f'displayFilter_{survey}']
+                            filteridx = filters.index(displayFilter)
+                            # res = self.properties[f'resolution_{survey}'][filteridx]
+                            pixelscale = self.properties[f'angleRes_{survey}'][filteridx] # pixel scale in arcsec
+                        
+                            for i in range(self.properties['numViews']):
+                                img = images[i][filteridx]
+                                savedFilename = f'mock_{survey}/Subhalo_{self.subhaloID}/galaxy_view_{i:02d}.png'
+                                self.__plot_image(img, pixelscale, savedFilename=savedFilename)
+
+                    if self.config['displaySED']:
+                        
+                        for i in range(self.properties['numViews']):
+                            
+                            sed = np.loadtxt(sedFilenames[i])
+                            savedFilename = f'mock_{survey}/Subhalo_{self.subhaloID}/galaxy_SED_view_{i:02d}.png'
+
+                            logscale = self.config['displaySEDxlogscale']
+                            minWave = self.properties['minWavelength']
+                            maxWave = self.properties['maxWavelength']
+                            redshift = self.properties['redshift']
+                            minWave = minWave * 10**4 # angstrom
+                            maxWave = maxWave * 10**4 # angstrom
+                            # print(logscale)
+                            self.__plot_sed(sed,  waveRange=[minWave, maxWave], logscale=logscale,
+                                        savedFilename=savedFilename)
                     
-                    imgFilenames = [f'mock_{survey}/Subhalo_{self.subhaloID}/galaxy_view_{i:02d}.png' 
-                                    for i in range(self.properties['numViews'])]
-                    sedFilenames = [f'mock_{survey}/Subhalo_{self.subhaloID}/galaxy_SED_view_{i:02d}.png' 
-                                    for i in range(self.properties['numViews'])]
-                    self.__show_images(imgFilenames, sedFilenames, self.subhaloID, survey)
-                
-                print(f'Finish postprocessing for {survey}')
-                
+                    env = self.__get_environment()
+
+                    if showImages:
+                    
+                        if env == 'CommandLine' or env == 'IPythonTerminal':
+                            print('Running in command line or IPython terminal, showImages can only be False.')
+                            showImages = False
+                        elif env == 'Jupyter':
+                            showImages = showImages
+                    
+                    if showImages:
+                        
+                        imgFilenames = [f'mock_{survey}/Subhalo_{self.subhaloID}/galaxy_view_{i:02d}.png' 
+                                        for i in range(self.properties['numViews'])]
+                        sedFilenames = [f'mock_{survey}/Subhalo_{self.subhaloID}/galaxy_SED_view_{i:02d}.png' 
+                                        for i in range(self.properties['numViews'])]
+                        self.__show_images(imgFilenames, sedFilenames, self.subhaloID, survey)
+                    
+                    print(f'Finish postprocessing for {survey}')
+                    
