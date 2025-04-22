@@ -16,6 +16,7 @@ A Mock Galaxy Image Generator for Various Telescopes from Hydrodynamical Simulat
 ### Euclid
 ![Euclid](assets/Euclid_combined.png)  
 ### RGB  
+Created using default parameters for `make_rgb` in Astropy  
 ![RGB](assets/subhalo_253881_rgb.png)  
 
 
@@ -86,7 +87,7 @@ export GALAXYGENIUS_DATA_DIR=/path/to/Data
         ├── offsets_N.hdf5  
         └── ...  
 ```
-We also implement [Web-based API](https://www.tng-project.org/data/docs/api/) in `galaxyGenius`, therefore, users do not even need to download the large snapshots and groups files. This feature can be activated by setting `requests=true` and provide `apiKey` in config. However, the generation speed will be slower and depends on the network speed.  
+We also implement [Web-based API](https://www.tng-project.org/data/docs/api/) in `galaxyGenius`, therefore, users do not even need to download the large snapshots and groups files. This feature can be activated by setting `requests=true` and provide users' own `apiKey` in config. However, the generation speed will be slower and depends on the network speed.  
 
 ## Filters and PSFs
 Filter throughputs and PSFs of specific surveys are saved in `Data/filters/(survey)` and `Data/PSFs/(survey)` directories.  
@@ -156,12 +157,12 @@ Or you can interactively run in jupyter as illustrated in [Notebooks/tutorial.ip
 
 ### For hydrodynamical simulations except TNG
 
-### JWST for EAGLE
-![eagle](assets/JWST_eagle_combined.png)
-
 Necessary particle data and properties need to be created and saved in `workingDir (run)` in advance, and call `preprocess.inputs(data)` and subsequent methods to perform the galaxy generation. An example for EAGLE simulation is provided in [EAGLE/eagle.ipynb](https://github.com/xczhou-astro/galaxyGenius/blob/main/EAGLE/eagle.ipynb).  
 data: `dict`  
-`snapRedshift`, `cosmology`, `stellarMass`, `subhaloID`, `boxLength` keys are required.
+`snapRedshift`, `cosmology`, `stellarMass`, `subhaloID`, `boxLength` keys are required.  
+
+#### JWST for EAGLE  
+![eagle](assets/JWST_eagle_combined.png)  
 
 
 ### Outputs
@@ -196,4 +197,4 @@ mock_(survey)/
 Bandpass images are saved in pages of fits file, and each page includes images in different views.
 
 ## Documentaion
-For classes and configuration sets, please refer to [documentation](https://xczhou-astro.github.io/galaxyGenius/)
+For classes and configuration sets, please refer to [documentation](https://xczhou-astro.github.io/galaxyGenius/).
