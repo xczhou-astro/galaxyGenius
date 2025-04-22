@@ -15,18 +15,20 @@ A Mock Galaxy Image Generator for Various Telescopes from Hydrodynamical Simulat
 ![CSST](assets/CSST_combined.png)  
 ### Euclid
 ![Euclid](assets/Euclid_combined.png)  
+### RGB  
+![RGB](assets/subhalo_253881_rgb.png)  
 
 
 ## Updates
 - 2025-02-20:  
-Add check and retry features for requests to handle failure of Web-based API.  
+    1. Add check and retry features for requests to handle failure of Web-based API.  
 
 - 2025-04-22:   
-1. Add support for local cosmology, and view distance for instrument  
-2. Add check for hydrodynamic solver: VoronoiMesh (TNG) and smoothParticle (EAGLE)  
-3. Replace ExtinctionOnly simulation mode to NoMedium  
-4. Add support for field of view instead of setting it equal boxlength  
-5. Add support for only output SEDs  
+    1. Add support for local cosmology, and view distance for instrument  
+    2. Add check for hydrodynamic solver: VoronoiMesh (TNG) and smoothParticle (EAGLE)  
+    3. Replace ExtinctionOnly simulation mode to NoMedium  
+    4. Add support for field of view instead of setting it equal boxlength  
+    5. Add support for only output SEDs  
 
 ## Dependence
 Python verison:  
@@ -94,7 +96,7 @@ Please make sure that the filters and PSFs exist in correct directories and form
 
 ## Sky backgrounds  
 Sky background noises are calculated based on the throughput of each filter and sky emission curve.  
-We provide a helper notebook for calculation of instrumental noises in [Notebooks/calc_sky_bkg.ipynb](https://github.com/xczhou-astro/galaxyGenius/blob/main/Notebooks/calc_sky_bkg.ipynb).  
+We provide a helper notebook for calculation of instrumental noises in [Notebooks/calc_sky_bkg.ipynb](https://github.com/xczhou-astro/galaxyGenius/blob/main/Bkg/calc_sky_bkg.ipynb).  
 
 ## Usage
 ### Initialization
@@ -131,6 +133,7 @@ for i, ID in enumerate(subhaloIDs):
     data['numPackets'] = 1e6
 
     if i < 100:
+        data['numViews'] = 1
         data['inclinations'] = [0]
         data['azimuths'] = [0]
         data['faceAndEdge'] = False
@@ -152,6 +155,10 @@ then `python run.py`.
 Or you can interactively run in jupyter as illustrated in [Notebooks/tutorial.ipynb](https://github.com/xczhou-astro/galaxyGenius/blob/main/Notebooks/tutorial.ipynb).  
 
 ### For hydrodynamical simulations except TNG
+
+### JWST for EAGLE
+![eagle](assets/JWST_eagle_combined.png)
+
 Necessary particle data and properties need to be created and saved in `workingDir (run)` in advance, and call `preprocess.inputs(data)` and subsequent methods to perform the galaxy generation. An example for EAGLE simulation is provided in [EAGLE/eagle.ipynb](https://github.com/xczhou-astro/galaxyGenius/blob/main/EAGLE/eagle.ipynb).  
 data: `dict`  
 `snapRedshift`, `cosmology`, `stellarMass`, `subhaloID`, `boxLength` keys are required.
