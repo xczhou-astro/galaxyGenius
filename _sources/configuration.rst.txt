@@ -4,6 +4,9 @@ Configuration
 Main config
 -----------
 
+``skirtPATH`` (str):
+    PATH for SKIRT executable. Give "PATH" if set in .bashrc, else provide absolute path   
+
 ``requests`` (bool):
     Whether to use Web-based API to retrieve data.
 
@@ -12,6 +15,9 @@ Main config
 
 ``simulation`` (str):
     Simulation name. TNG50, TNG100, TNG300, etc.
+
+``hydrodynamicSolver`` (str):
+    hydrodynamic solver for gas particles, can be VoronoiMesh (TNG) or smoothParticle (EAGLE)  
 
 ``TNGPath`` (str):
     Path to simulation data in local. 
@@ -23,10 +29,10 @@ Main config
     Working directory for running SKIRT code. 
 
 ``simulationMode`` (str):
-    Simulation mode. ExtinctionOnly or DustEmission.
+    Simulation mode. NoMedium or DustEmission.
 
 ``includeDust`` (bool):
-    Whether to include dust particles.
+    Whether to include dust particles. Be True if simulationMode is DustEmission
 
 ``dustEmissionType`` (str):
     Dust emission type. Equilibrium or Stochastic.
@@ -42,6 +48,9 @@ Main config
 
 ``maxBoxLength`` (float):
     Maximum box length.
+
+``fieldOfView`` (float)
+    Field of view in arcsec, equals to box length if 0.
 
 ``wavelengthGrid`` (str):
     Wavelength grid type. Linear or Log.
@@ -99,6 +108,12 @@ Main config
 
 ``snapRedshift`` (float):
     Snapshot redshift of Snapshot with ID.
+
+``inLocal`` (bool):
+    if use local cosmology.
+
+``viewDistance`` (float):
+    viewing distance, in Mpc, must be provided if inLocal is True.
 
 ``numThreads`` (int):
     Number of threads. No speedup for threads larger than 24.
@@ -179,7 +194,7 @@ Survey config
     Whether to add background as Gaussian distribution, otherwise as Poisson distribution.
 
 ``skyBkg`` (list):
-    Background level for considered filters. Please refer to notebook `calc_sky_bkg.ipynb <https://github.com/xczhou-astro/galaxyGenius/blob/main/Notebooks/calc_sky_bkg.ipynb>`_ for calculating skyBkg.
+    Background level for considered filters. Please refer to notebook `calc_sky_bkg.ipynb <https://github.com/xczhou-astro/galaxyGenius/blob/main/Bkg/calc_sky_bkg.ipynb>`_ for calculating skyBkg.
 
 ``darkCurrent`` (float, list):
     Dark current.
@@ -193,7 +208,7 @@ Survey config
 ``RGBImg`` (bool):
     Whether to create and display RGB image. 
     RGB image is created from `astropy.visualization.make_rgb`, a new feature added in version 7.0.0.
-    The RGB image may not be as one expected, feel free to edit the `convert_to_rgb` function in utils.py.
+    The RGB image may not be as one expected, feel free to edit the `convert_to_rgb` function in `utils.py`.
 
 ``RGBFilters`` (list, 3):
     Considered three filters for RGB image.
