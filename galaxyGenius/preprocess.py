@@ -37,11 +37,15 @@ class PreProcess:
         self.snapnum = np.int32(self.config['snapNum'])
         self.cosmology = Planck15
         self.snapz = self.config['snapRedshift']
+        self.viewz = self.config['viewRedshift']
         self.fage = self.__fage()
         
         # to avoid potential error in SKIRT execution
-        if np.isclose(self.snapz, 0, atol=0.005):
-            self.snapz = 0.005
+        if np.isclose(self.viewz, 0, atol=0.005):
+            self.viewz = 0.005
+        
+        # if np.isclose(self.snapz, 0, atol=0.005):
+        #     self.snapz = 0.005
             
         self.h = self.cosmology.h
         self.a = 1 / (1 + self.snapz)
@@ -706,13 +710,13 @@ class PreProcess:
         properties = {}
         properties['subhaloID'] = self.id
         properties['stellarMass'] = np.log10(self.mass)
-        properties['redshift'] = self.snapz
+        properties['redshift'] = self.viewz
         
         if self.__get_value('inLocal'):
             distance = self.__get_value('viewDistance', np.float32)
             properties['cosmology'] = 'LocalUniverseCosmology'
         else:
-            distance = self.cosmology.luminosity_distance(self.snapz).value
+            distance = self.cosmology.luminosity_distance(self.viewz).value
             properties['cosmology'] = 'FlatUniverseCosmology'
             
         properties['lumiDis'] = distance
@@ -815,7 +819,7 @@ class PreProcess:
             
             data = data.replace(cosmologyInfo, replace_str)
         else:
-            data = data.replace('redshift="0.008"', f'redshift="{self.snapz}"')
+            data = data.replace('redshift="0.008"', f'redshift="{self.viewz}"')
         
         self.properties = self.__get_properties()
         
@@ -843,8 +847,8 @@ class PreProcess:
             minWavelength = self.__get_value('minWavelength', np.float32)
             maxWavelength = self.__get_value('maxWavelength', np.float32)
         else:
-            minWavelength = self.__get_value('minWavelength', np.float32) * (1 + self.snapz)
-            maxWavelength = self.__get_value('maxWavelength', np.float32) * (1 + self.snapz)
+            minWavelength = self.__get_value('minWavelength', np.float32) * (1 + self.viewz)
+            maxWavelength = self.__get_value('maxWavelength', np.float32) * (1 + self.viewz)
         
         data = data.replace('minWavelength="0.01 micron"', f'minWavelength="{minWavelength} micron"')
         data = data.replace('maxWavelength="1.2 micron"', f'maxWavelength="{maxWavelength} micron"')
@@ -897,7 +901,7 @@ class PreProcess:
         if self.__get_value('inLocal'):
             distance = self.__get_value('viewDistance', np.float32)
         else:
-            distance = self.cosmology.luminosity_distance(self.snapz).value
+            distance = self.cosmology.luminosity_distance(self.viewz).value
             
         fieldOfView = self.__get_value('fieldOfView', np.float32) # in arcsec
         

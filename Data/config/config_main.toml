@@ -125,6 +125,11 @@ snapNum = 94
 # snapshot redshift, must be provided if inLocal is False
 snapRedshift = 0.06
 
+# viewing redshift, should be close to snapRedshift, 
+# For generating galaxies at continous redshift with a small offset on snapRedshift
+# For example, viewRedshift can be 0.105 for snapshot-91 at 0.1
+viewRedshift = 0.06
+
 # if view galaxy in local
 inLocal = false
 

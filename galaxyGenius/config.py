@@ -508,6 +508,8 @@ class Configuration:
         
         if self.__exist('inLocal'):
             self.__exist('viewDistance', 0)
+            
+        self.__exist('snapRedshift')
         
         simulationMode = self.__exist_return('simulationMode')
         if simulationMode:
@@ -705,7 +707,7 @@ class Configuration:
                 max_pivot = np.max(pivots)
                 min_pivot = np.min(pivots)
 
-                redshift = self.__exist_return('snapRedshift')
+                redshift = self.__exist_return('viewRedshift')
                 if np.isclose(redshift, 0, atol=0.005):
                     redshift = 0.005
                 redshift = np.float32(redshift)
