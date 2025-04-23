@@ -6,12 +6,11 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Configuration &mdash; GalaxyGenius  documentation</title>
+  <title>Configuration &mdash; galaxyGenius 1.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
   
-    <link rel="canonical" href="https://xczhou-astro.github.io/galaxyGenius/configuration.html" />
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
       <script src="_static/documentation_options.js?v=5929fcd5"></script>
@@ -20,7 +19,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="Classes Reference" href="classes.html" /> 
+    <link rel="prev" title="Welcome to galaxyGenius’s documentation!" href="index.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -32,7 +31,7 @@
           
           
           <a href="index.html" class="icon icon-home">
-            GalaxyGenius
+            galaxyGenius
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -44,7 +43,6 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="classes.html">Classes Reference</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Configuration</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#main-config">Main config</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#survey-config">Survey config</a></li>
@@ -58,7 +56,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="index.html">GalaxyGenius</a>
+          <a href="index.html">galaxyGenius</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -68,7 +66,7 @@
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
       <li class="breadcrumb-item active">Configuration</li>
       <li class="wy-breadcrumbs-aside">
-              <a href="https://github.com/xczhou-astro/galaxygenius/blob/main/docs/source/configuration.rst" class="fa fa-github"> Edit on GitHub</a>
+            <a href="_sources/configuration.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -81,11 +79,15 @@
 <section id="main-config">
 <h2>Main config<a class="headerlink" href="#main-config" title="Link to this heading"></a></h2>
 <dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">skirtPATH</span></code> (str):</dt><dd><p>PATH for SKIRT executable. Give “PATH” if set in .bashrc, else provide absolute path</p>
+</dd>
 <dt><code class="docutils literal notranslate"><span class="pre">requests</span></code> (bool):</dt><dd><p>Whether to use Web-based API to retrieve data.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">apiKey</span></code> (str):</dt><dd><p>API key for IllustrisTNG, required if <code class="docutils literal notranslate"><span class="pre">requests</span></code> is True.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">simulation</span></code> (str):</dt><dd><p>Simulation name. TNG50, TNG100, TNG300, etc.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">hydrodynamicSolver</span></code> (str):</dt><dd><p>hydrodynamic solver for gas particles, can be VoronoiMesh (TNG) or smoothParticle (EAGLE)</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">TNGPath</span></code> (str):</dt><dd><p>Path to simulation data in local.</p>
 </dd>
@@ -93,9 +95,9 @@
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">workingDir</span></code> (str):</dt><dd><p>Working directory for running SKIRT code.</p>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">simulationMode</span></code> (str):</dt><dd><p>Simulation mode. ExtinctionOnly or DustEmission.</p>
+<dt><code class="docutils literal notranslate"><span class="pre">simulationMode</span></code> (str):</dt><dd><p>Simulation mode. NoMedium or DustEmission.</p>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">includeDust</span></code> (bool):</dt><dd><p>Whether to include dust particles.</p>
+<dt><code class="docutils literal notranslate"><span class="pre">includeDust</span></code> (bool):</dt><dd><p>Whether to include dust particles. Be True if simulationMode is DustEmission</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">dustEmissionType</span></code> (str):</dt><dd><p>Dust emission type. Equilibrium or Stochastic.</p>
 </dd>
@@ -106,6 +108,8 @@
 <dt><code class="docutils literal notranslate"><span class="pre">boxLengthScale</span></code> (float):</dt><dd><p>Particles are retrieved from the box with length <code class="docutils literal notranslate"><span class="pre">halfStellarMassRadius</span> <span class="pre">*</span> <span class="pre">boxLengthScale</span></code>.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">maxBoxLength</span></code> (float):</dt><dd><p>Maximum box length.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">fieldOfView</span></code> (float)</dt><dd><p>Field of view in arcsec, equals to box length if 0.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">wavelengthGrid</span></code> (str):</dt><dd><p>Wavelength grid type. Linear or Log.</p>
 </dd>
@@ -144,6 +148,10 @@
 <dt><code class="docutils literal notranslate"><span class="pre">snapNum</span></code> (int):</dt><dd><p>Snapshot ID.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">snapRedshift</span></code> (float):</dt><dd><p>Snapshot redshift of Snapshot with ID.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">inLocal</span></code> (bool):</dt><dd><p>if use local cosmology.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">viewDistance</span></code> (float):</dt><dd><p>viewing distance, in Mpc, must be provided if inLocal is True.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">numThreads</span></code> (int):</dt><dd><p>Number of threads. No speedup for threads larger than 24.</p>
 </dd>
@@ -200,7 +208,7 @@ Memory cosumptions will be 7 times if True.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">gaussianNoise</span></code> (bool):</dt><dd><p>Whether to add background as Gaussian distribution, otherwise as Poisson distribution.</p>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">skyBkg</span></code> (list):</dt><dd><p>Background level for considered filters. Please refer to notebook <a class="reference external" href="https://github.com/xczhou-astro/galaxyGenius/blob/main/Notebooks/calc_sky_bkg.ipynb">calc_sky_bkg.ipynb</a> for calculating skyBkg.</p>
+<dt><code class="docutils literal notranslate"><span class="pre">skyBkg</span></code> (list):</dt><dd><p>Background level for considered filters. Please refer to notebook <a class="reference external" href="https://github.com/xczhou-astro/galaxyGenius/blob/main/Bkg/calc_sky_bkg.ipynb">calc_sky_bkg.ipynb</a> for calculating skyBkg.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">darkCurrent</span></code> (float, list):</dt><dd><p>Dark current.</p>
 </dd>
@@ -210,7 +218,7 @@ Memory cosumptions will be 7 times if True.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">RGBImg</span></code> (bool):</dt><dd><p>Whether to create and display RGB image.
 RGB image is created from <cite>astropy.visualization.make_rgb</cite>, a new feature added in version 7.0.0.
-The RGB image may not be as one expected, feel free to edit the <cite>convert_to_rgb</cite> function in utils.py.</p>
+The RGB image may not be as one expected, feel free to edit the <cite>convert_to_rgb</cite> function in <cite>utils.py</cite>.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">RGBFilters</span></code> (list, 3):</dt><dd><p>Considered three filters for RGB image.</p>
 </dd>
@@ -224,13 +232,13 @@ The RGB image may not be as one expected, feel free to edit the <cite>convert_to
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="classes.html" class="btn btn-neutral float-left" title="Classes Reference" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="index.html" class="btn btn-neutral float-left" title="Welcome to galaxyGenius’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024, Xingchen Zhou.</p>
+    <p>&#169; Copyright 2024.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

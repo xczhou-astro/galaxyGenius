@@ -1,14 +1,12 @@
-GalaxyGenius Documentation
-==========================
-
-GalaxyGenius is Mock Galaxy Image Generator for Various Telescopes from Hydrodynamical Simulations
+Welcome to galaxyGenius's documentation!
+====================================
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
-   classes
    configuration
+   classes
 
 Indices and tables
 ==================
