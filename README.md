@@ -199,7 +199,7 @@ mock_(survey)/
     └── galaxy_view_(ViewID).png # Plot of bandpass images
 ```
 
-Bandpass images are saved in pages of fits file, and each page includes images in different views.
+Galaxy images in each band are saved in each extension of the fits file, and each extension includes images in different views.  
 
 ## Documentaion
 For classes and configuration sets, please refer to [documentation](https://xczhou-astro.github.io/galaxyGenius/).
