@@ -21,7 +21,7 @@ class Configuration:
             self.surveys = []
         
         if os.environ.get('GALAXYGENIUS_DATA_DIR') is not None:
-            self.dataDir = os.environ.get('GALAXYGENIUS_DATA_DIR')
+            self.dataDir = os.environ.get('GALAXYGENIUS_DATA_DIR').split(':')[0]
         else:
             print('GALAXYGENIUS_DATA_DIR not set in environment variables. ' + 'Data directory falling to default path: ../Data')
             self.dataDir = '../Data'
@@ -492,17 +492,17 @@ class Configuration:
                 tngpath = self.__exist_return('TNGPath')
                 postpath = self.__exist_return('postprocessingPath')
             
-                if os.path.exists(tngpath) and os.path.exists(postpath):
-                    if tngpath.split('/')[:-1] != postpath.split('/')[:-1]:
-                        self.__issue('TNGPath and postprocessingPath should be in the same directory.')
-                        self.flag_count += 1
-                else:
-                    if not os.path.exists(tngpath):
-                        self.__issue('TNGPath not found.')
-                        self.flag_count += 1
-                    if not os.path.exists(postpath):
-                        self.__issue('postprocessingPath not found.')
-                        self.flag_count += 1
+                # if os.path.exists(tngpath) and os.path.exists(postpath):
+                #     if tngpath.split('/')[:-1] != postpath.split('/')[:-1]:
+                #         self.__issue('TNGPath and postprocessingPath should be in the same directory.')
+                #         self.flag_count += 1
+                # else:
+                #     if not os.path.exists(tngpath):
+                #         self.__issue('TNGPath not found.')
+                #         self.flag_count += 1
+                #     if not os.path.exists(postpath):
+                #         self.__issue('postprocessingPath not found.')
+                #         self.flag_count += 1
         
         self.__exist('workingDir')
         
@@ -624,7 +624,7 @@ class Configuration:
                                 self.__issue(f'Throughput file {survey}/{filter} not found! Please specify correct filters!')
                                 self.flag_count += 1
                             else:
-                                pivots.append(calc_pivot(survey, filter))
+                                pivots.append(calc_pivot(self.dataDir, survey, filter))
                                 
                         if self.__exist(f'numExposure_{survey}'):
                             self.__match(f'filters_{survey}', f'numExposure_{survey}', True)

@@ -13,9 +13,8 @@ from scipy.interpolate import interp1d
 from typing import Union
 import sys
 import time
-    
 
-class Galaxy:
+class PartSmoothing():
     def __init__(self, position: np.ndarray, smoothLength: np.ndarray, 
                  mass: np.ndarray, subhaloPos: np.ndarray, a: float, h: float):
         self.pos = position * a / h - subhaloPos
@@ -26,48 +25,52 @@ class PartNoSmoothing():
     def __init__(self, position: np.ndarray, mass: np.ndarray, subhaloPos: np.ndarray, a: float, h: float):
         self.pos = position * a / h - subhaloPos
         self.mass = mass * 10**10 / h
-
+        
 class PreProcess:
     
     def __init__(self, config: dict):
+        
         self.config = config
-        
-        self.dataDir = self.config['dataDir']
-        
-        self.snapnum = np.int32(self.config['snapNum'])
         self.cosmology = Planck15
-        self.snapz = self.config['snapRedshift']
-        self.viewz = self.config['viewRedshift']
         self.fage = self.__fage()
+        self.__init()
+        
+    def __fage(self) -> interp1d:
+        z = np.linspace(0, 4, 1000)
+        t = self.cosmology.age(z).to(u.Myr).value
+        fage = interp1d(z, t, kind='cubic', fill_value='extrapolate')
+        return fage
+        
+    def __init(self):
+        
+        self.snapRedshift = self.config['snapRedshift']
+        self.viewRedshift = self.config['viewRedshift']
         
         # to avoid potential error in SKIRT execution
-        if np.isclose(self.viewz, 0, atol=0.005):
-            self.viewz = 0.005
+        if np.isclose(self.viewRedshift, 0, atol=0.005):
+            self.viewRedshift = 0.005
         
-        # if np.isclose(self.snapz, 0, atol=0.005):
-        #     self.snapz = 0.005
-            
         self.h = self.cosmology.h
-        self.a = 1 / (1 + self.snapz)
+        self.a = 1 / (1 + self.snapRedshift)
         self.workingDir = self.config['workingDir']
-        self.dataDir = self.config['dataDir']
+        os.makedirs(self.workingDir, exist_ok=True)
         
-        # TNG100-1 is the main high-resolution IllustrisTNG100 run including the full TNG physics model.
-        self.simulation = self.config['simulation'] + '-1'
+        self.dataDir = self.config['dataDir']        
+        self.simulation = self.config['simulation']
+        self.snapnum = self.config['snapNum']
         
         if 'TNG' in self.config['simulation']:
             name = 'tng'
-            self.cosmology = Planck15 # TNG uses Planck15 cosmology
         else:
             name = None
             print('Simulation name is unrecognized. Please manually input data by calling inputs().')
-        
+            
         if self.config['requests']:
             self.base_url = f"https://www.{name}-project.org/api/"
             self.headers = {'api-key': self.config['apiKey']}
-            self.results = self.__get_subhalos_remote()
             
-    def make_request_with_retry(self, url: str, headers: dict = None, params: dict = None, max_retries: int = 5) -> requests.Response:
+    def __make_request_with_retry(self, url: str, headers: dict = None, 
+                                params: dict = None, max_retries: int = 5) -> requests.Response:
         """
         Make an HTTP request with retry logic.
         
@@ -96,39 +99,46 @@ class PreProcess:
                     sys.exit(1)
                 else:
                     print(f"Request failed (attempt {attempt + 1}/{max_retries}). Retrying...")
-                    time.sleep(2 ** attempt)  # Exponential backoff
-
-    def __get_snapz(self) -> float:
-        if not self.config['requests']:
-            snap = h5py.File(os.path.join(self.config['TNGPath'],
-                                      f'snapdir_{self.snapnum:03d}/snap_{self.snapnum:03d}.0.hdf5'), 'r')
-            snapz = dict(snap['Header'].attrs.items())['Redshift']
-        else:
-            url = f'{self.base_url}{self.simulation}/snapshots/{self.snapnum}'
-            response = self.make_request_with_retry(url, headers=self.headers)
-            data = response.json()
-            snapz = data['redshift']
-        
-        return snapz
-        
-
+                    time.sleep(2 ** attempt)  # Exponential backoff        
+                    
     def __read_subhalos(self) -> dict:
-        snap_subhalos = ill.groupcat.loadSubhalos(self.config['TNGPath'], self.snapnum)
+        snap_subhalos = ill.groupcat.loadSubhalos(self.config['TNGPath'], self.config['snapNum'])
         return snap_subhalos
     
+    def __retrieve_subhalos_with_requests(self) -> list:
+        
+        cache_dir = os.path.join('.', 'cache')
+        os.makedirs(cache_dir, exist_ok=True)
+        
+        minStellarMass = np.float32(self.config['minStellarMass']) / 10**10 * self.h
+        maxStellarMass = np.float32(self.config['maxStellarMass']) / 10**10 * self.h
+        snapnum = self.config['snapNum']
+        
+        if maxStellarMass == np.inf:
+            url = f'{self.base_url}{self.simulation}/snapshots/{snapnum}' \
+                + f'/subhalos/?mass_stars__gt={minStellarMass}&subhaloflag=1&limit=1000000'
+            
+            filename = f'subhalos_snap_{snapnum}_mass_gt_{minStellarMass}_1e10_Msun_over_h_subhaloflag1.json'
+        else:
+            url = f'{self.base_url}{self.simulation}/snapshots/{snapnum}' \
+                + f'/subhalos/?mass_stars__gt={minStellarMass}&mass_stars' \
+                + f'__lt={maxStellarMass}&subhaloflag=1&limit=1000000'
+                
+            filename = f'subhalos_snap_{snapnum}_mass_gt_{minStellarMass}' \
+                + f'_lt_{maxStellarMass}_1e10_Msun_over_h_subhaloflag1.json'
+        
+        cache_file = os.path.join(cache_dir, filename)
+        
+        response = self.__make_request_with_retry(url, headers=self.headers)
+        data = response.json()
+        results = data.get('results', [])
+        
+        with open(cache_file, 'w') as f:
+            json.dump(results, f, indent=4)
+        
+        return results
     
     def get_subhalos(self) -> dict:
-        
-        """
-        Retrieves subhalos from the simulation data based on the specified stellar mass range in configuration.
-
-        Returns:
-            dict: A dictionary containing the following keys:
-                - subhaloNum (int): The number of subhalos retrieved.
-                - subhaloIDs (np.ndarray, list): An array of IDs for the retrieved subhalos.
-                - subhaloSFR (np.ndarray, list): An array of star formation rates for the retrieved subhalos.
-                - units (list): A list of strings representing the units of the returned values.
-        """
         
         minStellarMass = np.float32(self.config['minStellarMass'])
         maxStellarMass = np.float32(self.config['maxStellarMass'])
@@ -139,9 +149,6 @@ class PreProcess:
         subhalos = {}
         
         if not self.config['requests']:
-        
-            minStellarMass = np.float32(self.config['minStellarMass'])
-            maxStellarMass = np.float32(self.config['maxStellarMass'])
             
             snap_subhalos = self.__read_subhalos()
             stellarMass = snap_subhalos['SubhaloMassType'][:, 4] * 10**10 / self.h # Msun
@@ -149,41 +156,43 @@ class PreProcess:
             subhalo_indices = np.where((stellarMass > minStellarMass) \
                                         & (stellarMass < maxStellarMass) \
                                         & (snap_subhalos['SubhaloFlag'] == 1))[0]
-            self.subhaloIDs = subhalo_indices
-            self.stellarMasses = stellarMass[self.subhaloIDs] # Msun
-            halfMassRad = snap_subhalos['SubhaloHalfmassRadType'][:, 4] * self.a / self.h # kpc
+            
+            self.subhaloIDs = subhalo_indices # indices are same as subhaloIDs
+            self.stellarMasses = stellarMass[self.subhaloIDs] # in Msun
+            halfMassRad = snap_subhalos['SubhaloHalfmassRadType'][:, 4] * self.a / self.h # in kpc
             self.halfMassRadii = halfMassRad[self.subhaloIDs]
-            self.subhaloNum = self.subhaloIDs.shape[0]
+            subhaloNum = self.subhaloIDs.shape[0]
             subhaloPos = snap_subhalos['SubhaloPos'] * self.a / self.h # in kpc
             self.subhaloPos = subhaloPos[self.subhaloIDs]
-            self.subhaloSFR = snap_subhalos['SubhaloSFR'][self.subhaloIDs] # Msun/yr
+            self.subhaloSFR = snap_subhalos['SubhaloSFR'][self.subhaloIDs] # in Msun/yr
             
-            subhalos['subhaloNum'] = self.subhaloNum
+            subhalos['subhaloNum'] = subhaloNum
             subhalos['subhaloIDs'] = self.subhaloIDs
-            # subhalos['stellarMasses'] = self.stellarMasses
             subhalos['subhaloSFR'] = self.subhaloSFR
             
             subhalos['units'] = ['1', '1', 'Msun/yr']
             
             if maxStellarMass == np.inf:
-                print_info = f'{self.subhaloNum} subhalos in snapshot {self.snapnum} ' \
+                print_info = f'{subhaloNum} subhalos in snapshot {self.snapnum} ' \
                     f'in stellar mass higher than 10^{minStellarMass_in_10:.2f} [M_sun]'
             else:
-                print_info = f'{self.subhaloNum} subhalos in snapshot {self.snapnum} ' \
+                print_info = f'{subhaloNum} subhalos in snapshot {self.snapnum} ' \
                     f'in stellar mass from 10^{minStellarMass_in_10:.2f} to 10^{maxStellarMass_in_10:.2f} [M_sun]'
+            
         else:
             
-            subhaloNum = len(self.results)
-            subhalosIDs = [result['id'] for result in self.results]
-            # stellarMasses = [10 ** result['mass_log_stars'] for result in self.results]
-            subhaloSFRs = [result['sfr'] for result in self.results]
+            results = self.__retrieve_subhalos_with_requests()
+            self.results = results # to access in following functions
+            
+            subhaloNum = len(results)
+            self.subhaloIDs = [result['id'] for result in results]
+            self.subhaloSFR = [result['sfr'] for result in results]
             
             subhalos['subhaloNum'] = subhaloNum
-            subhalos['subhaloIDs'] = subhalosIDs
-            # subhalos['stellarMasses'] = stellarMasses
-            subhalos['subhaloSFR'] = subhaloSFRs
+            subhalos['subhaloIDs'] = self.subhaloIDs
+            subhalos['subhaloSFR'] = self.subhaloSFR
             
-            subhalos['units'] = ['1', '1', 'Msun', 'Msun/yr']
+            subhalos['units'] = ['1', '1', 'Msun/yr']
             
             if maxStellarMass == np.inf:
                 print_info = f'{subhaloNum} subhalos in snapshot {self.snapnum} ' \
@@ -196,56 +205,21 @@ class PreProcess:
         
         return subhalos
     
-    def __get_subhalos_remote(self) -> list:
-        cache_dir = os.path.join('.', 'cache')
-        os.makedirs(cache_dir, exist_ok=True)
-        
-        minStellarMass = np.float32(self.config['minStellarMass']) / 10**10 * self.h
-        if self.config['maxStellarMass'] == np.inf:
-            maxStellarMass = np.inf
-            url = f'{self.base_url}{self.simulation}/snapshots/{self.snapnum}' \
-                + f'/subhalos/?mass_stars__gt={minStellarMass}&subhaloflag=1&limit=1000000'
-            
-            filename = f'subhalos_snap_{self.snapnum}_mass_gt_{minStellarMass}_1e10_Msun_over_h_subhaloflag1.json'
-        else:
-            maxStellarMass = np.float32(self.config['maxStellarMass']) / 10**10 * self.h
-            url = f'{self.base_url}{self.simulation}/snapshots/{self.snapnum}' \
-                + f'/subhalos/?mass_stars__gt={minStellarMass}&mass_stars' \
-                + f'__lt={maxStellarMass}&subhaloflag=1&limit=1000000'
-                
-            filename = f'subhalos_snap_{self.snapnum}_mass_gt_{minStellarMass}' \
-                + f'_lt_{maxStellarMass}_1e10_Msun_over_h_subhaloflag1.json'
-        
-        cache_file = os.path.join(cache_dir, filename)
-        
-        response = self.make_request_with_retry(url, headers=self.headers)
-        data = response.json()
-        results = data.get('results', [])
-        
-        with open(cache_file, 'w') as f:
-            json.dump(results, f, indent=4)
-        
-        return results
-
-    
     def subhalo(self, subhaloID: int):
         
-        """
-        Retrieves subhalo data based on the specified subhalo ID.
-
-        Parameters:
-            subhaloID (int): The ID of the subhalo to retrieve.
-        """
-        
         if not self.config['requests']:
-            idx = list(self.subhaloIDs).index(subhaloID)
+            idx = idx = list(self.subhaloIDs).index(subhaloID)
             self.id = self.subhaloIDs[idx]
             self.mass = self.stellarMasses[idx]
             self.radius = self.halfMassRadii[idx]
             self.pos = self.subhaloPos[idx]
+            self.sfr = self.subhaloSFR[idx]
 
             mass_in_10 = np.log10(self.mass)
+            
             print(f'Stellar Mass of Subhalo {self.id} is 10^{mass_in_10:.2f} [M_sun].')
+            print(f'SFR of Subhalo {self.id} is {self.sfr:.2f} [M_sun/yr].')
+            
         else:
             subhaloIDs = [result['id'] for result in self.results]
             idx = list(subhaloIDs).index(subhaloID)
@@ -253,7 +227,7 @@ class PreProcess:
             subhalo = self.results[idx]
             subhalo_url = subhalo['url']
             print('Subhalo URL: ', subhalo_url)
-            subhalo_response = self.make_request_with_retry(subhalo_url, headers=self.headers)
+            subhalo_response = self.__make_request_with_retry(subhalo_url, headers=self.headers)
             self.data = subhalo_response.json()
             self.mass = self.data['mass_stars'] * 10**10 / self.h # Msun
             self.radius = self.data['halfmassrad_stars'] * self.a / self.h # kpc
@@ -261,18 +235,15 @@ class PreProcess:
             self.pos_y = self.data['pos_y'] * self.a / self.h # kpc
             self.pos_z = self.data['pos_z'] * self.a / self.h # kpc
             self.pos = np.array([self.pos_x, self.pos_y, self.pos_z]) # kpc
+            self.sfr = self.subhaloSFR[idx]
             
             mass_in_10 = np.log10(self.mass)
-            print(f'Stellar Mass of Subhalo {self.id} is 10^{mass_in_10:.2f} [M_sun].')
             
-    def __fage(self) -> interp1d:
-        z = np.linspace(0, 4, 1000)
-        t = self.cosmology.age(z).to(u.Myr).value
-        fage = interp1d(z, t, kind='cubic', fill_value='extrapolate')
-        return fage
-    
+            print(f'Stellar Mass of Subhalo {self.id} is 10^{mass_in_10:.2f} [M_sun].')
+            print(f'SFR of Subhalo {self.id} is {self.sfr:.2f} [M_sun/yr].')
+            
+            
     def __calculate_angular_momentum_and_angles(self) -> tuple:
-        
         
         print('------Calculating face-on and edge-on viewing angles------')
         
@@ -353,90 +324,67 @@ class PreProcess:
         print('Edge-on angle:', (incs[1], azis[1]))
         
         return incs, azis
-        
-    def __get_value(self, key, castType=None):
-        
-        if hasattr(self, key):
-            value = getattr(self, key)
-        else:
-            value = self.config[key]
-        
-        if castType is not None:
-            value = castType(value)
-        
-        return value
-        
-    def handle_temp_file_with_retry(self, response_content, partType='star', suffix='.hdf5', max_retries=5):
+    
+    def __read_temp_file(self, response_content, partType='star', suffix='.hdf5', fields=None):
         """
         Handle temporary file operations with retry logic.
         
         Args:
             response_content: Content to write to temporary file
             suffix: File suffix
-            max_retries: Maximum number of retry attempts
+            fields: Fields to read
         
         Returns:
             Dictionary containing the particle data
-            
-        Raises:
-            SystemExit if all retries fail
         """
-        for attempt in range(max_retries):
-            try:
-                with tempfile.NamedTemporaryFile(suffix=suffix, dir=self.workingDir) as tmp:
-                    tmp.write(response_content)
-                    tmp.flush()
+        try:
+            with tempfile.NamedTemporaryFile(suffix=suffix, dir=self.workingDir) as tmp:
+                tmp.write(response_content)
+                tmp.flush()
+                
+                with h5py.File(tmp.name, 'r') as f:
                     
-                    with h5py.File(tmp.name, 'r') as f:
-                        # For stars
-                        if partType == 'star':
-                            particle_data = {key: f[f'PartType4/{key}'][:] for key in self.fields}
-                        # For gas
-                        elif partType == 'gas':
-                            particle_data = {key: f[f'PartType0/{key}'][:] for key in self.fields}
-                        else:
-                            raise ValueError(f"Invalid partType: {partType}")
-                            
-                    return particle_data
+                    if partType == 'star':
+                        particle_data = {key: f[f'PartType4/{key}'][:] for key in fields}
+                    elif partType == 'gas':
+                        particle_data = {key: f[f'PartType0/{key}'][:] for key in fields}
                     
-            except (OSError, IOError) as e:
-                if attempt == max_retries - 1:  # Last attempt
-                    print(f"Error: Failed to handle temporary file after {max_retries} attempts.")
-                    print(f"Error message: {str(e)}")
-                    sys.exit(1)
-                else:
-                    print(f"Temporary file operation failed (attempt {attempt + 1}/{max_retries}). Retrying...")
-                    time.sleep(2 ** attempt)  # Exponential backoff
-
+            particle_data['count'] = len(particle_data['Coordinates'])
+                    
+        except Exception as e:
+            print(f'Error reading temporary file: {e}')
+            particle_data = {}
+            particle_data['count'] = 0
+            
+        return particle_data
+    
     def __get_particles(self):
         
         print('Retrieving Stellar and Gas particles.')
         
-        boxLengthScale = self.__get_value('boxLengthScale', np.float32)
-        maxBoxLength = self.__get_value('maxBoxLength', np.float32)
-
+        boxLengthScale = np.float32(self.config['boxLengthScale'])
+        maxBoxLength = np.float32(self.config['maxBoxLength'])
+        
         boxLength = self.radius * boxLengthScale
         boxLength = np.min([boxLength, maxBoxLength])
-        self.boxLength = boxLength
+        self.boxLength = boxLength # in kpc
         
         region = boxLength / 2.
-
+        
         fields = ['GFM_InitialMass', 'GFM_Metallicity', 'GFM_StellarFormationTime',
                 'Coordinates', 'Velocities', 'Masses']
         
         if not self.config['requests']:
-            starPart = ill.snapshot.loadSubhalo(self.config['TNGPath'], self.snapnum,
+            starPart = ill.snapshot.loadSubhalo(self.config['TNGPath'], self.config['snapNum'],
                                                 self.id, 'star', fields)
         else:
-            cutout_url = f"{self.base_url}{self.simulation}/snapshots/{self.snapnum}/subhalos/{self.id}/cutout.hdf5"
+            cutout_url = f"{self.base_url}{self.simulation}/snapshots/{self.config['snapNum']}/subhalos/{self.id}/cutout.hdf5"
             
-            self.fields = fields
             params = {'stars': ','.join(fields)}
-            response = self.make_request_with_retry(cutout_url, headers=self.headers, params=params)
+            response = self.__make_request_with_retry(cutout_url, headers=self.headers, params=params)
             
-            starPart = self.handle_temp_file_with_retry(response.content, partType='star')
-            starPart['count'] = starPart['Coordinates'].shape[0]
-            
+            starPart = self.__read_temp_file(response.content, partType='star', fields=fields)
+            # starPart['count'] = len(starPart['Coordinates'])
             
         if 'TNG50' in self.simulation:
             stellar_smoothLength = 288
@@ -444,30 +392,28 @@ class PreProcess:
             stellar_smoothLength = 740
         elif 'TNG300' in self.simulation:
             stellar_smoothLength = 1480
-
-        if self.snapz <= 1:
-            # z = 0 ~ 1, smoothing length are changing
+            
+        if self.snapRedshift <= 1:
             stellar_smoothLength = stellar_smoothLength * 10**-3 / self.a * self.h # in ckpc/h, comoving scale
         else:
-            # z > 1, smoothing length are constant as z = 1 value
             stellar_smoothLength = stellar_smoothLength * 10**-3 / 0.5 * self.h # in ckpc/h, comoving scale
         
         starPart['smoothLength'] = np.array([stellar_smoothLength] * starPart['count'])
         
-        mask = np.where(starPart['GFM_StellarFormationTime'] > 0)[0]
+        mask = np.where(starPart['GFM_StellarFormationTime'] > 0)[0] # select stellar particles instead of wind
         for key in starPart.keys():
             if key == 'count':
                 pass
             else:
-                starPart[key] = starPart[key][mask] # select stellar particles instead of wind
-        
-        snapshot_age = self.fage(self.snapz)
-        starPart['age'] = snapshot_age - self.fage(1/starPart['GFM_StellarFormationTime'] - 1) # in Myr
-        g = Galaxy(starPart['Coordinates'], starPart['smoothLength'], 
-                   starPart['GFM_InitialMass'], self.pos, a=self.a, h=self.h)
-
-        ageThreshold = self.__get_value('ageThreshold', np.float32)
+                starPart[key] = starPart[key][mask] 
             
+        snapshot_age = self.fage(self.snapRedshift)
+        starPart['age'] = snapshot_age - self.fage(1/starPart['GFM_StellarFormationTime'] - 1) # in Myr
+        g = PartSmoothing(starPart['Coordinates'], starPart['smoothLength'], 
+                   starPart['GFM_InitialMass'], self.pos, a=self.a, h=self.h)
+        
+        ageThreshold = np.float32(self.config['ageThreshold'])
+        
         part = {}
         mask = np.where((np.abs(g.pos[:, 0]) < region)\
                     & (np.abs(g.pos[:, 1]) < region)\
@@ -475,34 +421,34 @@ class PreProcess:
                     & (starPart['age'] < ageThreshold))[0]
         size = mask.shape[0]
         print('Starforming regions: ', size)
-
+        
         part['x'] = g.pos[:, 0][mask] # in kpc
         part['y'] = g.pos[:, 1][mask]
         part['z'] = g.pos[:, 2][mask]
         part['smoothLength'] = g.smoothLength[mask]
         part['sfr'] = g.mass[mask] / (ageThreshold * 10**6) # constant SFR in Msun/yr
         part['Z'] = starPart['GFM_Metallicity'][mask]
-        logCompactnessMean = self.__get_value('logCompactnessMean', np.float32)
-        logCompactnessStd = self.__get_value('logCompactnessStd', np.float32)
+        logCompactnessMean = np.float32(self.config['logCompactnessMean'])
+        logCompactnessStd = np.float32(self.config['logCompactnessStd'])
         part['compactness'] = np.random.normal(loc=logCompactnessMean, 
                                                scale=logCompactnessStd, size=size) # from Kapoor et al. 2021
-        logPressure = self.__get_value('logPressure', np.float32)
+        logPressure = np.float32(self.config['logPressure'])
         pressure = (10**logPressure * const.k_B) * (u.J * u.cm**-3).to(u.J * u.m**-3) # J * m**3 == Pa
         pressure = pressure.value
         part['pressure'] = np.array([pressure] * size)
         age = starPart['age'][mask] # in Myr
-        constantCoveringFactor = self.__get_value('constantCoveringFactor', bool)
+        constantCoveringFactor = self.config['constantCoveringFactor']
         if constantCoveringFactor:
-            coveringFactor = self.__get_value('coveringFactor', np.float32)
+            coveringFactor = np.float32(self.config['coveringFactor'])
             part['covering'] = np.array([coveringFactor] * size)
         else:
-            PDRClearingTimescale = self.__get_value('PDRClearingTimescale', np.float32)
+            PDRClearingTimescale = np.float32(self.config['PDRClearingTimescale'])
             part['covering'] = np.array(np.exp(-age / PDRClearingTimescale)) # from Baes, M., et al. 2024
             
         part['velocities'] = starPart['Velocities'][mask] * np.sqrt(self.a) # in km/s
         part['masses'] = starPart['Masses'][mask] * 10**10 / self.h # Msun
-
-        header = 'starforming regions\n' \
+        
+        header = 'Starforming regions\n' \
                 + '\n' \
                 + 'Column 1: x-coordinate (kpc)\n' \
                 + 'Column 2: y-coordinate (kpc)\n' \
@@ -521,11 +467,10 @@ class PreProcess:
         info = np.column_stack((part['x'], part['y'], part['z'], part['smoothLength'],
                             part['sfr'], part['Z'], part['compactness'],
                             part['pressure'], part['covering'],
-                            part['velocities'], part['masses'])) # 10 params
+                            part['velocities'], part['masses'])) 
 
         np.savetxt(self.workingDir + '/starforming_regions.txt', info, header=header)
         
-
         part = {}
         mask = np.where((np.abs(g.pos[:, 0]) < region)\
                         & (np.abs(g.pos[:, 1]) < region)\
@@ -534,8 +479,8 @@ class PreProcess:
         size = mask.shape[0]
         print('Stars: ', size)
         part['x'] = g.pos[:, 0][mask] # in kpc
-        part['y'] = g.pos[:, 1][mask] # in kpc
-        part['z'] = g.pos[:, 2][mask] # in kpc
+        part['y'] = g.pos[:, 1][mask]
+        part['z'] = g.pos[:, 2][mask]
         part['smoothLength'] = g.smoothLength[mask]
         part['initialMass'] = g.mass[mask]
         part['Z'] = starPart['GFM_Metallicity'][mask]
@@ -544,44 +489,59 @@ class PreProcess:
         part['masses'] = starPart['Masses'][mask] * 10**10 / self.h # Msun
         
         header = 'Stars\n' \
-                    + '\n' \
-                    + 'Column 1: x-coordinate (kpc)\n'\
-                    + 'Column 2: y-coordinate (kpc)\n'\
-                    + 'Column 3: z-coordinate (kpc)\n'\
-                    + 'Column 4: smoothing length (kpc)\n'\
-                    + 'Column 5: initial mass (Msun)\n'\
-                    + 'Column 6: metallicity (1)\n'\
-                    + 'Column 7: age (Myr)\n' \
-                    + 'Column 8: x-velocity (km/s)\n' \
-                    + 'Column 9: y-velocity (km/s)\n' \
-                    + 'Column 10: z-velocity (km/s)\n' \
-                    + 'Column 11: Mass (Msun)'
-        
+                + '\n' \
+                + 'Column 1: x-coordinate (kpc)\n'\
+                + 'Column 2: y-coordinate (kpc)\n'\
+                + 'Column 3: z-coordinate (kpc)\n'\
+                + 'Column 4: smoothing length (kpc)\n'\
+                + 'Column 5: initial mass (Msun)\n'\
+                + 'Column 6: metallicity (1)\n'\
+                + 'Column 7: age (Myr)\n' \
+                + 'Column 8: x-velocity (km/s)\n' \
+                + 'Column 9: y-velocity (km/s)\n' \
+                + 'Column 10: z-velocity (km/s)\n' \
+                + 'Column 11: Mass (Msun)'
+                
         info = np.column_stack((part['x'], part['y'], part['z'], part['smoothLength'],
                                 part['initialMass'], part['Z'], part['age'],
                                 part['velocities'], part['masses']))
         np.savetxt(self.workingDir + '/stars.txt', info, header=header)
         
         part = {}
-        includeDust = self.__get_value('includeDust', bool)
         
-        if includeDust:
-            try:
-                fields = ['GFM_Metallicity', 'Coordinates', 'Masses',
-                            'InternalEnergy', 'StarFormationRate', 'ElectronAbundance', 
-                             'Velocities', 'Density']
-                if not self.config['requests']:
-                    gasPart = ill.snapshot.loadSubhalo(self.config['TNGPath'], 
-                            self.snapnum, self.id, 'gas', fields)
-                else:
-                    cutout_url = f"{self.base_url}{self.simulation}/snapshots/{self.snapnum}/subhalos/{self.id}/cutout.hdf5"
-                    
-                    self.fields = fields
-                    params = {'gas': ','.join(fields)}
-                    response = self.make_request_with_retry(cutout_url, headers=self.headers, params=params)
-                    
-                    gasPart = self.handle_temp_file_with_retry(response.content, partType='gas') 
-                    gasPart['count'] = gasPart['Coordinates'].shape[0]
+        if self.config['includeDust']:
+            
+            fields = ['GFM_Metallicity', 'Coordinates', 'Masses', 
+                      'InternalEnergy', 'StarFormationRate', 'ElectronAbundance', 
+                      'Velocities', 'Density']
+            
+            if not self.config['requests']:
+                gasPart = ill.snapshot.loadSubhalo(self.config['TNGPath'], self.config['snapNum'],
+                                                   self.id, 'gas', fields)
+            else:
+                cutout_url = f"{self.base_url}{self.simulation}/snapshots/{self.config['snapNum']}/subhalos/{self.id}/cutout.hdf5"
+                
+                params = {'gas': ','.join(fields)}
+                response = self.__make_request_with_retry(cutout_url, headers=self.headers, params=params)
+                
+                gasPart = self.__read_temp_file(response.content, partType='gas', fields=fields)
+                
+            if gasPart['count'] == 0:
+                print('No gas particles found, simulationMode falls to NoMedium')
+                
+                self.config['simulationMode'] = 'NoMedium'
+                self.config['includeDust'] = False
+                
+                part['x'] = np.array([])
+                part['y'] = np.array([])
+                part['z'] = np.array([])
+                part['mass'] = np.array([])
+                part['Z'] = np.array([])
+                part['Temperature'] = np.array([])
+                part['velocities'] = np.array([])
+                
+            else:
+                # gasPart['count'] = len(gasPart['Coordinates'])
                 
                 gasPart['Temperature'] = u2temp(gasPart['InternalEnergy'], 
                                                 gasPart['ElectronAbundance'])
@@ -594,21 +554,23 @@ class PreProcess:
                             & (np.abs(gas.pos[:, 1]) < region)\
                             & (np.abs(gas.pos[:, 2]) < region))[0]
                 
-                DISMModel = self.__get_value('DISMModel', str)
+                DISMModel = self.config['DISMModel']
                 if DISMModel == 'Camps_2016':
-                    temperatureThreshold = self.__get_value('temperatureThreshold', np.float32)
+                    temperatureThreshold = np.float32(self.config['temperatureThreshold'])
                     othermask = np.where((gasPart['StarFormationRate'] > 0) \
                                     | (gasPart['Temperature'] < temperatureThreshold))[0]
                     mask = np.intersect1d(spatialmask, othermask)
                     size = mask.shape[0]
+                    
                 elif DISMModel == 'Torrey_2012':
                     # Density from (10^10 Msun/h) / (ckpc/h)^3 to 10^10 h^2 Msun / kpc^3
                     density = gasPart['Density'] * self.a**-3
                     othermask = np.where(np.log10(gasPart['Temperature']) < (6 + 0.25 * np.log10(density)))[0]
                     mask = np.intersect1d(spatialmask, othermask)
                     size = mask.shape[0]
-                                         
+                
                 print('Dusts: ', size)
+                
                 part['x'] = gas.pos[:, 0][mask] # in kpc
                 part['y'] = gas.pos[:, 1][mask]
                 part['z'] = gas.pos[:, 2][mask]
@@ -616,16 +578,7 @@ class PreProcess:
                 part['Z'] = gasPart['GFM_Metallicity'][mask]
                 part['Temperature'] = gasPart['Temperature'][mask]
                 part['velocities'] = gasPart['Velocities'][mask]
-            except Exception as e:
-                print('Error when loading gas particles: ', e)
-                part['x'] = np.array([])
-                part['y'] = np.array([])
-                part['z'] = np.array([])
-                part['mass'] = np.array([])
-                part['Z'] = np.array([])
-                part['Temperature'] = np.array([])
-                part['velocities'] = np.array([])
-        
+                
         else:
             part['x'] = np.array([])
             part['y'] = np.array([])
@@ -634,7 +587,8 @@ class PreProcess:
             part['Z'] = np.array([])
             part['Temperature'] = np.array([])
             part['velocities'] = np.array([])
-        header = 'dusts\n' \
+            
+        header = 'Dusts\n' \
                 + '\n' \
                 + 'Column 1: x-coordinate (kpc)\n' \
                 + 'Column 2: y-coordinate (kpc)\n' \
@@ -654,53 +608,53 @@ class PreProcess:
         
     def __get_properties_survey(self, distance: float, properties: dict) -> dict:
         
-        postProcessing = self.__get_value('postProcessing', bool)
+        postProcessing = self.config['postProcessing']
         if postProcessing:
-            surveys = self.__get_value('surveys', list)
+            surveys = self.config['surveys']
             spatialResols = []
             for survey in surveys:
-                filters = self.__get_value(f'filters_{survey}', list)
+                filters = self.config[f'filters_{survey}']
                 numfilters = len(filters)
-                if self.__get_value(f'resolFromPix_{survey}', bool):
-                    pixelScales = self.__get_value(f'pixelScales_{survey}')
+                if self.config[f'resolFromPix_{survey}']:
+                    pixelScales = self.config[f'pixelScales_{survey}']
                     pixelScales = extend(pixelScales, numfilters)
                     resol = [distance * 10**6 * np.deg2rad(ang / 3600) for ang in pixelScales]
                     ps_in_sr = [(ps**2 * u.arcsec**2).to(u.sr).value for ps in pixelScales]
                 else:
-                    resol = self.__get_value(f'resolution_{survey}')
+                    resol = np.float32(self.config[f'resolution_{survey}'])
                     resol = extend(resol, numfilters)
                     pixelScales = [np.rad2deg(res / (distance * 10**6)) * 3600 for res in resol]
                     ps_in_sr = [(ps**2 * u.arcsec**2).to(u.sr).value for ps in pixelScales]
-                
+                    
                 properties[f'resolution_{survey}'] = resol
                 properties[f'angleRes_{survey}'] = pixelScales
                 properties[f'ps_in_sr_{survey}'] = ps_in_sr
-
+                
                 spatialResols += resol
-
-                numExposure = self.__get_value(f'numExposure_{survey}')
+                
+                numExposure = np.int32(self.config[f'numExposure_{survey}'])
                 numExposure = extend(numExposure, numfilters)
                 properties[f'numExposure_{survey}'] = numExposure
                 
-                exposureTime = self.__get_value(f'exposureTime_{survey}')
+                exposureTime = np.float32(self.config[f'exposureTime_{survey}'])
                 exposureTime = extend(exposureTime, numfilters)
                 properties[f'exposureTime_{survey}'] = exposureTime
                 
-                aperture = self.__get_value(f'aperture_{survey}', np.float32)
+                aperture = np.float32(self.config[f'aperture_{survey}'])
                 properties[f'aperture_{survey}'] = aperture
                 
                 properties[f'numfilters_{survey}'] = numfilters
                 properties[f'filters_{survey}'] = filters
-            
+                
             spatialResol = np.min(spatialResols)
             
             for survey in surveys:
                 ratios = [spatialResol / res for res in properties[f'resolution_{survey}']]
                 properties[f'ratios_{survey}'] = ratios
-            
+                
         else:
-            spatialResol = self.__get_value('spatialResol', np.float32)
-        
+            spatialResol = np.float32(self.config['spatialResol'])
+            
         properties['baseRes'] = spatialResol
         
         return properties
@@ -710,65 +664,56 @@ class PreProcess:
         properties = {}
         properties['subhaloID'] = self.id
         properties['stellarMass'] = np.log10(self.mass)
-        properties['redshift'] = self.viewz
+        properties['redshift'] = self.viewRedshift
         
-        if self.__get_value('inLocal'):
-            distance = self.__get_value('viewDistance', np.float32)
+        if self.config['inLocal']:
+            distance = np.float32(self.config['viewDistance'])
             properties['cosmology'] = 'LocalUniverseCosmology'
         else:
-            distance = self.cosmology.luminosity_distance(self.viewz).value
+            distance = self.cosmology.luminosity_distance(self.viewRedshift).value
             properties['cosmology'] = 'FlatUniverseCosmology'
             
         properties['lumiDis'] = distance
         
         properties = self.__get_properties_survey(distance, properties)
         
-        faceAndEdge = self.__get_value('faceAndEdge', bool)
+        faceAndEdge = self.config['faceAndEdge']
         
-        if hasattr(self, 'inclinations') and hasattr(self, 'azimuths'):
-            
-            inclinations = self.inclinations
-            azimuths = self.azimuths
-            numViews = len(self.inclinations)
-            self.numViews = numViews
-            
+        inclinations = self.config['inclinations']
+        azimuths = self.config['azimuths']
+        numViews = np.int32(self.config['numViews'])
+        
         if faceAndEdge:
             inclinations, azimuths = self.__calculate_angular_momentum_and_angles()
             numViews = 2
-            self.numViews = numViews
+            self.config['numViews'] = numViews
             
-        if not faceAndEdge and not hasattr(self, 'inclinations') and not hasattr(self, 'azimuths'):
+        if not faceAndEdge and self.config['randomViews']:
             
-            numViews = self.__get_value('numViews', np.int32)
-            randomViews = self.__get_value('randomViews', bool)
+            inclinations = np.random.uniform(0, 180, numViews)
+            azimuths = np.random.uniform(-360, 360, numViews)
             
-            if randomViews:
-                inclinations = np.random.uniform(0, 180, numViews).tolist()
-                azimuths = np.random.uniform(-360, 360, numViews).tolist()
-            else:
-                inclinations = self.config['inclinations']
-                azimuths = self.config['azimuths']
-                
-        self.inclinations = inclinations
-        self.azimuths = azimuths
+        self.config['inclinations'] = inclinations
+        self.config['azimuths'] = azimuths
         
-        print('Inclinations: ', inclinations)
-        print('Azimuths: ', azimuths)
-            
+        for i, inc, azi in zip(range(numViews), inclinations, azimuths):
+            print(f'View {i}: Inclination = {inc:.2f} deg, Azimuth = {azi:.2f} deg')
+        
         properties['numViews'] = numViews
         properties['inclinations'] = inclinations
         properties['azimuths'] = azimuths
+        
         boxLength = self.boxLength * 10**3 # in pc
         properties['boxLength'] = boxLength
         properties['boxlength_in_arcsec'] = np.rad2deg(boxLength / (distance * 10**6)) * 3600 # in arcsec
         
         return properties
-    
+        
     def __create_ski(self):
         
         print('Creating .ski file.')
         
-        mode = self.__get_value('simulationMode', str)
+        mode = self.config['simulationMode']
         
         ski_file = os.path.join(self.dataDir,  f'ski_templates/{mode}_template.ski')
         
@@ -787,7 +732,7 @@ class PreProcess:
             voronoiMeshMediumInfo = data[idx_begin: idx_end]
             remainingInfo = data[idx_end:]
             
-            if self.__get_value('hydrodynamicSolver') == 'smoothParticle':
+            if self.config['hydrodynamicSolver'] == 'smoothParticle':
                 replace_str = '<ParticleMedium filename="dusts.txt" '
                 replace_str += 'massType="Mass" massFraction="0.3" '
                 replace_str += 'importMetallicity="true" importTemperature="true" '
@@ -801,7 +746,7 @@ class PreProcess:
                 replace_str += '</ParticleMedium>\n'
 
                 data = data.replace(voronoiMeshMediumInfo, replace_str)
-        
+                
         begin_str = '<cosmology'
         end_str = '</cosmology>'
         offset = len(end_str)
@@ -812,16 +757,16 @@ class PreProcess:
         cosmologyInfo = data[idx_begin: idx_end]
         remainingInfo = data[idx_end:]
         
-        if self.__get_value('inLocal'):
+        if self.config['inLocal']:
             replace_str = '<cosmology type="Cosmology">\n'
             replace_str += '<LocalUniverseCosmology/>\n'
             replace_str += '</cosmology>\n'
             
             data = data.replace(cosmologyInfo, replace_str)
         else:
-            data = data.replace('redshift="0.008"', f'redshift="{self.viewz}"')
-        
-        self.properties = self.__get_properties()
+            data = data.replace('redshift="0.008"', f'redshift="{self.viewRedshift}"')
+            
+        properties = self.__get_properties()
         
         SEDFamily = {'BC03': 'BruzualCharlotSEDFamily',
                      'FSPS': 'FSPSSEDFamily'}
@@ -840,38 +785,44 @@ class PreProcess:
         data = data.replace('BruzualCharlotSEDFamily', SEDFamily)
         data = data.replace('Chabrier', initialMassFunction)
         
-        numPackets = self.__get_value('numPackets', np.float32)
+        numPackets = np.float32(self.config['numPackets'])
         data = data.replace('numPackets="1e7"', f'numPackets="{numPackets}"')
         
-        if self.__get_value('inLocal'):
-            minWavelength = self.__get_value('minWavelength', np.float32)
-            maxWavelength = self.__get_value('maxWavelength', np.float32)
+        if self.config['inLocal']:
+            minWavelength = np.float32(self.config['minWavelength'])
+            maxWavelength = np.float32(self.config['maxWavelength'])
         else:
-            minWavelength = self.__get_value('minWavelength', np.float32) * (1 + self.viewz)
-            maxWavelength = self.__get_value('maxWavelength', np.float32) * (1 + self.viewz)
-        
+            minWavelength = np.float32(self.config['minWavelength']) * (1 + self.viewRedshift)
+            maxWavelength = np.float32(self.config['maxWavelength']) * (1 + self.viewRedshift)
+            
         data = data.replace('minWavelength="0.01 micron"', f'minWavelength="{minWavelength} micron"')
         data = data.replace('maxWavelength="1.2 micron"', f'maxWavelength="{maxWavelength} micron"')
         
-        self.properties['minWavelength'] = minWavelength # micron
-        self.properties['maxWavelength'] = maxWavelength # micron    
-
-        massFraction = self.__get_value('massFraction', np.float32)
+        print(minWavelength, maxWavelength)
+        
+        properties['minWavelength'] = minWavelength # micron
+        properties['maxWavelength'] = maxWavelength # micron
+        
+        massFraction = np.float32(self.config['massFraction'])
         data = data.replace('massFraction="0.3"', f'massFraction="{massFraction}"')
+        
         dustConfig = '<ZubkoDustMix numSilicateSizes="15" numGraphiteSizes="15" numPAHSizes="15"/>'
-        dustModel = self.__get_value('dustModel', str)
-        numSilicateSizes = self.__get_value('numSilicateSizes', np.int32)
-        numGraphiteSizes = self.__get_value('numGraphiteSizes', np.int32)
-        numPAHSizes = self.__get_value('numPAHSizes', np.int32)
-        numHydrocarbonSizes = self.__get_value('numHydrocarbonSizes', np.int32)
+        dustModel = self.config['dustModel']
+        
+        numSilicateSizes = np.int32(self.config['numSilicateSizes'])
+        numGraphiteSizes = np.int32(self.config['numGraphiteSizes'])
+        numPAHSizes = np.int32(self.config['numPAHSizes'])
+        numHydrocarbonSizes = np.int32(self.config['numHydrocarbonSizes'])
+        
         if dustModel == 'ThemisDustMix':
             dustConfigNew = f'<{dustModel} numHydrocarbonSizes="{numHydrocarbonSizes}" numSilicateSizes="{numSilicateSizes}"/>'
         else:
             dustConfigNew = f'<{dustModel} numSilicateSizes="{numSilicateSizes}" numGraphiteSizes="{numGraphiteSizes}" numPAHSizes="{numPAHSizes}"/>'
+            
         data = data.replace(dustConfig, dustConfigNew)
-
-        minLevel = self.__get_value('minLevel', np.int32)
-        maxLevel = self.__get_value('maxLevel', np.int32)
+        
+        minLevel = np.int32(self.config['minLevel'])
+        maxLevel = np.int32(self.config['maxLevel'])
         data = data.replace('minLevel="8"', f'minLevel="{minLevel}"')
         data = data.replace('maxLevel="12"', f'maxLevel="{maxLevel}"')
         
@@ -883,9 +834,9 @@ class PreProcess:
         data = data.replace('minZ="-5e4 pc"', f'minZ="{-spatialRange} pc"')
         data = data.replace('maxZ="5e4 pc"', f'maxZ="{spatialRange} pc"')
         
-        numWavelengths = self.__get_value('numWavelengths', np.int32)
+        numWavelengths = np.int32(self.config['numWavelengths'])
         data = data.replace('numWavelengths="1000"', f'numWavelengths="{numWavelengths}"')
-
+        
         begin_str = '<FullInstrument'
         end_str = '</FullInstrument>'
         offset = len(end_str)
@@ -898,12 +849,12 @@ class PreProcess:
         
         data = data.replace(instrumentInfo, '')
         
-        if self.__get_value('inLocal'):
-            distance = self.__get_value('viewDistance', np.float32)
+        if self.config['inLocal']:
+            distance = np.float32(self.config['viewDistance'])
         else:
-            distance = self.cosmology.luminosity_distance(self.viewz).value
+            distance = self.cosmology.luminosity_distance(self.viewRedshift).value
             
-        fieldOfView = self.__get_value('fieldOfView', np.float32) # in arcsec
+        fieldOfView = np.float32(self.config['fieldOfView']) # in arcsec
         
         if fieldOfView == 0: 
             fovSize = self.boxLength * 10**3 # in pc
@@ -911,10 +862,10 @@ class PreProcess:
         else:
             fovSize = distance * 10**6 * np.deg2rad(fieldOfView / 3600) # in pc
             
-        self.properties['fovSize'] = fovSize
-        self.properties['fieldOfView'] = fieldOfView
-            
-        if self.__get_value('outputSEDOnly'):
+        properties['fovSize'] = fovSize
+        properties['fieldOfView'] = fieldOfView
+        
+        if self.config['outputSEDOnly']:
             replace_str = '<SEDInstrument instrumentName="view" distance="0 Mpc" inclination="0 deg" azimuth="0 deg" '
             replace_str += 'roll="0 deg" radius="0 pc" recordComponents="false" numScatteringLevels="0" recordPolarization="false" recordStatistics="false">\n'
             replace_str += '<wavelengthGrid type="WavelengthGrid">\n'
@@ -929,18 +880,18 @@ class PreProcess:
             replace_str = replace_str.replace('radius="0 pc"', f'radius="{fovSize / 2} pc"')
             
             instrumentInfo = replace_str
-
+            
         instrumentInfo = '\n' + instrumentInfo + '\n'
-
-        spatialResol = self.properties['baseRes']
-        inclinations = self.properties['inclinations']
-        azimuths = self.properties['azimuths']
         
-        numViews = self.properties['numViews']
-
+        spatialResol = properties['baseRes']
+        inclinations = properties['inclinations']
+        azimuths = properties['azimuths']
+        
+        numViews = properties['numViews']
+        
         numPixels = int(fovSize / spatialResol)
-
-        recordComponents = 'true' if self.__get_value('recordComponents', bool) else 'false'
+        
+        recordComponents = 'true' if self.config['recordComponents'] else 'false'
         
         insert_begin_idx = idx_begin
         for i, (inclination, azimuth) in enumerate(zip(inclinations, azimuths)):
@@ -955,13 +906,13 @@ class PreProcess:
             
             data = data[:insert_begin_idx] + info
             insert_begin_idx = insert_begin_idx + len(info)
-
-        if self.__get_value('inLocal'):
+            
+        if self.config['inLocal']:
             data = data.replace('distance="0 Mpc"', f'distance="{distance} Mpc"')
 
         data = data + remainingInfo
         
-        wavelengthGrid = self.__get_value('wavelengthGrid', str)
+        wavelengthGrid = self.config['wavelengthGrid']
         grid_type = {'Linear': 'LinWavelengthGrid',
                 'Log': 'LogWavelengthGrid'}
         grid_type = grid_type[wavelengthGrid]
@@ -971,7 +922,7 @@ class PreProcess:
             file.write(data)
         
         with open(self.workingDir + '/properties.json', 'w') as file:
-            json.dump(self.properties, file, 
+            json.dump(properties, file, 
                       default=custom_serialier, indent=4)
 
         print('------estimate memory usage------')
@@ -985,85 +936,42 @@ class PreProcess:
         dataSize_in_GB = np.around(dataCubeSize * 8 * factor * 1e-9, 3)
         print(f'Estimated memory usage: {dataSize_in_GB} GB')
         
-    def __get_attributes(self, directory):
+    def __save_configs(self):
         
-        attributes = vars(self)
-        attr_keys = list(attributes.keys())
-        
-        config = attributes['config']
-        attr_keys.remove('config')
-        
-        for key in attr_keys:
-            if key in config.keys():
-                config[key] = attributes[key]
-
-        with open(os.path.join(directory, 'config.json'), 'w') as file:
-            json.dump(config, file, default=custom_serialier, indent=4)
-    
+        with open(self.workingDir + '/config.json', 'w') as file:
+            json.dump(self.config, file, default=custom_serialier, indent=4)
+            
     def prepare(self, data: Union[dict, NoneType]=None):
         
-        """
-        Prepare the SKIRT input files and SKIRT executable files.
-
-        Parameters
-        ----------
-        data : dict, optional
-            A dictionary for dynamical modification of parameters.
-            If provided, the method will update the instance's 
-            attributes with the values from this dictionary.
-        """
-        
-        if data:
+        if data is not None:
             exist_keys = self.config.keys()
             for key, value in data.items():
                 if key in exist_keys:
-                    setattr(self, key, value)
-            
-        os.makedirs(self.workingDir, exist_ok=True)
+                    self.config[key] = value
+                    
+        self.__init()
         self.__get_particles()
         self.__create_ski()
-        self.__get_attributes(self.workingDir)
-        
-        # return content
-        
+        self.__save_configs()
+                    
     def inputs(self, data: dict):
         
-        """
-        Inputs for custom hydrodynamical simulations.
-
-        Parameters
-        ----------
-        data : dict
-            A dictionary containing the following keys:
-                - subhaloNum (int): The number of subhalos retrieved
-                - subhaloIDs (np.ndarray, list): An array of IDs for the retrieved subhalos
-                - subhaloSFR (np.ndarray, list): An array of star formation rates for the retrieved subhalos
-                - units (list): A list of strings representing the units of the returned values
-        """
+        self.snapRedshift = data['snapRedshift']
+        self.a = 1 / (1 + self.snapRedshift)
+        self.cosmology = data['cosmology']
+        self.mass = data['stellarMass']
+        self.id = data['subhaloID']
+        self.boxLength = data['boxLength']
         
-        keys = data.keys()
-        
-        self.snapz = data['snapRedshift'] # include
-        self.a = 1 / (1 + self.snapz)
-        self.cosmology = data['cosmology'] # include
-        self.mass = data['stellarMass'] # include 
-        self.id = data['subhaloID'] # include
-        self.boxLength = data['boxLength'] # include
-        
-        keys.remove('snapRedshift')
-        keys.remove('cosmology')
-        keys.remove('stellarMass')
-        keys.remove('subhaloID')
-        keys.remove('boxLength')
-        
-        # reset attributes
-        for key in keys:
-            setattr(self, key, data[key])
+        exist_keys = self.config.keys()
+        for key, value in data.items():
+            if key in exist_keys:
+                self.config[key] = value
         
         mass_in_10 = np.log10(self.mass)
         
         print(f'Stellar Mass of Subhalo {self.id} is 10^{mass_in_10:.2f} [Msun]')
         
-        os.makedirs(self.workingDir, exist_ok=True)
+        self.__init()
         self.__create_ski()
-        self.__get_attributes(self.workingDir)
+        self.__save_configs()

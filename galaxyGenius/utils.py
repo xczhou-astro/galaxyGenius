@@ -71,9 +71,9 @@ def get_wavelength_scale(filename: str) -> float:
     return wavelength_scale
         
 
-def calc_pivot(survey: str, filter: str) -> float:
+def calc_pivot(dataDir: str, survey: str, filter: str) -> float:
     
-    filterDir = f'../Data/filters/{survey}'
+    filterDir = f'{dataDir}/filters/{survey}'
     filterLs = os.listdir(filterDir)
     filterNames = [name.split('.')[0] for name in filterLs]
     filename = filterLs[filterNames.index(filter)]
@@ -100,7 +100,7 @@ def copyfile(src: str, tar: str):
         shutil.copyfile(src, tar)
 
 def extend(values: Union[int, float, list], nums: int) -> list:
-    if isinstance(values, (int, float)):
+    if isinstance(values, (int, float, np.int32, np.int64, np.float32, np.float64)):
         values = [values] * nums
     else:
         values = values

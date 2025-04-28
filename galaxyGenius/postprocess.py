@@ -31,12 +31,18 @@ class PostProcess:
 
     def __init__(self, subhaloID: int, config: dict):
 
-        self.config = config
-        self.dataDir = self.config['dataDir']
         self.subhaloID = subhaloID
         self.dataCubeDir = f'dataCubes/Subhalo_{self.subhaloID}'
         self.properties = self.__get_properties()
+        self.config = self.__read_configs()
+        self.dataDir = self.config['dataDir']
         
+    def __read_configs(self):
+        
+        with open(self.dataCubeDir + '/config.json', 'r') as file:
+            config = json.load(file)
+            
+        return config
         
     def __get_properties(self) -> dict:
         path = os.path.join(self.dataCubeDir, 'properties.json')

@@ -10,10 +10,17 @@ class DataGeneration:
     
     def __init__(self, config: dict):
         
-        self.config = config
         self.workingDir = config['workingDir']
         self.properties = self.__get_properties()
+        self.config = self.__read_configs()
         
+    def __read_configs(self):
+        
+        with open(self.workingDir + '/config.json', 'r') as file:
+            config = json.load(file)
+            
+        return config
+            
     def __save_basics(self, directory: str):
         copyfile(os.path.join(self.workingDir, 'skirt_parameters.xml'),
                 os.path.join(directory, 'skirt_parameters.xml'))
@@ -55,15 +62,15 @@ class DataGeneration:
     def __check_files(self):
         
         if not os.path.exists(os.path.join(self.workingDir, 'stars.txt')):
-            print('stars.txt not found')
+            print('stars.txt not found.')
             sys.exit()
             
         if not os.path.exists(os.path.join(self.workingDir, 'starforming_regions.txt')):
-            print('starforming_regions.txt not found')
+            print('starforming_regions.txt not found.')
             sys.exit()
             
         if not os.path.exists(os.path.join(self.workingDir, 'dusts.txt')):
-            print('dusts.txt not found')
+            print('dusts.txt not found.')
             sys.exit()
         else:
             with open(os.path.join(self.workingDir, 'dusts.txt'), 'r') as file:
@@ -74,7 +81,7 @@ class DataGeneration:
             if self.config['hydrodynamicSolver'] == 'smoothParticle':
                 
                 if not 'smoothing length' in lines:
-                    print('Smoothing length must be provided for particle-based gas representation')
+                    print('Smoothing length must be provided for particle-based gas representation.')
                     sys.exit()
         
     def __run_skirt(self):

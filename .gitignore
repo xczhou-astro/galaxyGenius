@@ -9,3 +9,6 @@ docs/
 .readthedocs.yaml
 check_psf.ipynb
 PSF_plots/
+test/
+_templates/
+galaxyGenius/preprocess_bk.py

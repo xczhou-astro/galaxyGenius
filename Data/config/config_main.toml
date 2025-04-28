@@ -10,7 +10,7 @@ requests = false
 apiKey = "abcde"
 
 # simulation name
-simulation = "TNG100"
+simulation = "TNG100-1"
 
 # hydrodynamic solve, VoronoiMesh or smoothParticle for gas particles
 hydrodynamicSolver = "VoronoiMesh"
