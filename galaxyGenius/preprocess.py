@@ -17,12 +17,37 @@ import time
 class PartSmoothing():
     def __init__(self, position: np.ndarray, smoothLength: np.ndarray, 
                  mass: np.ndarray, subhaloPos: np.ndarray, a: float, h: float):
+        
+        '''
+        Store particles with smoothing lengths, convert to physical units without hubble parameter
+        
+        Args:
+            position: positions of particles
+            smoothLength: smoothing lengths of particles
+            mass: masses of particles
+            subhaloPos: positions of subhalos
+            a: scale factor
+            h: hubble parameter
+        '''
+        
         self.pos = position * a / h - subhaloPos
         self.smoothLength = smoothLength * a / h
         self.mass = mass * 10**10 / h
         
 class PartNoSmoothing():
     def __init__(self, position: np.ndarray, mass: np.ndarray, subhaloPos: np.ndarray, a: float, h: float):
+        
+        '''
+        Store particles without smoothing lengths, convert to physical units without hubble parameter
+        
+        Args:
+            position: positions of particles
+            mass: masses of particles
+            subhaloPos: positions of subhalos
+            a: scale factor
+            h: hubble parameter
+        '''
+        
         self.pos = position * a / h - subhaloPos
         self.mass = mass * 10**10 / h
         
@@ -140,6 +165,13 @@ class PreProcess:
     
     def get_subhalos(self) -> dict:
         
+        '''
+        Get subhalos with stellar masses between minStellarMass and maxStellarMass
+        
+        Returns:
+            subhalos: dictionary containing number of subhalos, subhaloIDs, subhaloSFRs
+        '''
+        
         minStellarMass = np.float32(self.config['minStellarMass'])
         maxStellarMass = np.float32(self.config['maxStellarMass'])
         
@@ -206,6 +238,13 @@ class PreProcess:
         return subhalos
     
     def subhalo(self, subhaloID: int):
+        
+        '''
+        Specify one subhalo to be processed
+        
+        Args:
+            subhaloID: subhaloID of the subhalo to be processed
+        '''
         
         if not self.config['requests']:
             idx = idx = list(self.subhaloIDs).index(subhaloID)
@@ -943,6 +982,13 @@ class PreProcess:
             
     def prepare(self, data: Union[dict, NoneType]=None):
         
+        '''
+        Prepare the data and ski file for simulation
+        
+        Args:
+            data: dictionary containing data to be used for the simulation
+        '''
+        
         if data is not None:
             exist_keys = self.config.keys()
             for key, value in data.items():
@@ -955,6 +1001,13 @@ class PreProcess:
         self.__save_configs()
                     
     def inputs(self, data: dict):
+        
+        '''
+        Input the data to create the ski file, used for simulations that are not TNG
+        
+        Args:
+            data: dictionary containing data to be used for the simulation
+        '''
         
         self.snapRedshift = data['snapRedshift']
         self.a = 1 / (1 + self.snapRedshift)

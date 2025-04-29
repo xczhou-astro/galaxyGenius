@@ -26,15 +26,20 @@ def u2temp(u_energy: float, x_e: float) -> float:
 
 def convert_to_rgb(bandpassImage: Union[np.ndarray, list], idx: list=[2, 3, 5]) -> np.ndarray:
     
-    # RGB -- long -> short wavelength
-
-    # bandpassImage = np.array(bandpassImage)
+    '''
+    Convert the bandpass image to RGB image
+    
+    Args:
+        bandpassImage: bandpass image
+        idx: index of the bandpass image used to create the RGB image
+        
+    Returns:
+        rgb: RGB image
+    '''
 
     img_red = bandpassImage[idx[2]]
     img_green = bandpassImage[idx[1]]
     img_blue = bandpassImage[idx[0]]
-    
-    
     
     pctl = 99.5
     maxv = 0
@@ -49,6 +54,18 @@ def convert_to_rgb(bandpassImage: Union[np.ndarray, list], idx: list=[2, 3, 5]) 
     return rgb
         
 def split(string: str, castType: Union[type, NoneType]=None) -> list:
+    
+    '''
+    Split the string into a list
+    
+    Args:
+        string: string to be split
+        castType: type of the elements in the list
+        
+    Returns:
+        splits: list of the split string
+    '''
+    
     splits = [inc for inc in "".join(string.split()).split(',')]
     if castType is not None:
         splits = [castType(sp) for sp in splits]
@@ -56,6 +73,17 @@ def split(string: str, castType: Union[type, NoneType]=None) -> list:
     return splits
 
 def get_wavelength_scale(filename: str) -> float:
+    
+    '''
+    Get the wavelength scale of the filter
+    
+    Args:
+        filename: filename of the filter
+        
+    Returns:
+        wavelength_scale: wavelength scale of the filter
+    '''
+    
     with open(filename) as file:
         header = file.readline()
         
@@ -72,6 +100,18 @@ def get_wavelength_scale(filename: str) -> float:
         
 
 def calc_pivot(dataDir: str, survey: str, filter: str) -> float:
+    
+    '''
+    Calculate the pivot wavelength of the filter
+    
+    Args:
+        dataDir: directory of the data
+        survey: survey name
+        filter: filter name
+        
+    Returns:
+        pivot: pivot wavelength of the filter
+    '''
     
     filterDir = f'{dataDir}/filters/{survey}'
     filterLs = os.listdir(filterDir)
@@ -100,6 +140,18 @@ def copyfile(src: str, tar: str):
         shutil.copyfile(src, tar)
 
 def extend(values: Union[int, float, list], nums: int) -> list:
+    
+    '''
+    Extend the values to list with size consistent with nums
+    
+    Args:
+        values: values to be extended
+        nums: number of values to be extended
+        
+    Returns:
+        values: extended values
+    '''
+    
     if isinstance(values, (int, float, np.int32, np.int64, np.float32, np.float64)):
         values = [values] * nums
     else:
@@ -109,6 +161,17 @@ def extend(values: Union[int, float, list], nums: int) -> list:
 
 
 def custom_serialier(obj):
+    
+    '''
+    Custom serializer for json dump
+    
+    Args:
+        obj: object to be serialized
+        
+    Returns:
+        obj: serialized object
+    '''
+    
     if isinstance(obj, (np.float32, np.float64)):
         return float(obj)
     elif isinstance(obj, (np.int32, np.int64)):
