@@ -972,7 +972,7 @@ class PreProcess:
         print(f'numWavelengthPixels: {numWavelengths}')
         
         factor = 7 if recordComponents == 'true' else 1
-        numPixels = np.float64(numPixels) # avoid overflow
+        numPixels = np.int64(numPixels) # avoid overflow
         dataCubeSize = np.int64(numPixels ** 2 * numWavelengths * numViews)
         dataSize_in_GB = np.around(dataCubeSize * 8 * factor * 1e-9, 3)
         print(f'Estimated memory usage: {dataSize_in_GB} GB')
