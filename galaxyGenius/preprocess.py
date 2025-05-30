@@ -837,7 +837,7 @@ class PreProcess:
         data = data.replace('minWavelength="0.01 micron"', f'minWavelength="{minWavelength} micron"')
         data = data.replace('maxWavelength="1.2 micron"', f'maxWavelength="{maxWavelength} micron"')
         
-        print(minWavelength, maxWavelength)
+        # print(minWavelength, maxWavelength)
         
         properties['minWavelength'] = minWavelength # micron
         properties['maxWavelength'] = maxWavelength # micron
@@ -875,6 +875,8 @@ class PreProcess:
         
         numWavelengths = np.int32(self.config['numWavelengths'])
         data = data.replace('numWavelengths="1000"', f'numWavelengths="{numWavelengths}"')
+        
+        properties['numWavelengths'] = numWavelengths
         
         begin_str = '<FullInstrument'
         end_str = '</FullInstrument>'
