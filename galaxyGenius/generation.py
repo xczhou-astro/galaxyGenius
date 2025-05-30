@@ -99,14 +99,20 @@ class DataGeneration:
         if numThreads > 24:
             numThreads = 24
         command = f'{executable} -t {numThreads} skirt.ski'
-        try:
-            result = subprocess.run(command, shell=True, check=True)
-        except subprocess.CalledProcessError:
+        
+        result = subprocess.run(command, shell=True, check=True)
+        
+        run_flag = 0
+        if result.returncode != 0:
             print('SKIRT exited with error.')
-            os.chdir(base)
-            sys.exit()
-
+            run_flag = 1
+            
         os.chdir(base)
+        
+        return run_flag
+    
+    def __exit(self):
+        sys.exit()
     
     def runSKIRT(self):
         
@@ -117,11 +123,13 @@ class DataGeneration:
         """
         
         self.__check_files()
-        self.__run_skirt()
-        self.__saveDataCube()
+        run_flag = self.__run_skirt()
+        if run_flag == 1:
+            return self.__exit()
+        else:
+            self.__saveDataCube()
+            
+            print('Cleaning up working directory')
+            rmtree(self.workingDir)
         
-        print('Cleaning up working directory')
-        rmtree(self.workingDir)
-    
-    
-        
+            return 0

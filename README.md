@@ -22,6 +22,9 @@ Created using default parameters for `make_rgb` in Astropy
 
 ## Updates  
 
+- 2025-05-30
+1. Add return code for `runSKIRT` in `generation.py`.  
+
 - 2025-04-28  
 1. Add support for viewRedshift  
 2. Bug fixes  
