@@ -455,23 +455,22 @@ class Configuration:
         
         self.flag_count = 0
         
-        skirtPATH = self.__exist_return('skirtPath')
-        if skirtPATH == 'PATH':
-            sys_paths = os.environ['PATH'].split(':')
-            for path in sys_paths:
-                if 'SKIRT' in path:
-                    skirtPATH = path
-                    break
+        # skirtPATH = self.__exist_return('skirtPath')
+        # if skirtPATH == 'PATH':
+        #     sys_paths = os.environ['PATH'].split(':')
+        #     for path in sys_paths:
+        #         if 'SKIRT' in path:
+        #             skirtPATH = path
+        #             break
                 
-            if skirtPATH == 'PATH':
-                self.__issue('SKIRT not found in PATH. Please edit ~/.bashrc or provide the absolute path of SKIRT.')
-                self.flag_count += 1
+        #     if skirtPATH == 'PATH':
+        #         self.__issue('SKIRT not found in PATH. Please edit ~/.bashrc or provide the absolute path of SKIRT.')
+        #         self.flag_count += 1
 
-        executable = os.path.join(skirtPATH, 'skirt')
-        if not os.path.exists(executable):
-            self.__issue('SKIRT executable not found. SKIRT is not installed correctly.')
-            self.flag_count += 1
-            
+        # executable = os.path.join(skirtPATH, 'skirt')
+        # if not os.path.exists(executable):
+        #     self.__issue('SKIRT executable not found. SKIRT is not installed correctly.')
+        #     self.flag_count += 1
             
         simName = self.__exist_return('simulation')
         
