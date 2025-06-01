@@ -89,16 +89,16 @@ class DataGeneration:
         print('Subhalo ID: ', self.properties['subhaloID'])
         
         base = os.getcwd()
-        if self.config['skirtPath'] == 'PATH':
-            executable = 'skirt'
-        else:
-            executable = self.config['skirtPath']
+        # if self.config['skirtPath'] == 'PATH':
+        #     executable = 'skirt'
+        # else:
+        #     executable = self.config['skirtPath']
         
         os.chdir(self.workingDir)
         numThreads = int(self.config['numThreads'])
         if numThreads > 24:
             numThreads = 24
-        command = f'{executable} -t {numThreads} skirt.ski'
+        command = f'skirt -t {numThreads} skirt.ski'
         
         result = subprocess.run(command, shell=True, check=True)
         
