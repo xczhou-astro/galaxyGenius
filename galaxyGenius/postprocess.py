@@ -208,7 +208,7 @@ class PostProcess:
             exposureTime = np.array(bkgNoise['exposureTime'])
             numExposure = np.array(bkgNoise['numExposure'])
             
-            if bkgNoise['noiseType'] == 'Gaussian':
+            if bkgNoise['noiseType'] == 'instrument':
                 std = np.sqrt((skyBkg + darkCurrent)*exposureTime*numExposure + readOut**2*numExposure)
                 images_with_bkg = []
                 for i, img in enumerate(bandpass_images):

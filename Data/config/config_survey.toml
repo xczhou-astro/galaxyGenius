@@ -32,13 +32,22 @@ PSFFWHM = 0
 # if include background
 includeBkg = true
 
-# if add background as Gaussian distribution
-gaussianNoise = false
+# By which parameters noise levels are calculated, can be instrument or limitingMagnitude
+noiseType = "instrument"
 
-# required instrumental parameters for background
+# required parameters to calculate noise level, for noiseType is instrument
 skyBkg = [0.0042, 0.0317, 0.2803, 0.3591, 0.3708, 0.2168, 0.0638]
 darkCurrent = 0.02
 readOut = 5
+
+# required parameters to calculate noise level, for noiseType is limitingMagnitude
+# limitMag, limitSNR, limitAperture and zeroPoint are the limiting magnitdudes,
+# corresponding SNR, aperture size for photometry and zeroPoint respectively.
+# Note that the limitAperture is in arcsec, commonly as 2 or 3 arcsec. 
+limitMag = 24
+limitSNR = 5
+limitAperture = 2
+zeroPoint = 0
 
 # display options
 imgDisplay = true
