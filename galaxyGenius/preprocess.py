@@ -111,20 +111,31 @@ class PreProcess:
         Raises:
             SystemExit if all retries fail
         """
+        
+        start_time = time.time()
+        content = None
+        
         for attempt in range(max_retries):
             try:
                 response = requests.get(url, headers=headers, params=params)
                 response.raise_for_status()  # Raises an HTTPError for bad responses
-                return response
+                content = response
             except requests.exceptions.RequestException as e:
                 if attempt == max_retries - 1:  # Last attempt
                     print(f"Error: Failed to make request after {max_retries} attempts.")
                     print(f"URL: {url}")
                     print(f"Error message: {str(e)}")
-                    sys.exit(1)
                 else:
                     print(f"Request failed (attempt {attempt + 1}/{max_retries}). Retrying...")
                     time.sleep(2 ** attempt)  # Exponential backoff        
+                    
+        end_time = time.time()
+        print(f"Requesting time taken: {end_time - start_time:.2f} seconds")
+        
+        if content is None:
+            sys.exit(1)
+        
+        return content
                     
     def __read_subhalos(self) -> dict:
         snap_subhalos = ill.groupcat.loadSubhalos(self.config['TNGPath'], self.config['snapNum'])
