@@ -73,6 +73,9 @@ initialMassFunction = "Chabrier"
 minStellarMass = 1e10
 maxStellarMass = inf
 
+# morphological estimation for the galaxy is either a spiral or other types
+estimateMorph = false
+
 # if use face-on and edge-on angles derived by angular momentum
 faceAndEdge = true
 

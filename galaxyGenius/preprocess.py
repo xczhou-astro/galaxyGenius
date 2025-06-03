@@ -733,6 +733,11 @@ class PreProcess:
         azimuths = self.config['azimuths']
         numViews = np.int32(self.config['numViews'])
         
+        estimateMorph = self.config['estimateMorph']
+        if estimateMorph:
+            galmorph = self.__estimate_morphology()
+            properties['morph'] = galmorph
+        
         if faceAndEdge:
             inclinations, azimuths = self.__calculate_angular_momentum_and_angles()
             numViews = 2
@@ -992,6 +997,86 @@ class PreProcess:
         
         with open(self.workingDir + '/config.json', 'w') as file:
             json.dump(self.config, file, default=custom_serialier, indent=4)
+            
+    def __estimate_morphology(self):
+    
+        '''
+        Estimate the morphology of the galaxy by the S/T ratio.
+        see https://arxiv.org/pdf/1904.12860, https://arxiv.org/pdf/2407.19152
+        and https://www.tng-project.org/data/docs/specifications/#sec5c for more details.
+        
+        Returns:
+            gal: 'spiral' or 'nonspiral'
+        '''
+        
+        stars = np.loadtxt(self.workingDir + '/stars.txt')
+        
+        headers = []
+        with open(self.workingDir + '/stars.txt', 'r') as f:
+            for line in f:
+                if line.startswith('# Column'):
+                    headers.append(line)
+                    
+        idx_coords = []
+        idx_vels = []
+        idx_masses = []
+                    
+        for i, header in enumerate(headers):
+            if 'coordinates' in header.lower():
+                idx_coords.append(i)
+            elif 'velocity' in header.lower():
+                idx_vels.append(i)
+            elif 'Mass' in header:
+                idx_masses.append(i)
+                
+        positions = stars[:, idx_coords]
+        velocities = stars[:, idx_vels]
+        masses = stars[:, idx_masses]
+        
+        offset = self.subhaloPos
+        radius = self.radius
+        
+        boxsize = 3 * radius
+        
+        mask = np.where((np.abs(positions[:, 0]) < boxsize) \
+                    & (np.abs(positions[:, 1]) < boxsize) \
+                    & (np.abs(positions[:, 2]) < boxsize))[0]
+        
+        positions = positions[mask] + offset # original positions
+        velocities = velocities[mask]
+        masses = masses[mask].reshape(-1, 1)
+
+        mass_center = np.sum(masses * positions, axis=0) / np.sum(masses)
+        vel_center = np.sum(velocities * masses, axis=0) / np.sum(masses)
+        
+        dpos = positions - mass_center
+        dvel = velocities - vel_center
+        
+        J3d_star = np.cross(dpos * masses, dvel)
+        J_total = J3d_star.sum(axis=0)
+        n_rotate = J_total / np.linalg.norm(J_total, keepdims=True, axis=-1)
+        
+        J_star = np.linalg.norm(J3d_star, axis=1)
+        Jz_star = np.abs(J3d_star@n_rotate)
+        
+        disk_mask = J_star > 0
+        disk_mask[disk_mask] = (Jz_star[disk_mask] / J_star[disk_mask]) > 0.7
+        disk_mass = np.sum(masses[:, 0] * disk_mask)
+        total_mass = np.sum(masses)
+        sph_mass = total_mass - disk_mass
+        
+        S_T_ratio = sph_mass / total_mass
+        
+        print(f'S/T ratio: {S_T_ratio:.2f}')
+        if S_T_ratio < 0.5:
+            print('This galaxy is probably a spiral one.')
+            gal = 'spiral'
+        else:
+            print('This galaxy is probably not a spiral one.')
+            gal = 'nonspiral'
+
+        return gal
+        
             
     def prepare(self, data: Union[dict, NoneType]=None):
         
