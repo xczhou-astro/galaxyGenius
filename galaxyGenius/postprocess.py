@@ -134,6 +134,7 @@ class PostProcess:
 
         ps_in_sr = self.properties[f'ps_in_sr_{survey}']
         interpolate_ratios = self.properties[f'ratios_{survey}']
+        pixelScales = self.properties[f'angleRes_{survey}']
 
         numfils = len(throughputs)
 
@@ -142,6 +143,7 @@ class PostProcess:
         waves = []
         factors = []
         conversion_to_Jy = []
+        gains = []
         for i, thr in enumerate(throughputs):
             wave_min = np.min(thr[:, 0])
             wave_max = np.max(thr[:, 0])
@@ -154,7 +156,8 @@ class PostProcess:
                         * numExp[i] * (exposureTime[i] * u.s) * (areaMirror * u.m**2) / (const.c * const.h) * u.angstrom**2
             converter = converter.to(u.sr ** -1)
             converter = converter.value
-
+            gain = (const.c * const.h) / (areaMirror * u.m**2 * trapezoid(trans_in * wave_in, wave_in) * u.angstrom**2) 
+            gains.append(gain)
             image_arrs.append(image_arr)
             trans.append(trans_in)
             waves.append(wave_in)
@@ -178,7 +181,6 @@ class PostProcess:
         # bandpass_images = Parallel(n_jobs=numfils, prefer='threads')(delayed(self.__calculate_bandpass)(img, tran, wave, factor)
         #                                            for img, tran, wave, factor in zip(image_arrs, trans, waves, factors))
         
-
         resized_imgs = []
         for i, ratio in enumerate(interpolate_ratios):
             resized_imgs.append(rescale(bandpass_images[i], ratio))
@@ -200,25 +202,20 @@ class PostProcess:
             
             bandpass_images = images_with_psf
 
-        # add instrumental noise 
+        # add instrumental noise
         if bkgNoise is not None:
-            skyBkg = np.array(bkgNoise['skyBkg'])
-            darkCurrent = np.array(bkgNoise['darkCurrent'])
-            readOut = np.array(bkgNoise['readOut'])
-            exposureTime = np.array(bkgNoise['exposureTime'])
-            numExposure = np.array(bkgNoise['numExposure'])
             
             if bkgNoise['noiseType'] == 'instrument':
-                std = np.sqrt((skyBkg + darkCurrent)*exposureTime*numExposure + readOut**2*numExposure)
-                images_with_bkg = []
+                
+                skyBkg = np.array(bkgNoise['skyBkg'])
+                darkCurrent = np.array(bkgNoise['darkCurrent'])
+                readOut = np.array(bkgNoise['readOut'])
+                exposureTime = np.array(bkgNoise['exposureTime'])
+                numExposure = np.array(bkgNoise['numExposure'])
+
+                images_with_bkg_in_electron = []
                 for i, img in enumerate(bandpass_images):
-                    noise = np.random.normal(loc=0, scale=std[i], size=img.shape)
-                    images_with_bkg.append(img + noise)
-                    
-            elif bkgNoise['noiseType'] == 'Poisson':
-                images_with_bkg = []
-                for i, img in enumerate(bandpass_images):
-                    mean = (skyBkg[i] + darkCurrent[i])*exposureTime[i]*numExposure[i]
+                    mean = (skyBkg[i] + darkCurrent[i]) * exposureTime[i] * numExposure[i]
                     img = img + mean
                     img = np.random.poisson(img).astype(np.int32)
                     for _ in range(numExposure[i]):
@@ -226,23 +223,52 @@ class PostProcess:
                         readnoise = np.around(readnoise, 0).astype(np.int32)
                         img = img + readnoise
                     img = img.astype(np.float32) - mean.astype(np.float32)
-                    images_with_bkg.append(img)
+                    images_with_bkg_in_electron.append(img)
+                    
+                if self.config['imageUnit'] == 'electron':
+                    images_with_bkg = images_with_bkg_in_electron
+                elif self.config['imageUnit'] == 'flux':
+                    images_with_bkg = []
+                    for i, img in enumerate(images_with_bkg_in_electron):
+                        img = img * conversion_to_Jy[i]
+                        images_with_bkg.append(img)
             
-            bandpass_images = images_with_bkg
+            elif bkgNoise['noiseType'] == 'limitingMagnitude':
                 
-        # bandpass_images = bandpass_images
-
-        if self.config['imageUnit'] == 'electron':
-            images_in_unit = bandpass_images
-        elif self.config['imageUnit'] == 'flux':
-            images_in_unit = []
-            for i, img in enumerate(bandpass_images):
-                img = img * conversion_to_Jy[i]
-                images_in_unit.append(img)
+                limitMag = np.array(bkgNoise['limitMag'])
+                limitSNR = np.array(bkgNoise['limitSNR'])
+                limitAperture = np.array(bkgNoise['limitAperture'])
+                zeroPoint = np.array(bkgNoise['zeroPoint'])
+                exposureTime = np.array(bkgNoise['exposureTime'])
+                numExposure = np.array(bkgNoise['numExposure'])
+                
+                npix = (np.pi * (limitAperture / 2)**2) / (pixelScales**2)
+                
+                images_with_bkg_in_Jy = []
+                for i, img in enumerate(bandpass_images):
+                    img_in_Jy = img * conversion_to_Jy[i] * u.Jy
+                    first_term = (gains[i] * img_in_Jy / (numExposure[i] * exposureTime[i] * u.s))
+                    second_term = ((1 / limitSNR[i]) * 10**((zeroPoint[i] - limitMag[i]) / 2.5) * u.Jy)**2 * (1 / npix[i])
+                    third_term = (gains[i] / (numExposure[i] * exposureTime[i] * u.s * npix[i])) * 10**((zeroPoint[i] - limitMag[i]) / 2.5) * u.Jy
+                    
+                    first_term = first_term.to(u.Jy**2).value
+                    second_term = second_term.to(u.Jy**2).value
+                    third_term = third_term.to(u.Jy**2).value
+                    
+                    noise = np.sqrt(first_term + second_term + third_term) # in Jy
+                    noises = np.random.normal(loc=0, scale=noise, size=img.shape)
+                    images_with_bkg_in_Jy.append(img + noises)
+                    
+                if self.config['imageUnit'] == 'electron':
+                    images_with_bkg = []
+                    for i, img in enumerate(images_with_bkg_in_Jy):
+                        img = img / conversion_to_Jy[i]
+                        images_with_bkg.append(img)
+                        
+                elif self.config['imageUnit'] == 'flux':
+                    images_with_bkg = images_with_bkg_in_Jy
         
-        self.conversion_to_Jy = conversion_to_Jy
-        
-        return images_in_unit
+        return images_with_bkg
 
             
     def __saveBandpassImages(self, images: list, survey: str):
@@ -486,24 +512,42 @@ class PostProcess:
                     if self.config[f'includeBkg_{survey}']:
                         
                         bkgNoise = {}
-                        skyBkg = self.config[f'skyBkg_{survey}']
-                        darkCurrent = self.config[f'darkCurrent_{survey}']
-                        readOut = self.config[f'readOut_{survey}']
                         
-                        skyBkg = extend(skyBkg, len(filters))
-                        darkCurrent = extend(darkCurrent, len(filters))
-                        readOut = extend(readOut, len(filters))
+                        if self.config[f'noiseType_{survey}'] == 'instrument':
                         
-                        bkgNoise = {'skyBkg': skyBkg,
-                                    'darkCurrent': darkCurrent,
-                                    'readOut': readOut, 
-                                    'exposureTime': self.properties[f'exposureTime_{survey}'],
-                                    'numExposure': self.properties[f'numExposure_{survey}']}
+                            skyBkg = self.config[f'skyBkg_{survey}']
+                            darkCurrent = self.config[f'darkCurrent_{survey}']
+                            readOut = self.config[f'readOut_{survey}']
+                            
+                            skyBkg = extend(skyBkg, len(filters))
+                            darkCurrent = extend(darkCurrent, len(filters))
+                            readOut = extend(readOut, len(filters))
+                            
+                            bkgNoise = {'noiseType': 'instrument',
+                                        'skyBkg': skyBkg,
+                                        'darkCurrent': darkCurrent,
+                                        'readOut': readOut, 
+                                        'exposureTime': self.properties[f'exposureTime_{survey}'],
+                                        'numExposure': self.properties[f'numExposure_{survey}']}
                         
-                        if self.config[f'gaussianNoise_{survey}']:
-                            bkgNoise['noiseType'] = 'Gaussian'
-                        else:
-                            bkgNoise['noiseType'] = 'Poisson'                        
+                        elif self.config[f'noiseType_{survey}'] == 'limitingMagnitude':
+                            limitMag = self.config[f'limitMag_{survey}']
+                            limitSNR = self.config[f'limitSNR_{survey}']
+                            limitAperture = self.config[f'limitAperture_{survey}']
+                            zeroPoint = self.config[f'zeroPoint_{survey}']
+                            
+                            limitMag = extend(limitMag, len(filters))
+                            limitSNR = extend(limitSNR, len(filters))
+                            limitAperture = extend(limitAperture, len(filters))
+                            zeroPoint = extend(zeroPoint, len(filters))
+                            
+                            bkgNoise = {'noiseType': 'limitingMagnitude',
+                                        'limitMag': limitMag,
+                                        'limitSNR': limitSNR,
+                                        'limitAperture': limitAperture,
+                                        'zeroPoint': zeroPoint, 
+                                        'exposureTime': self.properties[f'exposureTime_{survey}'],
+                                        'numExposure': self.properties[f'numExposure_{survey}']}                   
 
                     images = []
                     for i in range(self.properties['numViews']):
