@@ -31,13 +31,13 @@ subhaloIDs = subhalos['subhaloIDs']
 for i, ID in enumerate(subhaloIDs):
     
     # Dynamically modify the config for each subhalo
-    data = {}
-    data['faceAndEdge'] = False
-    data['numViews'] = 2
-    data['randomViews'] = True
+    arguments = {}
+    arguments['faceAndEdge'] = False
+    arguments['numViews'] = 2
+    arguments['randomViews'] = True
     
     preprocess.subhalo(ID)
-    preprocess.prepare(data)
+    preprocess.prepare(arguments)
     # The modifications for config will be recorded and saved
     
     dataGeneration = DataGeneration(config=conf)

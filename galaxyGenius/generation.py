@@ -117,10 +117,16 @@ class DataGeneration:
     
     def runSKIRT(self, skirtPath: Union[str, NoneType]=None):
         
-        """
-        This method runs the SKIRT radiative transfer simulation using the 
-        configuration specified in the working directory. After execution, 
-        it saves the resulting data cubes and cleans up the working directory.
+        """Run SKIRT radiative transfer simulation.
+
+        This method executes the SKIRT radiative transfer simulation using the configured parameters.
+        It checks required files, runs SKIRT, saves the output data cube, and cleans up temporary files.
+
+        Args:
+            skirtPath (str, optional): Path to SKIRT executable. If None, assumes 'skirt' is in PATH.
+
+        Returns:
+            int: 0 if successful, exits with error otherwise.
         """
         
         self.__check_files()

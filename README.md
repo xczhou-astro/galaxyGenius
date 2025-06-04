@@ -23,7 +23,7 @@ Created using default parameters for `make_rgb` in Astropy
 ## Updates  
 - 2025-06-03  
 1. Add support for deriving noise level from limiting magnitudes.  
-2. Add support for estimating if galaxy is a spiral or not.  
+2. Add support for estimating if galaxy is a spiral or not (Please use with caution).  
 
 - 2025-05-30  
 1. Add return code for `runSKIRT` in `generation.py`.  

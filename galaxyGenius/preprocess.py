@@ -177,7 +177,7 @@ class PreProcess:
     def get_subhalos(self) -> dict:
         
         '''
-        Get subhalos with stellar masses between minStellarMass and maxStellarMass
+        Get subhalos
         
         Returns:
             subhalos: dictionary containing number of subhalos, subhaloIDs, subhaloSFRs
@@ -1080,18 +1080,18 @@ class PreProcess:
         return gal
         
             
-    def prepare(self, data: Union[dict, NoneType]=None):
+    def prepare(self, arguments: Union[dict, NoneType]=None):
         
         '''
         Prepare the data and ski file for simulation
         
         Args:
-            data: dictionary containing data to be used for the simulation
+            arguments: dictionary containing modifications for configurations to be used for the simulation
         '''
         
-        if data is not None:
+        if arguments is not None:
             exist_keys = self.config.keys()
-            for key, value in data.items():
+            for key, value in arguments.items():
                 if key in exist_keys:
                     self.config[key] = value
                     
