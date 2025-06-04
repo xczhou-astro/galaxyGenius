@@ -20,6 +20,7 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.intersphinx',
     'sphinx.ext.mathjax',
+    'sphinx_autodoc_typehints',
 ]
 
 templates_path = ['_templates']
@@ -63,4 +64,16 @@ autodoc_default_options = {
     'special-members': '__init__',
     'undoc-members': True,
     'exclude-members': '__weakref__'
-} 
+}
+
+# Type hints settings
+typehints_fully_qualified = False
+typehints_document_rtype = True
+typehints_use_rtype = False
+typehints_defaults = 'comma'
+typehints_use_signature = True
+typehints_use_signature_return = True
+typehints_use_union = True
+typehints_use_type_aliases = True
+typehints_use_numpy = True
+typehints_use_astropy = True 

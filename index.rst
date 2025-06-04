@@ -6,7 +6,7 @@ Welcome to galaxyGenius's documentation!
    :caption: Contents:
 
    configuration
-   classes
+   api
 
 Indices and tables
 ==================
