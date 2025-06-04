@@ -79,8 +79,6 @@
 <section id="main-config">
 <h2>Main config<a class="headerlink" href="#main-config" title="Link to this heading"></a></h2>
 <dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">skirtPATH</span></code> (str):</dt><dd><p>PATH for SKIRT executable. Give “PATH” if set in .bashrc, else provide absolute path</p>
-</dd>
 <dt><code class="docutils literal notranslate"><span class="pre">requests</span></code> (bool):</dt><dd><p>Whether to use Web-based API to retrieve data.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">apiKey</span></code> (str):</dt><dd><p>API key for IllustrisTNG, required if <code class="docutils literal notranslate"><span class="pre">requests</span></code> is True.</p>
@@ -125,6 +123,8 @@
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">minStellarMass</span></code>, <code class="docutils literal notranslate"><span class="pre">maxStellarMass</span></code> (float):</dt><dd><p>Stellar mass range for subhalos in Msun, inf for infinite.</p>
 </dd>
+<dt><code class="docutils literal notranslate"><span class="pre">estimateMorph</span></code> (bool):</dt><dd><p>Estimate the morphology of current galaxy using S/T ratios, either a spiral or non-spiral.</p>
+</dd>
 <dt><code class="docutils literal notranslate"><span class="pre">faceAndEdge</span></code> (bool):</dt><dd><p>Whether to use face-on and edge-on angles derived by angular momentum.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">numViews</span></code> (int):</dt><dd><p>Number of instrument views.</p>
@@ -145,9 +145,15 @@
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">displaySEDxlogscale</span></code> (bool):</dt><dd><p>Whether to display SED in logscale for wavelength.</p>
 </dd>
+<dt><code class="docutils literal notranslate"><span class="pre">outputSEDOnly</span></code> (bool):</dt><dd><p>If only output SED.</p>
+</dd>
 <dt><code class="docutils literal notranslate"><span class="pre">snapNum</span></code> (int):</dt><dd><p>Snapshot ID.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">snapRedshift</span></code> (float):</dt><dd><p>Snapshot redshift of Snapshot with ID.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">viewRedshift</span></code> (float):</dt><dd><p>viewing redshift, should be close to snapRedshift.
+For generating galaxies at continous redshift with a small offset on snapRedshift.
+For example, viewRedshift can be 0.105 for snapshot-91 at 0.1.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">inLocal</span></code> (bool):</dt><dd><p>if use local cosmology.</p>
 </dd>
@@ -206,13 +212,23 @@ Memory cosumptions will be 7 times if True.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">includeBkg</span></code> (bool):</dt><dd><p>Whether to include background.</p>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">gaussianNoise</span></code> (bool):</dt><dd><p>Whether to add background as Gaussian distribution, otherwise as Poisson distribution.</p>
+<dt><code class="docutils literal notranslate"><span class="pre">noiseType</span></code> (str):</dt><dd><p>By what parameters noise levels are calculated, can be instrument or limitingMagnitude.
+For noiseType == instrument, skyBkg, darkCurrent, readOut are required.
+For noiseType == limitingMagnitude, limitMag, limitSNR, limitAperture and zeroPoint are required.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">skyBkg</span></code> (list):</dt><dd><p>Background level for considered filters. Please refer to notebook <a class="reference external" href="https://github.com/xczhou-astro/galaxyGenius/blob/main/Bkg/calc_sky_bkg.ipynb">calc_sky_bkg.ipynb</a> for calculating skyBkg.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">darkCurrent</span></code> (float, list):</dt><dd><p>Dark current.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">readOut</span></code> (float, list):</dt><dd><p>Readout noise.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">limitMag</span></code> (float, list):</dt><dd><p>limiting magnitudes.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">limitSNR</span></code> (float, list):</dt><dd><p>SNR for the limiting magnitude.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">limitAperture</span></code> (float, list):</dt><dd><p>The aperture used to measure the limiting magnitude, in arcsec.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">zeroPoint</span></code> (float):</dt><dd><p>Zero point for magnitude system.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">imgDisplay</span></code> (bool):</dt><dd><p>Whether to display image.</p>
 </dd>
