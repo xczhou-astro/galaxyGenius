@@ -47,7 +47,7 @@ readOut = 5
 limitMag = 24
 limitSNR = 5
 limitAperture = 2
-zeroPoint = 0
+zeroPoint = 8.9
 
 # display options
 imgDisplay = true

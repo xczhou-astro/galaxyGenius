@@ -157,7 +157,7 @@ class PostProcess:
                         * numExp[i] * (exposureTime[i] * u.s) * (areaMirror * u.m**2) / (const.c * const.h) * u.angstrom**2
             converter = converter.to(u.sr ** -1)
             converter = converter.value
-            gain = (const.c * const.h) / (areaMirror * u.m**2 * trapezoid(trans_in * wave_in, wave_in) * u.angstrom**2) 
+            gain = const.h / (areaMirror * u.m**2 * trapezoid(trans_in / wave_in, wave_in))
             gains.append(gain)
             image_arrs.append(image_arr)
             trans.append(trans_in)
@@ -249,10 +249,12 @@ class PostProcess:
                 images_with_bkg_in_Jy = []
                 for i, img in enumerate(bandpass_images):
                     img_in_Jy = img * conversion_to_Jy[i]
-                    first_term = (gains[i] * img_in_Jy * u.Jy * pivots[i]**2 * u.angstrom**2) / (numExposure[i] * exposureTime[i] * u.s * const.c)
+                    first_term = (gains[i] * img_in_Jy * u.Jy) / (numExposure[i] * exposureTime[i] * u.s)
+                    # first_term = (gains[i] * img_in_Jy * u.Jy * pivots[i]**2 * u.angstrom**2) / (numExposure[i] * exposureTime[i] * u.s * const.c)
                     second_term = ((1 / limitSNR[i]) * 10**((zeroPoint[i] - limitMag[i]) / 2.5) * u.Jy)**2 * (1 / npix[i])
-                    third_term = (gains[i] * pivots[i]**2 * u.angstrom**2) / (numExposure[i] * exposureTime[i] * u.s * const.c * npix[i]) \
-                        * 10**((zeroPoint[i] - limitMag[i]) / 2.5) * u.Jy
+                    third_term = (gains[i]) / (numExposure[i] * exposureTime[i] * u.s * npix[i]) * 10**((zeroPoint[i] - limitMag[i]) / 2.5) * u.Jy
+                    # third_term = (gains[i] * pivots[i]**2 * u.angstrom**2) / (numExposure[i] * exposureTime[i] * u.s * const.c * npix[i]) \
+                    #     * 10**((zeroPoint[i] - limitMag[i]) / 2.5) * u.Jy
                     
                     total = (first_term + second_term - third_term).to(u.Jy**2).value
                     
