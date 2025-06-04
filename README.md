@@ -29,22 +29,22 @@ Created using default parameters for `make_rgb` in Astropy
 1. Add return code for `runSKIRT` in `generation.py`.  
 
 - 2025-04-28  
-1. Add support for viewRedshift  
-2. Bug fixes  
+1. Add support for viewRedshift.  
+2. Bug several fixes.  
 
 - 2025-04-22:   
-1. Add support for local cosmology, and view distance for instrument  
-2. Add check for hydrodynamic solver: VoronoiMesh (TNG) and smoothParticle (EAGLE)  
-3. Replace ExtinctionOnly simulation mode to NoMedium  
-4. Add support for field of view instead of setting it equal boxlength  
-5. Add support for only output SEDs  
+1. Add support for local cosmology, and view distance for instrument.  
+2. Add check for hydrodynamic solver: VoronoiMesh (TNG) and smoothParticle (EAGLE).  
+3. Replace ExtinctionOnly simulation mode to NoMedium.  
+4. Add support for field of view instead of setting it equal boxlength.  
+5. Add support for only output SEDs.  
 
 - 2025-02-20:  
 1. Add check and retry features for requests to handle failure of Web-based API.  
 
 ## Dependence
 Python verison:  
-`python==3.11.10`  
+`python>=3.11`  
 
 Python packages:
 `tomlkit==0.13.2`  
@@ -58,6 +58,7 @@ Python packages:
 `h5py==3.9.0` ⚠️  
 `termcolor==2.4.0`  
 `photutils==2.0.2`  
+`requests==2.32.3`  
 
 ⚠️: Package versions should strictly match, otherwise there may be compatibility issues.
 
@@ -68,7 +69,7 @@ Other packages:
 A new Python environment is recommended  
 
 ```Python
-conda create -n galaxyGenius python=3.11.10  
+conda create -n galaxyGenius python=3.11  
 
 conda activate galaxyGenius  
 
@@ -98,7 +99,7 @@ export GALAXYGENIUS_DATA_DIR=/path/to/Data
         ├── offsets_N.hdf5  
         └── ...  
 ```
-We also implement [Web-based API](https://www.tng-project.org/data/docs/api/) in `galaxyGenius`, therefore, users do not need to download the large snapshots and groups files. This feature can be activated by setting `requests=true` and provide users' own `apiKey` in config. However, the generation speed will be slower and depends on the network speed.  
+We also implement [Web-based API](https://www.tng-project.org/data/docs/api/) in `galaxyGenius`, therefore, users do not need to download the large snapshots and groups files. This feature can be activated by setting `requests=true` and provide users' `apiKey` in config. However, the generation speed will be slower and depends on the network speed.  
 
 ## Filters and PSFs
 Filter throughputs and PSFs of specific surveys are saved in `Data/filters/(survey)` and `Data/PSFs/(survey)` directories.  
@@ -157,9 +158,9 @@ for i, ID in enumerate(subhaloIDs):
     preprocess.prepare(data) # prepare for simulation, including retrieving particles and creating .ski file
 
     dataGeneration = DataGeneration(config=conf) # initialize DataGeneration class
-    dataGeneration.runSKIRT() # run SKIRT
+    dataGeneration.runSKIRT(skirtPATh='path/to/skirt') # run SKIRT, skirtPATH=None if skirt is in environment
 
-    postprocess = PostProcess(subhaloID=ID, config=conf) # initialize PostProcess class
+    postprocess = PostProcess(subhaloID=ID) # initialize PostProcess class
     postprocess.runPostprocess() # run postprocessing
 ```  
 then `python run.py`. 

@@ -25,7 +25,7 @@ for i, ID in enumerate(subhaloIDs):
     dataGeneration = DataGeneration(config=conf)
     dataGeneration.runSKIRT()
     
-    postprocess = PostProcess(subhaloID=ID, config=conf)
+    postprocess = PostProcess(subhaloID=ID)
     postprocess.runPostprocess()
 
     

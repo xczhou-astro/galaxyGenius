@@ -38,11 +38,10 @@ for i, ID in enumerate(subhaloIDs):
     
     preprocess.subhalo(ID)
     preprocess.prepare(data)
+    # The modifications for config will be recorded and saved
     
     dataGeneration = DataGeneration(config=conf)
     dataGeneration.runSKIRT()
     
-    postprocess = PostProcess(subhaloID=ID, config=conf)
+    postprocess = PostProcess(subhaloID=ID)
     postprocess.runPostprocess()
-
-# The modifications by config and data will be recorded in workingDir/config.json
