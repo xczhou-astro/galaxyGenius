@@ -4,9 +4,6 @@ Configuration
 Main config
 -----------
 
-``skirtPATH`` (str):
-    PATH for SKIRT executable. Give "PATH" if set in .bashrc, else provide absolute path   
-
 ``requests`` (bool):
     Whether to use Web-based API to retrieve data.
 
@@ -73,6 +70,9 @@ Main config
 ``minStellarMass``, ``maxStellarMass`` (float):
     Stellar mass range for subhalos in Msun, inf for infinite.
 
+``estimateMorph`` (bool):
+    Estimate the morphology of current galaxy using S/T ratios, either a spiral or non-spiral.
+
 ``faceAndEdge`` (bool):
     Whether to use face-on and edge-on angles derived by angular momentum.
 
@@ -103,11 +103,19 @@ Main config
 ``displaySEDxlogscale`` (bool):
     Whether to display SED in logscale for wavelength.
 
+``outputSEDOnly`` (bool):
+    If only output SED.
+
 ``snapNum`` (int):
     Snapshot ID.
 
 ``snapRedshift`` (float):
     Snapshot redshift of Snapshot with ID.
+
+``viewRedshift`` (float):
+    viewing redshift, should be close to snapRedshift.  
+    For generating galaxies at continous redshift with a small offset on snapRedshift.  
+    For example, viewRedshift can be 0.105 for snapshot-91 at 0.1.
 
 ``inLocal`` (bool):
     if use local cosmology.
@@ -190,8 +198,10 @@ Survey config
 ``includeBkg`` (bool):
     Whether to include background.
 
-``gaussianNoise`` (bool):
-    Whether to add background as Gaussian distribution, otherwise as Poisson distribution.
+``noiseType`` (str):
+    By what parameters noise levels are calculated, can be instrument or limitingMagnitude.  
+    For noiseType == instrument, skyBkg, darkCurrent, readOut are required.  
+    For noiseType == limitingMagnitude, limitMag, limitSNR, limitAperture and zeroPoint are required.
 
 ``skyBkg`` (list):
     Background level for considered filters. Please refer to notebook `calc_sky_bkg.ipynb <https://github.com/xczhou-astro/galaxyGenius/blob/main/Bkg/calc_sky_bkg.ipynb>`_ for calculating skyBkg.
@@ -201,6 +211,18 @@ Survey config
 
 ``readOut`` (float, list):
     Readout noise.
+
+``limitMag`` (float, list):
+    limiting magnitudes.
+
+``limitSNR`` (float, list):
+    SNR for the limiting magnitude.
+
+``limitAperture`` (float, list):
+    The aperture used to measure the limiting magnitude, in arcsec. 
+
+``zeroPoint`` (float): 
+    Zero point for magnitude system.
 
 ``imgDisplay`` (bool):
     Whether to display image.
