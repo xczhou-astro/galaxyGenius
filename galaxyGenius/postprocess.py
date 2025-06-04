@@ -29,7 +29,7 @@ class AngleDimension(_Dimension):
 
 class PostProcess:
 
-    def __init__(self, subhaloID: int, config: dict):
+    def __init__(self, subhaloID: int):
 
         self.subhaloID = subhaloID
         self.dataCubeDir = f'dataCubes/Subhalo_{self.subhaloID}'
@@ -243,6 +243,8 @@ class PostProcess:
                 zeroPoint = np.array(bkgNoise['zeroPoint'])
                 exposureTime = np.array(bkgNoise['exposureTime'])
                 numExposure = np.array(bkgNoise['numExposure'])
+                
+                pixelScales = np.array(pixelScales)
                 
                 npix = (np.pi * (limitAperture / 2)**2) / (pixelScales**2)
                 

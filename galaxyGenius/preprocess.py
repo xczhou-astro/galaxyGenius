@@ -1009,6 +1009,8 @@ class PreProcess:
             gal: 'spiral' or 'nonspiral'
         '''
         
+        print('------Estimating morphology of galaxy------')
+        
         stars = np.loadtxt(self.workingDir + '/stars.txt')
         
         headers = []
@@ -1022,7 +1024,7 @@ class PreProcess:
         idx_masses = []
                     
         for i, header in enumerate(headers):
-            if 'coordinates' in header.lower():
+            if 'coordinate' in header.lower():
                 idx_coords.append(i)
             elif 'velocity' in header.lower():
                 idx_vels.append(i)
@@ -1033,7 +1035,7 @@ class PreProcess:
         velocities = stars[:, idx_vels]
         masses = stars[:, idx_masses]
         
-        offset = self.subhaloPos
+        offset = self.pos
         radius = self.radius
         
         boxsize = 3 * radius

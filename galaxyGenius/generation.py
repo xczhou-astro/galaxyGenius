@@ -84,21 +84,22 @@ class DataGeneration:
                     print('Smoothing length must be provided for particle-based gas representation.')
                     sys.exit()
         
-    def __run_skirt(self):
+    def __run_skirt(self, skirtPath: Union[str, NoneType]=None):
         print('Running SKIRT')
         print('Subhalo ID: ', self.properties['subhaloID'])
         
         base = os.getcwd()
-        # if self.config['skirtPath'] == 'PATH':
-        #     executable = 'skirt'
-        # else:
-        #     executable = self.config['skirtPath']
+        
+        if skirtPath is None:
+            executable = 'skirt'
+        else:
+            executable = skirtPath
         
         os.chdir(self.workingDir)
         numThreads = int(self.config['numThreads'])
         if numThreads > 24:
             numThreads = 24
-        command = f'skirt -t {numThreads} skirt.ski'
+        command = f'{executable} -t {numThreads} skirt.ski'
         
         result = subprocess.run(command, shell=True, check=True)
         
@@ -114,7 +115,7 @@ class DataGeneration:
     def __exit(self):
         sys.exit()
     
-    def runSKIRT(self):
+    def runSKIRT(self, skirtPath: Union[str, NoneType]=None):
         
         """
         This method runs the SKIRT radiative transfer simulation using the 
@@ -123,7 +124,7 @@ class DataGeneration:
         """
         
         self.__check_files()
-        run_flag = self.__run_skirt()
+        run_flag = self.__run_skirt(skirtPath)
         if run_flag == 1:
             return self.__exit()
         else:
