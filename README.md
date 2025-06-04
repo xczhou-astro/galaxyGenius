@@ -142,20 +142,20 @@ subhaloIDs = subhalos['subhaloIDs'] # get subhaloIDs
 for i, ID in enumerate(subhaloIDs):
 
     # Dynamically set parameters
-    data = {}
-    data['numPackets'] = 1e6
+    arguments = {}
+    arguments['numPackets'] = 1e6
 
     if i < 100:
-        data['numViews'] = 1
-        data['inclinations'] = [0]
-        data['azimuths'] = [0]
-        data['faceAndEdge'] = False
+        arguments['numViews'] = 1
+        arguments['inclinations'] = [0]
+        arguments['azimuths'] = [0]
+        arguments['faceAndEdge'] = False
     else:
-        data['faceAndEdge'] = True
+        arguments['faceAndEdge'] = True
 
 
     preprocess.subhalo(subhaloID=ID) # get properties of subhalo
-    preprocess.prepare(data) # prepare for simulation, including retrieving particles and creating .ski file
+    preprocess.prepare(arguments) # prepare for simulation, including retrieving particles and creating .ski file
 
     dataGeneration = DataGeneration(config=conf) # initialize DataGeneration class
     dataGeneration.runSKIRT(skirtPATh='path/to/skirt') # run SKIRT, skirtPATH=None if skirt is in environment
