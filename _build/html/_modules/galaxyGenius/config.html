@@ -1,0 +1,918 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>galaxyGenius.config &mdash; galaxyGenius 1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            galaxyGenius
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">galaxyGenius</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">galaxyGenius.config</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for galaxyGenius.config</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">types</span><span class="w"> </span><span class="kn">import</span> <span class="n">NoneType</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">termcolor</span><span class="w"> </span><span class="kn">import</span> <span class="n">colored</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tomlkit</span><span class="w"> </span><span class="kn">import</span> <span class="n">parse</span><span class="p">,</span> <span class="n">dumps</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Union</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+
+<div class="viewcode-block" id="Configuration">
+<a class="viewcode-back" href="../../api.html#galaxyGenius.config.Configuration">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Configuration</span><span class="p">:</span>
+<div class="viewcode-block" id="Configuration.__init__">
+<a class="viewcode-back" href="../../api.html#galaxyGenius.config.Configuration.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">surveys</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">NoneType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize a Configuration object for GalaxyGenius.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        surveys : str, list[str], or None, optional</span>
+<span class="sd">            Survey names to process. Can be a single survey name as a string,</span>
+<span class="sd">            a list of survey names, or None. If None, an empty list will be used.</span>
+<span class="sd">            Default is None.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">surveys</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">surveys</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">surveys</span> <span class="o">=</span> <span class="n">split</span><span class="p">(</span><span class="n">surveys</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">surveys</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">surveys</span> <span class="o">=</span> <span class="n">surveys</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">surveys</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;GALAXYGENIUS_DATA_DIR&#39;</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dataDir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;GALAXYGENIUS_DATA_DIR&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;GALAXYGENIUS_DATA_DIR not set in environment variables. &#39;</span> <span class="o">+</span> <span class="s1">&#39;Data directory falling to default path: ../Data&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dataDir</span> <span class="o">=</span> <span class="s1">&#39;../Data&#39;</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataDir</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__issue</span><span class="p">(</span><span class="s1">&#39;Data directory not found. Please set GALAXYGENIUS_DATA_DIR environment variable.&#39;</span><span class="p">)</span>
+                <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span>
+            
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">main_config_template</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__read_config</span><span class="p">(</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataDir</span><span class="p">,</span> <span class="s1">&#39;config/config_main.toml&#39;</span><span class="p">)</span>
+        <span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">survey_config_template</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__read_config</span><span class="p">(</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataDir</span><span class="p">,</span> <span class="s1">&#39;config/config_survey.toml&#39;</span><span class="p">)</span>
+        <span class="p">)</span></div>
+
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">__read_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">config</span> <span class="o">=</span> <span class="n">parse</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+        
+        <span class="k">return</span> <span class="n">config</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__modify_main_config</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">surveys</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">main_config_template</span><span class="p">[</span><span class="s1">&#39;postProcessing&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">main_config_template</span><span class="p">[</span><span class="s1">&#39;surveys&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            
+            <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;postProcessing&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;surveys&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">main_config_template</span><span class="p">[</span><span class="s1">&#39;postProcessing&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">main_config_template</span><span class="p">[</span><span class="s1">&#39;surveys&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">surveys</span>
+            
+            <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;postProcessing&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;surveys&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">surveys</span>
+            
+            
+<div class="viewcode-block" id="Configuration.init">
+<a class="viewcode-back" href="../../api.html#galaxyGenius.config.Configuration.init">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize configuration. Only use by init.py</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">__update_config</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">check_config</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_config</span><span class="p">()</span></div>
+
+        
+<div class="viewcode-block" id="Configuration.add_survey">
+<a class="viewcode-back" href="../../api.html#galaxyGenius.config.Configuration.add_survey">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_survey</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">surveys</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">NoneType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Add surveys. Call ``get_config()`` to get the updated configs.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        surveys : str or list[str] or None</span>
+<span class="sd">            Survey names to add. If None, no surveys will be added.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        
+        <span class="k">if</span> <span class="n">surveys</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">surveys</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="n">surveys_add</span> <span class="o">=</span> <span class="n">split</span><span class="p">(</span><span class="n">surveys</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">surveys_add</span> <span class="o">=</span> <span class="n">surveys</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Please provide survey names.&#39;</span><span class="p">)</span>
+            <span class="n">surveys_add</span> <span class="o">=</span> <span class="p">[]</span>
+            
+        <span class="n">added_surveys</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">survey</span> <span class="ow">in</span> <span class="n">surveys_add</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">survey</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">surveys</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1"> already exists.&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1"> added.&#39;</span><span class="p">)</span>
+                <span class="n">added_surveys</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">survey</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">surveys</span> <span class="o">+=</span> <span class="n">added_surveys</span></div>
+
+    
+<div class="viewcode-block" id="Configuration.remove_survey">
+<a class="viewcode-back" href="../../api.html#galaxyGenius.config.Configuration.remove_survey">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">remove_survey</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">surveys</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">NoneType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Remove surveys. Call ``get_config()`` to get the updated configs.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        surveys : str or list[str] or None</span>
+<span class="sd">            Survey names to remove. If None, no surveys will be removed.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        
+        <span class="k">if</span> <span class="n">surveys</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">surveys</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="n">surveys_remove</span> <span class="o">=</span> <span class="n">split</span><span class="p">(</span><span class="n">surveys</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">surveys_remove</span> <span class="o">=</span> <span class="n">surveys</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Please provide survey names.&#39;</span><span class="p">)</span>
+            <span class="n">surveys_remove</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="k">for</span> <span class="n">survey</span> <span class="ow">in</span> <span class="n">surveys_remove</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">survey</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">surveys</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1"> removed.&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;config_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">.toml&#39;</span><span class="p">):</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;config_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">.toml&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">surveys</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">survey</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1"> does not exist.&#39;</span><span class="p">)</span></div>
+
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">__load_config</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__read_config</span><span class="p">(</span><span class="s1">&#39;config.toml&#39;</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">survey_configs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">survey_config_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+        <span class="n">survey_config_files</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">survey_config_path</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s1">&#39;config_*.toml&#39;</span><span class="p">))</span>
+        <span class="n">detected_surveys</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">file</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">survey_config_files</span>
+        <span class="p">]</span>
+        
+        
+        <span class="k">for</span> <span class="n">survey</span> <span class="ow">in</span> <span class="n">detected_surveys</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">survey</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">surveys</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">surveys</span> <span class="o">+=</span> <span class="p">[</span><span class="n">survey</span><span class="p">]</span>
+            
+            <span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__read_config</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;config_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">.toml&#39;</span><span class="p">)</span>
+            
+            <span class="bp">self</span><span class="o">.</span><span class="n">survey_configs</span><span class="p">[</span><span class="n">survey</span><span class="p">]</span> <span class="o">=</span> <span class="n">config</span>
+            
+        
+        
+            
+        <span class="bp">self</span><span class="o">.</span><span class="n">__modify_main_config</span><span class="p">()</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">__create_survey_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">survey</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        
+        <span class="n">survey_config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">survey_config_template</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">adapted_survey_config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__adapt_survey</span><span class="p">(</span><span class="n">survey</span><span class="p">,</span> <span class="n">survey_config</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">adapted_survey_config</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">__update_config</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">surveys</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s1">&#39;config.toml&#39;</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__load_config</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">main_config_template</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__modify_main_config</span><span class="p">()</span>
+        
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s1">&#39;config.toml&#39;</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__load_config</span><span class="p">()</span>
+                
+                <span class="bp">self</span><span class="o">.</span><span class="n">survey_configs</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="k">for</span> <span class="n">survey</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">surveys</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;config_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">.toml&#39;</span><span class="p">):</span>
+                        <span class="n">survey_config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__create_survey_config</span><span class="p">(</span><span class="n">survey</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">survey_configs</span><span class="p">[</span><span class="n">survey</span><span class="p">]</span> <span class="o">=</span> <span class="n">survey_config</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">survey_config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__read_config</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;config_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">.toml&#39;</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">survey_configs</span><span class="p">[</span><span class="n">survey</span><span class="p">]</span> <span class="o">=</span> <span class="n">survey_config</span>
+                        
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">main_config_template</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__modify_main_config</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">survey_configs</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="k">for</span> <span class="n">survey</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">surveys</span><span class="p">:</span>
+                    <span class="n">survey_config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__create_survey_config</span><span class="p">(</span><span class="n">survey</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">survey_configs</span><span class="p">[</span><span class="n">survey</span><span class="p">]</span> <span class="o">=</span> <span class="n">survey_config</span>
+                        
+    <span class="k">def</span><span class="w"> </span><span class="nf">__config_to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        
+        <span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span>
+        
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;survey_configs&#39;</span><span class="p">):</span>
+            <span class="n">survey_configs</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">survey_configs</span><span class="p">)</span>
+            
+            <span class="n">survey_config</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">survey</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">surveys</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">survey_configs</span><span class="p">[</span><span class="n">survey</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+                    <span class="n">key_suffix</span> <span class="o">=</span> <span class="n">key</span> <span class="o">+</span> <span class="sa">f</span><span class="s1">&#39;_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span>
+                    <span class="n">survey_config</span><span class="p">[</span><span class="n">key_suffix</span><span class="p">]</span> <span class="o">=</span> <span class="n">survey_configs</span><span class="p">[</span><span class="n">survey</span><span class="p">][</span><span class="n">key</span><span class="p">]</span>
+                
+            <span class="n">config</span> <span class="o">=</span> <span class="n">config</span> <span class="o">|</span> <span class="n">survey_config</span>
+        
+        <span class="k">return</span> <span class="n">config</span>
+              
+    
+<div class="viewcode-block" id="Configuration.save_config">
+<a class="viewcode-back" href="../../api.html#galaxyGenius.config.Configuration.save_config">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conf</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">dict</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Save the current configuration to files.</span>
+
+<span class="sd">        The configuration is saved to config.toml for the main settings, and separate</span>
+<span class="sd">        config_{survey}.toml files for each survey&#39;s specific settings.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        conf : dict or None, optional</span>
+<span class="sd">            Dictionary containing configuration updates to apply before saving.</span>
+<span class="sd">            If None, saves the current configuration without modifications.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="k">if</span> <span class="n">conf</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+                <span class="k">if</span> <span class="n">conf</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="n">key</span><span class="p">]:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">conf</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+                    
+            <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;dataDir&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataDir</span>
+            
+                    
+            <span class="k">for</span> <span class="n">survey</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">surveys</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">survey_configs</span><span class="p">[</span><span class="n">survey</span><span class="p">]):</span>
+                    <span class="k">if</span> <span class="n">conf</span><span class="p">[</span><span class="n">key</span> <span class="o">+</span> <span class="sa">f</span><span class="s1">&#39;_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">survey_configs</span><span class="p">[</span><span class="n">survey</span><span class="p">][</span><span class="n">key</span><span class="p">]:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">survey_configs</span><span class="p">[</span><span class="n">survey</span><span class="p">][</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">conf</span><span class="p">[</span><span class="n">key</span> <span class="o">+</span> <span class="sa">f</span><span class="s1">&#39;_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span>
+        
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;config.toml&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">))</span>
+            
+        <span class="k">for</span> <span class="n">survey</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">surveys</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;config_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">.toml&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">survey_configs</span><span class="p">[</span><span class="n">survey</span><span class="p">]))</span></div>
+
+        
+                
+<div class="viewcode-block" id="Configuration.get_config">
+<a class="viewcode-back" href="../../api.html#galaxyGenius.config.Configuration.get_config">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_config</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Update and return the current configuration.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict: The updated configuration dictionary.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__update_config</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">check_config</span><span class="p">()</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__config_to_dict</span><span class="p">()</span>
+        <span class="n">config</span><span class="p">[</span><span class="s1">&#39;dataDir&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataDir</span>
+        
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">config</span><span class="p">)</span></div>
+
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">__adapt_survey</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">survey</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">survey_config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">survey</span> <span class="o">==</span> <span class="s1">&#39;HST&#39;</span><span class="p">:</span>
+            <span class="n">adapted_survey_config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__for_HST</span><span class="p">(</span><span class="n">survey_config</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">survey</span> <span class="o">==</span> <span class="s1">&#39;JWST&#39;</span><span class="p">:</span>
+            <span class="n">adapted_survey_config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__for_JWST</span><span class="p">(</span><span class="n">survey_config</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">survey</span> <span class="o">==</span> <span class="s1">&#39;Euclid&#39;</span><span class="p">:</span>
+            <span class="n">adapted_survey_config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__for_Euclid</span><span class="p">(</span><span class="n">survey_config</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">survey</span> <span class="o">==</span> <span class="s1">&#39;Roman&#39;</span><span class="p">:</span>
+            <span class="n">adapted_survey_config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__for_Roman</span><span class="p">(</span><span class="n">survey_config</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">survey</span> <span class="o">==</span> <span class="s1">&#39;HSC&#39;</span><span class="p">:</span>
+            <span class="n">adapted_survey_config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__for_HSC</span><span class="p">(</span><span class="n">survey_config</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">survey</span> <span class="o">==</span> <span class="s1">&#39;CSST&#39;</span><span class="p">:</span>
+            <span class="n">adapted_survey_config</span> <span class="o">=</span> <span class="n">survey_config</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">adapted_survey_config</span> <span class="o">=</span> <span class="n">survey_config</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Please provide your own Throughputs and PSFs of filters for </span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">adapted_survey_config</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">__for_HST</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">survey_config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;filters&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;UV_F275W&quot;</span><span class="p">,</span> <span class="s2">&quot;UV_F390W&quot;</span><span class="p">,</span> <span class="s2">&quot;UV_F814W&quot;</span><span class="p">,</span> <span class="s2">&quot;IR_F105W&quot;</span><span class="p">,</span> <span class="s2">&quot;IR_F140W&quot;</span><span class="p">]</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;resolFromPix&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;pixelScales&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.04</span><span class="p">,</span> <span class="mf">0.04</span><span class="p">,</span> <span class="mf">0.04</span><span class="p">,</span> <span class="mf">0.13</span><span class="p">,</span> <span class="mf">0.13</span><span class="p">]</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;numExposure&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;exposureTime&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">600</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;aperture&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.4</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;RGBImg&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;RGBFilters&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;displayFilter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;UV_F814W&quot;</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;skyBkg&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0004</span><span class="p">,</span> <span class="mf">0.0181</span><span class="p">,</span> <span class="mf">0.0562</span><span class="p">,</span> <span class="mf">1.9397</span><span class="p">,</span> <span class="mf">2.2485</span><span class="p">]</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;darkCurrent&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0008</span><span class="p">,</span> <span class="mf">0.0008</span><span class="p">,</span> <span class="mf">0.0008</span><span class="p">,</span> <span class="mf">0.048</span><span class="p">,</span> <span class="mf">0.048</span><span class="p">]</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;readOut&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mf">3.1</span><span class="p">,</span> <span class="mf">3.1</span><span class="p">,</span> <span class="mf">3.1</span><span class="p">,</span> <span class="mi">21</span><span class="p">,</span> <span class="mi">21</span><span class="p">]</span>
+        
+        <span class="k">return</span> <span class="n">survey_config</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">__for_HSC</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">survey_config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;filters&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;g&quot;</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="s2">&quot;i&quot;</span><span class="p">,</span> <span class="s2">&quot;z&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">]</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;resolFromPix&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;pixelScales&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.168</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;numExposure&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;exposureTime&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">600</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;aperture&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">8.5</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;RGBImg&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;RGBFilters&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;g&quot;</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="s2">&quot;z&quot;</span><span class="p">]</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;displayFilter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;r&quot;</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;skyBkg&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mf">49.983</span><span class="p">,</span> <span class="mf">79.8137</span><span class="p">,</span> <span class="mf">91.8011</span><span class="p">,</span> <span class="mf">107.205</span><span class="p">,</span> <span class="mf">198.5708</span><span class="p">]</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;darkCurrent&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;readOut&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">4.5</span>
+        
+        <span class="k">return</span> <span class="n">survey_config</span>
+
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">__for_JWST</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">survey_config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;filters&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;F356W&quot;</span><span class="p">,</span> <span class="s2">&quot;F444W&quot;</span><span class="p">,</span> <span class="s2">&quot;F070W&quot;</span><span class="p">,</span> <span class="s2">&quot;F150W&quot;</span><span class="p">,</span> <span class="s2">&quot;F200W&quot;</span><span class="p">,</span> <span class="s2">&quot;F182M&quot;</span><span class="p">]</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;resolFromPix&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;pixelScales&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.063</span><span class="p">,</span> <span class="mf">0.063</span><span class="p">,</span> <span class="mf">0.031</span><span class="p">,</span> <span class="mf">0.031</span><span class="p">,</span> <span class="mf">0.031</span><span class="p">,</span> <span class="mf">0.031</span><span class="p">]</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;numExposure&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;exposureTime&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">600</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;aperture&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">6.5</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;RGBImg&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;RGBFilters&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;displayFilter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;F200W&#39;</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;skyBkg&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.1707</span><span class="p">,</span> <span class="mf">3.2627</span><span class="p">,</span> <span class="mf">0.3307</span><span class="p">,</span> <span class="mf">0.4721</span><span class="p">,</span> <span class="mf">0.4326</span><span class="p">,</span> <span class="mf">0.2502</span><span class="p">]</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;darkCurrent&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0342</span><span class="p">,</span> <span class="mf">0.0342</span><span class="p">,</span> <span class="mf">0.0019</span><span class="p">,</span> <span class="mf">0.0019</span><span class="p">,</span> <span class="mf">0.0019</span><span class="p">,</span> <span class="mf">0.0019</span><span class="p">]</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;readOut&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mf">13.25</span><span class="p">,</span> <span class="mf">13.25</span><span class="p">,</span> <span class="mf">15.77</span><span class="p">,</span> <span class="mf">15.77</span><span class="p">,</span> <span class="mf">15.77</span><span class="p">,</span> <span class="mf">15.77</span><span class="p">]</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;minWavelength&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.5</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;maxWavelength&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">5</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;simulationMode&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;DustEmission&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;includeDust&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        
+        <span class="k">return</span> <span class="n">survey_config</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">__for_Euclid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">survey_config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;filters&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;VIS&quot;</span><span class="p">,</span> <span class="s2">&quot;Y&quot;</span><span class="p">,</span> <span class="s2">&quot;J&quot;</span><span class="p">,</span> <span class="s2">&quot;H&quot;</span><span class="p">]</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;resolFromPix&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;pixelScales&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">]</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;numExposure&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;exposureTime&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">600</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;aperture&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.2</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;PSFFromFile&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;PSFFWHM&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.204</span><span class="p">,</span> <span class="mf">0.493</span><span class="p">,</span> <span class="mf">0.515</span><span class="p">,</span> <span class="mf">0.553</span><span class="p">]</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;RGBImg&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;RGBFilters&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;displayFilter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;VIS&#39;</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;skyBkg&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.7162</span><span class="p">,</span> <span class="mf">3.6863</span><span class="p">,</span> <span class="mf">4.4556</span><span class="p">,</span> <span class="mf">3.8228</span><span class="p">]</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;darkCurrent&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.005</span><span class="p">,</span> <span class="mf">0.02</span><span class="p">,</span> <span class="mf">0.02</span><span class="p">,</span> <span class="mf">0.02</span><span class="p">]</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;readOut&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mf">2.2</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">]</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;minWavelength&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.5</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;maxWavelength&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">5</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;simulationMode&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;DustEmission&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;includeDust&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        
+        <span class="k">return</span> <span class="n">survey_config</span>
+        
+    <span class="k">def</span><span class="w"> </span><span class="nf">__for_Roman</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">survey_config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;filters&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;F062&quot;</span><span class="p">,</span> <span class="s2">&quot;F087&quot;</span><span class="p">,</span> <span class="s2">&quot;F106&quot;</span><span class="p">,</span> <span class="s2">&quot;F129&quot;</span><span class="p">,</span> <span class="s2">&quot;F158&quot;</span><span class="p">,</span> <span class="s2">&quot;F184&quot;</span><span class="p">,</span> <span class="s2">&quot;F213&quot;</span><span class="p">,</span> <span class="s2">&quot;F146&quot;</span><span class="p">]</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;resolFromPix&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;pixelScales&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.11</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;numExposure&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;exposureTime&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">600</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;aperture&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.36</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;RGBImg&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;RGBFilters&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;displayFilter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;F106&#39;</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;skyBkg&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mf">7.1684</span><span class="p">,</span> <span class="mf">6.6275</span><span class="p">,</span> <span class="mf">7.0874</span><span class="p">,</span> <span class="mf">7.1373</span><span class="p">,</span> <span class="mf">7.0349</span><span class="p">,</span> <span class="mf">4.1791</span><span class="p">,</span> <span class="mf">3.515</span><span class="p">,</span> <span class="mf">21.3173</span><span class="p">]</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;darkCurrent&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.1</span>
+        <span class="n">survey_config</span><span class="p">[</span><span class="s1">&#39;readOut&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">20</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;minWavelength&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.5</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;maxWavelength&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">5</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;simulationMode&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;DustEmission&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;includeDust&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        
+        <span class="k">return</span> <span class="n">survey_config</span>
+        
+    <span class="k">def</span><span class="w"> </span><span class="nf">__issue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">colored</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="s1">&#39;red&#39;</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__exist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">threshold</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_config</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">threshold</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_config</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
+                    <span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="n">values</span><span class="p">]</span>
+                <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">values</span><span class="p">])</span>
+                <span class="n">check</span> <span class="o">=</span> <span class="p">(</span><span class="n">values</span> <span class="o">&gt;</span> <span class="n">threshold</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">check</span> <span class="o">==</span> <span class="kc">False</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__issue</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s1"> value must &gt; </span><span class="si">{</span><span class="n">threshold</span><span class="si">}</span><span class="s1">.&#39;</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">flag_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">return</span> <span class="kc">False</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="kc">True</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">True</span>
+        
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__issue</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s1"> is not provided.&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">flag_count</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        
+    <span class="k">def</span><span class="w"> </span><span class="nf">__exist_return</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="n">threshold</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">value</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_config</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        
+    <span class="k">def</span><span class="w"> </span><span class="nf">__match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">homo</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
+            
+            <span class="n">base</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_config</span><span class="p">[</span><span class="n">base_key</span><span class="p">]</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_config</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
+                <span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="n">values</span><span class="p">]</span>
+            
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">base</span><span class="p">):</span>
+                <span class="k">return</span> <span class="kc">True</span>
+            <span class="k">elif</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">homo</span><span class="p">):</span>
+                <span class="k">return</span> <span class="kc">True</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__issue</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;number of </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s1"> inconsistent with number of </span><span class="si">{</span><span class="n">base_key</span><span class="si">}</span><span class="s1">.&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">flag_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">return</span> <span class="kc">False</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">__logic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">relation</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;match&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">relation</span> <span class="o">==</span> <span class="s1">&#39;match&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_config</span><span class="p">[</span><span class="n">base_key</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_config</span><span class="p">[</span><span class="n">key</span><span class="p">]:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__issue</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s1"> must be </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">all_config</span><span class="p">[</span><span class="n">base_key</span><span class="p">]</span><span class="si">}</span><span class="s1"> if </span><span class="si">{</span><span class="n">base_key</span><span class="si">}</span><span class="s1"> is </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">all_config</span><span class="p">[</span><span class="n">base_key</span><span class="p">]</span><span class="si">}</span><span class="s1">.&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">flag_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">elif</span> <span class="n">relation</span> <span class="o">==</span> <span class="s1">&#39;diff&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_config</span><span class="p">[</span><span class="n">base_key</span><span class="p">]</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_config</span><span class="p">[</span><span class="n">key</span><span class="p">]:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__issue</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s1"> must be </span><span class="si">{</span><span class="ow">not</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">all_config</span><span class="p">[</span><span class="n">base_key</span><span class="p">]</span><span class="si">}</span><span class="s1"> if </span><span class="si">{</span><span class="n">base_key</span><span class="si">}</span><span class="s1"> is </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">all_config</span><span class="p">[</span><span class="n">base_key</span><span class="p">]</span><span class="si">}</span><span class="s1">.&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">flag_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+
+<div class="viewcode-block" id="Configuration.check_config">
+<a class="viewcode-back" href="../../api.html#galaxyGenius.config.Configuration.check_config">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check the configuration for any inconsistencies and issues.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            int: The number of issues found in the configuration.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">all_config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__config_to_dict</span><span class="p">()</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">flag_count</span> <span class="o">=</span> <span class="mi">0</span>
+        
+        <span class="c1"># skirtPATH = self.__exist_return(&#39;skirtPath&#39;)</span>
+        <span class="c1"># if skirtPATH == &#39;PATH&#39;:</span>
+        <span class="c1">#     sys_paths = os.environ[&#39;PATH&#39;].split(&#39;:&#39;)</span>
+        <span class="c1">#     for path in sys_paths:</span>
+        <span class="c1">#         if &#39;SKIRT&#39; in path:</span>
+        <span class="c1">#             skirtPATH = path</span>
+        <span class="c1">#             break</span>
+                
+        <span class="c1">#     if skirtPATH == &#39;PATH&#39;:</span>
+        <span class="c1">#         self.__issue(&#39;SKIRT not found in PATH. Please edit ~/.bashrc or provide the absolute path of SKIRT.&#39;)</span>
+        <span class="c1">#         self.flag_count += 1</span>
+
+        <span class="c1"># executable = os.path.join(skirtPATH, &#39;skirt&#39;)</span>
+        <span class="c1"># if not os.path.exists(executable):</span>
+        <span class="c1">#     self.__issue(&#39;SKIRT executable not found. SKIRT is not installed correctly.&#39;)</span>
+        <span class="c1">#     self.flag_count += 1</span>
+            
+        <span class="n">simName</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="s1">&#39;simulation&#39;</span><span class="p">)</span>
+        
+        <span class="n">requests</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="s1">&#39;requests&#39;</span><span class="p">)</span>
+        
+        <span class="n">solver</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="s1">&#39;hydrodynamicSolver&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">solver</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;VoronoiMesh&#39;</span><span class="p">,</span> <span class="s1">&#39;smoothParticle&#39;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__issue</span><span class="p">(</span><span class="s1">&#39;hydrodynamicSolver unrecognized.&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">flag_count</span> <span class="o">+=</span> <span class="mi">1</span>
+        
+        <span class="k">if</span> <span class="s1">&#39;TNG&#39;</span> <span class="ow">in</span> <span class="n">simName</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">requests</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="s1">&#39;apiKey&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="s1">&#39;TNGPath&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="s1">&#39;postprocessingPath&#39;</span><span class="p">)</span>
+        
+                <span class="n">tngpath</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="s1">&#39;TNGPath&#39;</span><span class="p">)</span>
+                <span class="n">postpath</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="s1">&#39;postprocessingPath&#39;</span><span class="p">)</span>
+            
+                <span class="c1"># if os.path.exists(tngpath) and os.path.exists(postpath):</span>
+                <span class="c1">#     if tngpath.split(&#39;/&#39;)[:-1] != postpath.split(&#39;/&#39;)[:-1]:</span>
+                <span class="c1">#         self.__issue(&#39;TNGPath and postprocessingPath should be in the same directory.&#39;)</span>
+                <span class="c1">#         self.flag_count += 1</span>
+                <span class="c1"># else:</span>
+                <span class="c1">#     if not os.path.exists(tngpath):</span>
+                <span class="c1">#         self.__issue(&#39;TNGPath not found.&#39;)</span>
+                <span class="c1">#         self.flag_count += 1</span>
+                <span class="c1">#     if not os.path.exists(postpath):</span>
+                <span class="c1">#         self.__issue(&#39;postprocessingPath not found.&#39;)</span>
+                <span class="c1">#         self.flag_count += 1</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="s1">&#39;workingDir&#39;</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="s1">&#39;inLocal&#39;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="s1">&#39;viewDistance&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            
+        <span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="s1">&#39;snapRedshift&#39;</span><span class="p">)</span>
+        
+        <span class="n">simulationMode</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="s1">&#39;simulationMode&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">simulationMode</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">simulationMode</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;NoMedium&#39;</span><span class="p">,</span> <span class="s1">&#39;DustEmission&#39;</span><span class="p">]:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__issue</span><span class="p">(</span><span class="s1">&#39;simulationMode unrecognized.&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">flag_count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+                <span class="k">if</span> <span class="n">simulationMode</span> <span class="o">==</span> <span class="s1">&#39;DustEmission&#39;</span><span class="p">:</span>
+                    <span class="n">includeDust</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="s1">&#39;includeDust&#39;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">includeDust</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">__issue</span><span class="p">(</span><span class="s1">&#39;includeDust should be True if simulationMode is DustEmission.&#39;</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">flag_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                    
+                    <span class="n">dustEmissionType</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="s1">&#39;dustEmissionType&#39;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">dustEmissionType</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="n">dustEmissionType</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;Equilibrium&#39;</span><span class="p">,</span> <span class="s1">&#39;Stochastic&#39;</span><span class="p">]:</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">__issue</span><span class="p">(</span><span class="s1">&#39;dustEmissionType unrecognized.&#39;</span><span class="p">)</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">flag_count</span> <span class="o">+=</span> <span class="mi">1</span>
+            
+        
+        <span class="n">dustModel</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="s1">&#39;dustModel&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dustModel</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">dustModel</span> <span class="o">!=</span> <span class="s1">&#39;ZubkoDustMix&#39;</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">dustModel</span> <span class="o">!=</span> <span class="s1">&#39;DraineLiDustMix&#39;</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">dustModel</span> <span class="o">!=</span> <span class="s1">&#39;ThemisDustMix&#39;</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__issue</span><span class="p">(</span><span class="s1">&#39;dustModel unrecognized.&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">flag_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                
+        <span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="s1">&#39;minWavelength&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="s1">&#39;maxBoxLength&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="s1">&#39;boxLengthScale&#39;</span><span class="p">)</span>
+                
+        <span class="n">wavelengthGrid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="s1">&#39;wavelengthGrid&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">wavelengthGrid</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">wavelengthGrid</span> <span class="o">!=</span> <span class="s1">&#39;Linear&#39;</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">wavelengthGrid</span> <span class="o">!=</span> <span class="s1">&#39;Log&#39;</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__issue</span><span class="p">(</span><span class="s1">&#39;wavelengthGrid unrecognized.&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">flag_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                
+        <span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="s1">&#39;numWavelengths&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="s1">&#39;minLevel&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="s1">&#39;maxLevel&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="s1">&#39;numPackets&#39;</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="s1">&#39;faceAndEdge&#39;</span><span class="p">):</span>
+            <span class="k">pass</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="s1">&#39;numViews&#39;</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="s1">&#39;randomViews&#39;</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="s1">&#39;inclinations&#39;</span><span class="p">)</span> <span class="o">&amp;</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="s1">&#39;azimuths&#39;</span><span class="p">):</span>
+                    
+                        <span class="n">numViews</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_config</span><span class="p">[</span><span class="s1">&#39;numViews&#39;</span><span class="p">]</span>
+                        <span class="n">inclinations</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_config</span><span class="p">[</span><span class="s1">&#39;inclinations&#39;</span><span class="p">]</span>
+                        <span class="n">azimuths</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_config</span><span class="p">[</span><span class="s1">&#39;azimuths&#39;</span><span class="p">]</span>
+                        
+                        <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">inclinations</span><span class="p">)</span> <span class="o">!=</span> <span class="n">numViews</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">azimuths</span><span class="p">)</span> <span class="o">!=</span> <span class="n">numViews</span><span class="p">):</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">__issue</span><span class="p">(</span><span class="s1">&#39;number of inclinations or azimuth inconsistent with numViews.&#39;</span><span class="p">)</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">flag_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                        
+                        <span class="n">inc_in_cond</span> <span class="o">=</span> <span class="p">[</span><span class="kc">True</span> <span class="k">if</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">inc</span> <span class="o">&lt;=</span> <span class="mi">180</span> <span class="k">else</span> <span class="kc">False</span> <span class="k">for</span> <span class="n">inc</span> <span class="ow">in</span> <span class="n">inclinations</span><span class="p">]</span>
+                        <span class="n">azi_in_cond</span> <span class="o">=</span> <span class="p">[</span><span class="kc">True</span> <span class="k">if</span> <span class="o">-</span><span class="mi">360</span> <span class="o">&lt;=</span> <span class="n">azi</span> <span class="o">&lt;=</span> <span class="mi">360</span> <span class="k">else</span> <span class="kc">False</span> <span class="k">for</span> <span class="n">azi</span> <span class="ow">in</span> <span class="n">azimuths</span><span class="p">]</span>
+
+                        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">inc_in_cond</span><span class="p">):</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">__issue</span><span class="p">(</span><span class="s1">&#39;inclinations must be in 0 to 180 degree.&#39;</span><span class="p">)</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">flag_count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+                        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">azi_in_cond</span><span class="p">):</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">__issue</span><span class="p">(</span><span class="s1">&#39;azimuths must be in -360 to 360 degree.&#39;</span><span class="p">)</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">flag_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                    
+        <span class="n">SEDFamily</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="s1">&#39;SEDFamily&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">SEDFamily</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">SEDFamily</span> <span class="o">!=</span> <span class="s1">&#39;BC03&#39;</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">SEDFamily</span> <span class="o">!=</span> <span class="s1">&#39;FSPS&#39;</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__issue</span><span class="p">(</span><span class="s1">&#39;SEDFamily unrecognized.&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">flag_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                
+            <span class="k">elif</span> <span class="n">SEDFamily</span> <span class="o">==</span> <span class="s1">&#39;BC03&#39;</span><span class="p">:</span>
+                <span class="n">initialMassFunction</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="s1">&#39;initialMassFunction&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">initialMassFunction</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">initialMassFunction</span> <span class="o">!=</span> <span class="s1">&#39;Chabrier&#39;</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">initialMassFunction</span> <span class="o">!=</span> <span class="s1">&#39;Salpeter&#39;</span><span class="p">):</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">__issue</span><span class="p">(</span><span class="s1">&#39;initialMassFunction unrecognized for BC03 SEDFamily.&#39;</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">flag_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                    
+            <span class="k">elif</span> <span class="n">SEDFamily</span> <span class="o">==</span> <span class="s1">&#39;FSPS&#39;</span><span class="p">:</span>
+                <span class="n">initialMassFunction</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="s1">&#39;initialMassFunction&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">initialMassFunction</span><span class="p">:</span>
+                    <span class="k">if</span>  <span class="p">(</span><span class="n">initialMassFunction</span> <span class="o">!=</span> <span class="s1">&#39;Chabrier&#39;</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">initialMassFunction</span> <span class="o">!=</span> <span class="s1">&#39;Salpeter&#39;</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">initialMassFunction</span> <span class="o">!=</span> <span class="s1">&#39;Kroupa&#39;</span><span class="p">):</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">__issue</span><span class="p">(</span><span class="s1">&#39;initialMassFunction unrecognized for FSPS SEDFamily.&#39;</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">flag_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                        
+        <span class="n">imageUnit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="s1">&#39;imageUnit&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">imageUnit</span> <span class="o">!=</span> <span class="s1">&#39;electron&#39;</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">imageUnit</span> <span class="o">!=</span> <span class="s1">&#39;flux&#39;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__issue</span><span class="p">(</span><span class="s1">&#39;imageUnit unrecognized.&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">flag_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                        
+        <span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="s1">&#39;minStellarMass&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="s1">&#39;maxStellarMass&#39;</span><span class="p">)</span>
+                        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="s1">&#39;displaySED&#39;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="s1">&#39;displaySEDxlogscale&#39;</span><span class="p">)</span>
+            
+        <span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="s1">&#39;snapNum&#39;</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="s1">&#39;spatialResol&#39;</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="s1">&#39;postProcessing&#39;</span><span class="p">):</span>
+            <span class="n">surveys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="s1">&#39;surveys&#39;</span><span class="p">)</span>
+            <span class="n">pivots</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">if</span> <span class="n">surveys</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">survey</span> <span class="ow">in</span> <span class="n">surveys</span><span class="p">:</span>
+                    <span class="n">filters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;filters_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">filters</span><span class="p">:</span>
+                        <span class="k">for</span> <span class="nb">filter</span> <span class="ow">in</span> <span class="n">filters</span><span class="p">:</span>
+                            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dataDir</span><span class="si">}</span><span class="s1">/filters/</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="nb">filter</span><span class="si">}</span><span class="s1">.fil&#39;</span><span class="p">):</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">__issue</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Throughput file </span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="nb">filter</span><span class="si">}</span><span class="s1"> not found! Please specify correct filters!&#39;</span><span class="p">)</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">flag_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                            <span class="k">else</span><span class="p">:</span>
+                                <span class="n">pivots</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">calc_pivot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataDir</span><span class="p">,</span> <span class="n">survey</span><span class="p">,</span> <span class="nb">filter</span><span class="p">))</span>
+                                
+                        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;numExposure_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">):</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">__match</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;filters_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;numExposure_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+                        
+                        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;exposureTime_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">):</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">__match</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;filters_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;exposureTime_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+                        
+                        <span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;aperture_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                        
+                        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;resolFromPix_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">):</span>
+                            <span class="n">pixelScales</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;pixelScales_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+                            <span class="k">if</span> <span class="n">pixelScales</span><span class="p">:</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">__match</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;filters_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;pixelScales_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+                            
+                            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;includePSF_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">):</span>
+                                <span class="n">PSFFromFile</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;PSFFromFile_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                                <span class="k">if</span> <span class="ow">not</span> <span class="n">PSFFromFile</span><span class="p">:</span>
+                                    <span class="n">PSFFWHM</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;PSFFWHM_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                                    <span class="k">if</span> <span class="n">PSFFWHM</span><span class="p">:</span>
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">__match</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;filters_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;PSFFWHM_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+                                <span class="k">else</span><span class="p">:</span>
+                                    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dataDir</span><span class="si">}</span><span class="s1">/PSFs/</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">):</span>
+                                        <span class="n">psffiles</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dataDir</span><span class="si">}</span><span class="s1">/PSFs/</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                                        <span class="n">psffilters</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">psffiles</span><span class="p">]</span>
+                                        <span class="k">for</span> <span class="nb">filter</span> <span class="ow">in</span> <span class="n">filters</span><span class="p">:</span>
+                                            <span class="k">if</span> <span class="ow">not</span> <span class="nb">filter</span> <span class="ow">in</span> <span class="n">psffilters</span><span class="p">:</span>
+                                                <span class="bp">self</span><span class="o">.</span><span class="n">__issue</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;PSF file </span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="nb">filter</span><span class="si">}</span><span class="s1"> not found.&#39;</span><span class="p">)</span>
+                                                <span class="bp">self</span><span class="o">.</span><span class="n">__issue</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Please add PSF file in Data/PSFs.&#39;</span><span class="p">)</span>
+                                                <span class="bp">self</span><span class="o">.</span><span class="n">flag_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                                    <span class="k">else</span><span class="p">:</span>
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">__issue</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;PSF folder of </span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1"> not found.&#39;</span><span class="p">)</span>
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">flag_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                            
+                            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;includeBkg_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">):</span>
+                                
+                                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;noiseType_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;instrument&#39;</span><span class="p">,</span> <span class="s1">&#39;limitingMagnitude&#39;</span><span class="p">]:</span>
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">__issue</span><span class="p">(</span><span class="s1">&#39;noiseType unrecognized.&#39;</span><span class="p">)</span>
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">flag_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                                    
+                                <span class="k">else</span><span class="p">:</span>
+                                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;noiseType_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;instrument&#39;</span><span class="p">:</span>
+                                
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">__match</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;filters_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;skyBkg_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">__match</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;filters_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;darkCurrent_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">__match</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;filters_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;readOut_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+                                        
+                                    <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;noiseType_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;limitingMagnitude&#39;</span><span class="p">:</span>
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">__match</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;filters_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;limitMag_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">__match</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;filters_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;limitSNR_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">__match</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;filters_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;limitAperture_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">__match</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;filters_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;zeroPoint_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+
+                                        
+                            
+                            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;imgDisplay_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">):</span>
+                                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;RGBImg_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">):</span>
+                                    <span class="n">RGBFilters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;RGBFilters_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                                    <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">([</span><span class="kc">True</span> <span class="k">if</span> <span class="n">fil</span> <span class="ow">in</span> <span class="n">filters</span> <span class="k">else</span> <span class="kc">False</span> <span class="k">for</span> <span class="n">fil</span> <span class="ow">in</span> <span class="n">RGBFilters</span><span class="p">]):</span>
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">__issue</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;RBGFilters not in </span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1"> filter set.&#39;</span><span class="p">)</span>
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">flag_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                                <span class="k">else</span><span class="p">:</span>
+                                    <span class="n">displayFilter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;displayFilter_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                                    <span class="k">if</span> <span class="n">displayFilter</span><span class="p">:</span>
+                                        <span class="k">if</span> <span class="ow">not</span> <span class="n">displayFilter</span> <span class="ow">in</span> <span class="n">filters</span><span class="p">:</span>
+                                            <span class="bp">self</span><span class="o">.</span><span class="n">__issue</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;displayFilter not in </span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1"> filter set.&#39;</span><span class="p">)</span>
+                                            <span class="bp">self</span><span class="o">.</span><span class="n">flag_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;includePSF_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">):</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">__issue</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;includePSF_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1"> can only be False if resolFromPix_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1"> is False.&#39;</span><span class="p">)</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">flag_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                            
+                            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;includeBkg_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">):</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">__issue</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;includeBkg_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1"> can only be False if resolFromPix_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1"> is False.&#39;</span><span class="p">)</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">flag_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                            
+                            <span class="n">resolution</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;resolution_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+                            <span class="k">if</span> <span class="n">resolution</span><span class="p">:</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">__match</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;filters_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;resolution_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+                                
+                            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;imgDisplay_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">):</span>
+                                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;RGBImg_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">):</span>
+                                    <span class="n">RGBFilters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;RGBFilters_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                                    <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">([</span><span class="kc">True</span> <span class="k">if</span> <span class="n">fil</span> <span class="ow">in</span> <span class="n">filters</span> <span class="k">else</span> <span class="kc">False</span> <span class="k">for</span> <span class="n">fil</span> <span class="ow">in</span> <span class="n">RGBFilters</span><span class="p">]):</span>
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">__issue</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;RBGFilters not in </span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1"> filter set.&#39;</span><span class="p">)</span>
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">flag_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                                <span class="k">else</span><span class="p">:</span>
+                                    <span class="n">displayFilter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;displayFilter_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                                    <span class="k">if</span> <span class="n">displayFilter</span><span class="p">:</span>
+                                        <span class="k">if</span> <span class="ow">not</span> <span class="n">displayFilter</span> <span class="ow">in</span> <span class="n">filters</span><span class="p">:</span>
+                                            <span class="bp">self</span><span class="o">.</span><span class="n">__issue</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;displayFilter not in </span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1"> filter set.&#39;</span><span class="p">)</span>
+                                            <span class="bp">self</span><span class="o">.</span><span class="n">flag_count</span> <span class="o">+=</span> <span class="mi">1</span>
+            
+                             
+            <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pivots</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="s1">&#39;maxWavelength&#39;</span><span class="p">))</span> <span class="o">&amp;</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="s1">&#39;minWavelength&#39;</span><span class="p">)):</span>
+                <span class="n">max_pivot</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">pivots</span><span class="p">)</span>
+                <span class="n">min_pivot</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">pivots</span><span class="p">)</span>
+
+                <span class="n">redshift</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="s1">&#39;viewRedshift&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">redshift</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">0.005</span><span class="p">):</span>
+                    <span class="n">redshift</span> <span class="o">=</span> <span class="mf">0.005</span>
+                <span class="n">redshift</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">(</span><span class="n">redshift</span><span class="p">)</span>
+                
+                
+                <span class="n">maxWavelength</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">all_config</span><span class="p">[</span><span class="s1">&#39;maxWavelength&#39;</span><span class="p">])</span> <span class="o">*</span> <span class="mi">10</span><span class="o">**</span><span class="mi">4</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">redshift</span><span class="p">)</span>
+                <span class="n">minWaveLength</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">all_config</span><span class="p">[</span><span class="s1">&#39;minWavelength&#39;</span><span class="p">])</span> <span class="o">*</span> <span class="mi">10</span><span class="o">**</span><span class="mi">4</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">redshift</span><span class="p">)</span>
+                
+                <span class="k">if</span> <span class="p">(</span><span class="n">max_pivot</span> <span class="o">&gt;</span> <span class="n">maxWavelength</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">min_pivot</span> <span class="o">&lt;</span> <span class="n">minWaveLength</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__issue</span><span class="p">(</span><span class="s1">&#39;Please make sure the redshiftted wavelength range covers all filters.&#39;</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">flag_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                
+                <span class="k">if</span> <span class="p">(</span><span class="n">max_pivot</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="o">*</span> <span class="mi">10</span><span class="o">**</span><span class="mi">4</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">all_config</span><span class="p">[</span><span class="s1">&#39;simulationMode&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;DustEmission&#39;</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__issue</span><span class="p">(</span><span class="s1">&#39;Filters reaching infrared, simulationMode should be DustEmission.&#39;</span><span class="p">)</span>
+            
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="s1">&#39;outputSEDOnly&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="s1">&#39;fieldOfView&#39;</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="s1">&#39;numThreads&#39;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_config</span><span class="p">[</span><span class="s1">&#39;numThreads&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">24</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__issue</span><span class="p">(</span><span class="s1">&#39;No speed improvement with numThreads larger than, 24, falling back to 24.&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="s1">&#39;recordComponents&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="s1">&#39;ageThreshold&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="s1">&#39;logCompactnessMean&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="s1">&#39;logCompactnessStd&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="s1">&#39;massFraction&#39;</span><span class="p">)</span>
+        <span class="n">covering</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="s1">&#39;constantCoveringFactor&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">covering</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="s1">&#39;coveringFactor&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="s1">&#39;PDRClearingTimescale&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="s1">&#39;logPressure&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="s1">&#39;temperatureThreshold&#39;</span><span class="p">)</span>
+        <span class="n">DISMModel</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="s1">&#39;DISMModel&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">DISMModel</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">DISMModel</span> <span class="o">!=</span> <span class="s1">&#39;Camps_2016&#39;</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">DISMModel</span> <span class="o">!=</span> <span class="s1">&#39;Torrey_2012&#39;</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__issue</span><span class="p">(</span><span class="s1">&#39;DISMModel unrecognized.&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">flag_count</span> <span class="o">+=</span> <span class="mi">1</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="s1">&#39;numSilicateSizes&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="s1">&#39;numGraphiteSizes&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="s1">&#39;numPAHSizes&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="s1">&#39;numHydrocarbonSizes&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">flag_count</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">colored</span><span class="p">(</span><span class="s1">&#39;No conflicts in configurations. &#39;</span><span class="p">,</span> <span class="s1">&#39;green&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\U0001F44D</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">colored</span><span class="p">(</span><span class="s1">&#39;Conflicts exist in configurations. &#39;</span><span class="p">,</span> <span class="s1">&#39;red&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\U0001F914</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span>
+        
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">flag_count</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
