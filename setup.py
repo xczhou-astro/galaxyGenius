@@ -13,7 +13,7 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/xczhou-astro/galaxyGenius",
     packages=find_packages(),
-    python_requires=">=3.11.10",
+    python_requires=">=3.11",
     install_requires=requirements,
     classifiers=[
         "Programming Language :: Python :: 3.11.10",

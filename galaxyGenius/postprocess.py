@@ -144,6 +144,7 @@ class PostProcess:
         factors = []
         conversion_to_Jy = []
         gains = []
+        pivots = []
         for i, thr in enumerate(throughputs):
             wave_min = np.min(thr[:, 0])
             wave_max = np.max(thr[:, 0])
@@ -167,6 +168,7 @@ class PostProcess:
             numerator = trapezoid(trans_in, wave_in)
             denominator = trapezoid(trans_in * wave_in ** -2, wave_in)
             pivot = np.sqrt(numerator / denominator)
+            pivots.append(pivot)
             Jy_converter = Jy_converter / (const.h * const.c) * areaMirror * u.m**2\
                             * numExp[i] * (exposureTime[i] * u.s)
             Jy_converter = (pivot * u.angstrom)**2 / const.c / Jy_converter
@@ -246,16 +248,15 @@ class PostProcess:
                 
                 images_with_bkg_in_Jy = []
                 for i, img in enumerate(bandpass_images):
-                    img_in_Jy = img * conversion_to_Jy[i] * u.Jy
-                    first_term = (gains[i] * img_in_Jy / (numExposure[i] * exposureTime[i] * u.s))
+                    img_in_Jy = img * conversion_to_Jy[i]
+                    first_term = (gains[i] * img_in_Jy * u.Jy * pivots[i]**2 * u.angstrom**2) / (numExposure[i] * exposureTime[i] * u.s * const.c)
                     second_term = ((1 / limitSNR[i]) * 10**((zeroPoint[i] - limitMag[i]) / 2.5) * u.Jy)**2 * (1 / npix[i])
-                    third_term = (gains[i] / (numExposure[i] * exposureTime[i] * u.s * npix[i])) * 10**((zeroPoint[i] - limitMag[i]) / 2.5) * u.Jy
+                    third_term = (gains[i] * pivots[i]**2 * u.angstrom**2) / (numExposure[i] * exposureTime[i] * u.s * const.c * npix[i]) \
+                        * 10**((zeroPoint[i] - limitMag[i]) / 2.5) * u.Jy
                     
-                    first_term = first_term.to(u.Jy**2).value
-                    second_term = second_term.to(u.Jy**2).value
-                    third_term = third_term.to(u.Jy**2).value
+                    total = (first_term + second_term - third_term).to(u.Jy**2).value
                     
-                    noise = np.sqrt(first_term + second_term + third_term) # in Jy
+                    noise = np.sqrt(total) # in Jy
                     noises = np.random.normal(loc=0, scale=noise, size=img.shape)
                     images_with_bkg_in_Jy.append(img + noises)
                     
