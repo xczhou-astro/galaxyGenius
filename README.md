@@ -1,6 +1,8 @@
 # galaxyGenius
 
-A Mock Galaxy Image Generator for Various Telescopes from Hydrodynamical Simulations
+A Mock Galaxy Image Generator for Various Telescopes from Hydrodynamical Simulations  
+
+This work is accepted by A&A. The preprint is at https://arxiv.org/abs/2506.15060.
 
 ## Results  
 ### Workflow
