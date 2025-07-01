@@ -577,10 +577,10 @@ class PreProcess:
                 gasPart = self.__read_temp_file(response.content, partType='gas', fields=fields)
                 
             if gasPart['count'] == 0:
-                print('No gas particles found, simulationMode falls to NoMedium')
+                # print('No gas particles found, simulationMode falls to NoMedium')
                 
-                self.config['simulationMode'] = 'NoMedium'
-                self.config['includeDust'] = False
+                # self.config['simulationMode'] = 'NoMedium'
+                # self.config['includeDust'] = False
                 
                 part['x'] = np.array([])
                 part['y'] = np.array([])
@@ -775,7 +775,7 @@ class PreProcess:
         with open(ski_file, 'r') as file:
             data = file.read()
             
-        if mode == 'DustEmission':
+        if mode in ['DustEmission', 'ExtinctionOnly']:
             
             begin_str = '<VoronoiMeshMedium'
             end_str = '</VoronoiMeshMedium>'
@@ -830,7 +830,7 @@ class PreProcess:
         if SEDFamily == 'FSPSSEDFamily':
             data = data.replace('resolution="High"', '')
         
-        if mode == 'DustEmission':
+        if mode in ['DustEmission', 'ExtinctionOnly']:
             dustEmissionType = self.config['dustEmissionType']
             data = data.replace('dustEmissionType="Equilibrium"',
                                 f'dustEmissionType="{dustEmissionType}"')

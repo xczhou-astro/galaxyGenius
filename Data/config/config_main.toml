@@ -20,8 +20,10 @@ postprocessingPath = '../../postprocessing'
 # working directory for running SKIRT
 workingDir = "run"
 
-# simulation mode for SKIRT, can be NoMedium or DustEmission
-# DustEmission are used when near- or mid- infrared bands are considered
+# simulation mode for SKIRT, can be ExtinctionOnly, DustEmission or NoMedium
+# ExtinctionOnly is used when extinction and scattering should be considered
+# DustEmission is used when extinction and scattering along with secondary emission should be considered
+# NoMedium is an ideal case with no dust elements.
 simulationMode = "NoMedium"
 
 # if dusts are considered
@@ -34,7 +36,7 @@ dustEmissionType = "Equilibrium"
 # dust model, ZubkoDustMix, DraineLiDustMix or ThemisDustMix
 dustModel = "ZubkoDustMix"
 
-# wavelength range considered, in micron
+# rest-frame wavelength range considered, in micron
 # maxWavelength should be larger than the maximum wavelength of filters considered
 minWavelength = 0.1
 maxWavelength = 1.2

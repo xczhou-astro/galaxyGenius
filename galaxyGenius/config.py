@@ -512,14 +512,14 @@ class Configuration:
         
         simulationMode = self.__exist_return('simulationMode')
         if simulationMode:
-            if not simulationMode in ['NoMedium', 'DustEmission']:
+            if not simulationMode in ['NoMedium', 'DustEmission', 'ExtinctionOnly']:
                 self.__issue('simulationMode unrecognized.')
                 self.flag_count += 1
 
-                if simulationMode == 'DustEmission':
+                if simulationMode in ['DustEmission', 'ExtinctionOnly']:
                     includeDust = self.__exist_return('includeDust')
                     if not includeDust:
-                        self.__issue('includeDust should be True if simulationMode is DustEmission.')
+                        self.__issue('includeDust should be True if simulationMode is DustEmission or ExtinctionOnly.')
                         self.flag_count += 1
                     
                     dustEmissionType = self.__exist_return('dustEmissionType')
