@@ -24,7 +24,7 @@ Created using default parameters for `make_rgb` in Astropy
 
 ## Updates  
 
-- 2025-07-01
+- 2025-07-01  
 1. Add support for simulation mode of ExtinctionOnly (thanks comments from Maarten Baes, Qi Zeng, Andrea Gebek, Nick Andreads and members of SKIRT team.)  
     ExtinctionOnly is used when extinction and scattering of dust should be considered,  
     DustEmission is used when extinction and scattering along with secondary emission caused by dust should be considered,  
