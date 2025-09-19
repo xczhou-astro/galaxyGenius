@@ -14,7 +14,7 @@ pixelScales = 0.074
 # typical number exposure for considered filters
 numExposure = [4, 2, 2, 2, 2, 2, 4]
 
-# exposure time
+# exposure time, in second
 exposureTime = 150
 
 # aperture size for instrument, in meter
