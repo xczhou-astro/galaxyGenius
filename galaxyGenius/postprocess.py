@@ -144,7 +144,7 @@ class PostProcess:
     @staticmethod
     @numba.njit(
     "float32[:, :](float32[:, :, :], float32[:], float32[:], float32)", 
-    parallel=True)
+    parallel=True, cache=True, fastmath=True)
     def integrate_bandpass(img, tran, wave, factor):
         n = len(wave)
         h, w = img.shape[1], img.shape[2]
