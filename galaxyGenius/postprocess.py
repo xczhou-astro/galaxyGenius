@@ -16,6 +16,16 @@ from photutils.segmentation import make_2dgaussian_kernel
 from typing import Union
 from types import NoneType
 import json
+import numba
+import gc
+import time
+
+try:
+    import pyfftw
+    import scipy.fft as sfft
+    sfft.set_backend(pyfftw.interfaces.scipy_fft)
+except:
+    pass
 
 class ParsecDimension(_Dimension):
     def __init__(self):
@@ -36,6 +46,14 @@ class PostProcess:
         self.properties = self.__get_properties()
         self.config = self.__read_configs()
         self.dataDir = self.config['dataDir']
+        self.__precompile_numba()
+        
+    def __precompile_numba(self):
+        dummy_img = np.ones((10, 10, 10), dtype=np.float32)
+        dummy_trans = np.ones(10, dtype=np.float32)
+        dummy_wave = np.ones(10, dtype=np.float32)
+        dummy_factor = np.float32(1)
+        self.integrate_bandpass(dummy_img, dummy_trans, dummy_wave, dummy_factor)
         
     def __read_configs(self):
         
@@ -123,11 +141,30 @@ class PostProcess:
                                           * wave.reshape(-1, 1, 1), wave, axis=0)
         return bandpass_img
     
+    @staticmethod
+    @numba.njit(
+    "float32[:, :](float32[:, :, :], float32[:], float32[:], float32)", 
+    parallel=True)
+    def integrate_bandpass(img, tran, wave, factor):
+        n = len(wave)
+        h, w = img.shape[1], img.shape[2]
+        out = np.zeros((h, w), dtype=np.float32)
+        for i in numba.prange(h):
+            for j in range(w):
+                integral = 0.0
+                for k in range(1, n):
+                    y1 = img[k-1, i, j] * tran[k-1] * wave[k-1]
+                    y2 = img[k, i, j] * tran[k] * wave[k]
+                    dx = wave[k] - wave[k-1]
+                    integral += (y1 + y2) / 2.0 * dx
+                out[i, j] = factor * integral
+        return out
+    
     def __bandpass_images(self, dataCube: str, survey: str, throughputs: list,
                           PSFs: Union[list, NoneType]=None, bkgNoise: Union[dict, NoneType]=None) -> list:
         
         file = fits.open(dataCube)
-        wave_sed = file[1].data['grid_points'] * 10**4
+        wave_sed = (file[1].data['grid_points'] * 10**4).astype(np.float32)
         numExp = self.properties[f'numExposure_{survey}']
         exposureTime = self.properties[f'exposureTime_{survey}']
         areaMirror = np.pi * (self.properties[f'aperture_{survey}'] / 2)**2
@@ -138,46 +175,101 @@ class PostProcess:
 
         numfils = len(throughputs)
 
-        image_arrs = []
-        trans = []
-        waves = []
-        factors = []
+        data = file[0].data
+        
         conversion_to_Jy = []
         gains = []
         pivots = []
+        bandpass_images = []
+                
+        data_norm = None
+        
         for i, thr in enumerate(throughputs):
-            wave_min = np.min(thr[:, 0])
-            wave_max = np.max(thr[:, 0])
-            interp = interp1d(thr[:, 0], thr[:, 1])
-            idx = np.where((wave_sed > wave_min) & (wave_sed < wave_max))[0]
-            wave_in = wave_sed[idx]# * u.angstrom
-            trans_in = interp(wave_in)
-            image_arr = file[0].data[idx] / wave_in.reshape(-1, 1, 1)**2 # in flambda/u.sr
-            converter = (u.MJy/u.sr) * const.c / u.angstrom**2 \
-                        * numExp[i] * (exposureTime[i] * u.s) * (areaMirror * u.m**2) / (const.c * const.h) * u.angstrom**2
-            converter = converter.to(u.sr ** -1)
-            converter = converter.value
-            gain = const.h / (areaMirror * u.m**2 * trapezoid(trans_in / wave_in, wave_in))
-            gains.append(gain)
-            image_arrs.append(image_arr)
-            trans.append(trans_in)
-            waves.append(wave_in)
-            factors.append(converter)
+    
+            thr = thr.astype(np.float32)
             
-            Jy_converter = trapezoid(trans_in * wave_in, wave_in) * u.angstrom**2
+            wave_min, wave_max = np.min(thr[:, 0]), np.max(thr[:, 0])
+            idx = np.where((wave_sed > wave_min) & (wave_sed < wave_max))[0]
+            
+            interp = interp1d(thr[:, 0], thr[:, 1])
+            wave_in = wave_sed[idx]
+            trans_in = interp(wave_in)
+            
+            if data_norm is None or data_norm.shape != (len(idx), data.shape[1], data.shape[2]):
+                if data_norm is not None:
+                    del data_norm
+                    gc.collect()
+                data_norm = np.empty((len(idx), data.shape[1], data.shape[2]), dtype=np.float32)
+            
+            np.divide(data[idx], wave_in.reshape(-1, 1, 1)**2, out=data_norm)
+            
+            factor = (u.MJy/u.sr) * const.c / u.angstrom**2 \
+                        * numExp[i] * (exposureTime[i] * u.s) \
+                            * (areaMirror * u.m**2) / (const.c * const.h) * u.angstrom**2
+            factor = factor.to(u.sr ** -1)
+            factor = factor.value.astype(np.float32)
+            
+            gain = const.h / (areaMirror * u.m**2 * trapezoid(trans_in / wave_in, wave_in))
             numerator = trapezoid(trans_in, wave_in)
             denominator = trapezoid(trans_in * wave_in ** -2, wave_in)
             pivot = np.sqrt(numerator / denominator)
-            pivots.append(pivot)
+            
+            Jy_converter = trapezoid(trans_in * wave_in, wave_in) * u.angstrom**2
+            
             Jy_converter = Jy_converter / (const.h * const.c) * areaMirror * u.m**2\
                             * numExp[i] * (exposureTime[i] * u.s)
             Jy_converter = (pivot * u.angstrom)**2 / const.c / Jy_converter
             Jy_converter = Jy_converter.to(u.Jy).value
-            conversion_to_Jy.append(Jy_converter)
+            
+            conversion_to_Jy.append(Jy_converter.astype(np.float32))
+            gains.append(gain.astype(np.float32))
+            pivots.append(pivot.astype(np.float32))
+            
+            bandpass_images.append(self.integrate_bandpass(data_norm, trans_in, wave_in, factor))
 
-        bandpass_images = []
-        for img, tran, wave, factor in zip(image_arrs, trans, waves, factors):
-            bandpass_images.append(self.__calculate_bandpass(img, tran, wave, factor))
+        # image_arrs = []
+        # trans = []
+        # waves = []
+        # factors = []
+        # conversion_to_Jy = []
+        # gains = []
+        # pivots = []
+        
+        # data = file[0].data
+        
+        # for i, thr in enumerate(throughputs):
+        #     wave_min = np.min(thr[:, 0])
+        #     wave_max = np.max(thr[:, 0])
+        #     interp = interp1d(thr[:, 0], thr[:, 1])
+        #     idx = np.where((wave_sed > wave_min) & (wave_sed < wave_max))[0]
+        #     wave_in = wave_sed[idx]# * u.angstrom
+        #     trans_in = interp(wave_in)
+        #     image_arr = data[idx] / wave_in.reshape(-1, 1, 1)**2 # in flambda/u.sr
+        #     converter = (u.MJy/u.sr) * const.c / u.angstrom**2 \
+        #                 * numExp[i] * (exposureTime[i] * u.s) * (areaMirror * u.m**2) / (const.c * const.h) * u.angstrom**2
+        #     converter = converter.to(u.sr ** -1)
+        #     converter = converter.value
+        #     gain = const.h / (areaMirror * u.m**2 * trapezoid(trans_in / wave_in, wave_in))
+        #     gains.append(gain)
+        #     image_arrs.append(image_arr)
+        #     trans.append(trans_in)
+        #     waves.append(wave_in)
+        #     factors.append(converter)
+            
+        #     Jy_converter = trapezoid(trans_in * wave_in, wave_in) * u.angstrom**2
+        #     numerator = trapezoid(trans_in, wave_in)
+        #     denominator = trapezoid(trans_in * wave_in ** -2, wave_in)
+        #     pivot = np.sqrt(numerator / denominator)
+        #     pivots.append(pivot)
+        #     Jy_converter = Jy_converter / (const.h * const.c) * areaMirror * u.m**2\
+        #                     * numExp[i] * (exposureTime[i] * u.s)
+        #     Jy_converter = (pivot * u.angstrom)**2 / const.c / Jy_converter
+        #     Jy_converter = Jy_converter.to(u.Jy).value
+        #     conversion_to_Jy.append(Jy_converter)
+
+        # bandpass_images = []
+        # for img, tran, wave, factor in zip(image_arrs, trans, waves, factors):
+        #     bandpass_images.append(self.__calculate_bandpass(img, tran, wave, factor))
 
         
         # bandpass_images = Parallel(n_jobs=numfils, prefer='threads')(delayed(self.__calculate_bandpass)(img, tran, wave, factor)
@@ -500,7 +592,9 @@ class PostProcess:
                     self.__saveSEDs(sedFilenames, survey)
                     
                 else:
-        
+                    
+                    start_time = time.time()
+                    
                     filters = self.properties[f'filters_{survey}']
                     saveBaseDir = f'mock_{survey}/Subhalo_{self.subhaloID}'
                     os.makedirs(saveBaseDir, exist_ok=True)
@@ -554,12 +648,18 @@ class PostProcess:
                                         'exposureTime': self.properties[f'exposureTime_{survey}'],
                                         'numExposure': self.properties[f'numExposure_{survey}']}                   
 
+                    # start_time = time.time()
                     images = []
                     for i in range(self.properties['numViews']):
                         images.append(self.__bandpass_images(dataCubeFilenames[i], survey,
                                                         throughputs, PSFs, bkgNoise))
-
+                    # end_time = time.time()
+                    # print(f'Time taken to generate images: {end_time - start_time} seconds')
+                    
+                    # start_time = time.time()
                     self.__saveBandpassImages(images, survey)
+                    # end_time = time.time()
+                    # print(f'Time taken to save images: {end_time - start_time} seconds')
 
                     sedFilenames = [self.dataCubeDir + f'/skirt_view_{i:02d}_sed.dat' 
                                     for i in range(self.properties['numViews'])]
@@ -630,4 +730,7 @@ class PostProcess:
                         self.__show_images(imgFilenames, sedFilenames, self.subhaloID, survey)
                     
                     print(f'Finish postprocessing for {survey}')
+                    end_time = time.time()
+                    duration = end_time - start_time
+                    print(f'Time taken to postprocess for {survey}: {duration:.2f} seconds')
                     

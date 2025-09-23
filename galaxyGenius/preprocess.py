@@ -13,6 +13,8 @@ from scipy.interpolate import interp1d
 from typing import Union
 import sys
 import time
+import gc
+import numba
 
 class PartSmoothing():
     def __init__(self, position: np.ndarray, smoothLength: np.ndarray, 
@@ -59,6 +61,13 @@ class PreProcess:
         self.cosmology = Planck15
         self.fage = self.__fage()
         self.__init()
+        self.__precompile_numba()
+        
+    def __precompile_numba(self):
+        dummy_pos = np.ones((10, 3), dtype=np.float64)
+        dummy_vel = np.ones((10, 3), dtype=np.float64)
+        dummy_mass = np.ones(10, dtype=np.float64)
+        self.angular_momentum(dummy_pos, dummy_vel, dummy_mass)
         
     def __fage(self) -> interp1d:
         z = np.linspace(0, 4, 1000)
@@ -291,8 +300,29 @@ class PreProcess:
             
             print(f'Stellar Mass of Subhalo {self.id} is 10^{mass_in_10:.2f} [M_sun].')
             print(f'SFR of Subhalo {self.id} is {self.sfr:.2f} [M_sun/yr].')
+
+    @staticmethod
+    @numba.njit(parallel=True, fastmath=True, cache=True)
+    def angular_momentum(positions, velocities, masses):
+        n = len(positions)
+        partial = np.zeros((n, 3), dtype=positions.dtype)
+        
+        for i in numba.prange(n):
             
+            r = positions[i]
+            v = velocities[i]
+            m = masses[i]
+
+            lx = r[1] * m * v[2] - r[2] * m * v[1]
+            ly = r[2] * m * v[0] - r[0] * m * v[2]
+            lz = r[0] * m * v[1] - r[1] * m * v[0]
             
+            partial[i, 0] = lx.item()
+            partial[i, 1] = ly.item()
+            partial[i, 2] = lz.item()
+
+        return partial.sum(axis=0)
+    
     def __calculate_angular_momentum_and_angles(self) -> tuple:
         
         print('------Calculating face-on and edge-on viewing angles------')
@@ -332,17 +362,19 @@ class PreProcess:
         velocities = velocities[mask]
         masses = masses[mask]
 
+        total_angular_momentum = self.angular_momentum(positions, velocities, masses)
+
         # Calculate angular momentum for each particle
-        for i in range(len(positions)):
-            r = positions[i]
-            v = velocities[i]
-            m = masses[i]
+        # for i in range(len(positions)):
+        #     r = positions[i]
+        #     v = velocities[i]
+        #     m = masses[i]
             
-            # Calculate angular momentum for the current particle
-            angular_momentum = np.cross(r, m * v)
+        #     # Calculate angular momentum for the current particle
+        #     angular_momentum = np.cross(r, m * v)
             
-            # Add to total angular momentum
-            total_angular_momentum += angular_momentum
+        #     # Add to total angular momentum
+        #     total_angular_momentum += angular_momentum
 
         # Normalize the angular momentum vector to get the direction
         norm = np.linalg.norm(total_angular_momentum)
@@ -521,6 +553,9 @@ class PreProcess:
 
         np.savetxt(self.workingDir + '/starforming_regions.txt', info, header=header)
         
+        del part
+        gc.collect()
+        
         part = {}
         mask = np.where((np.abs(g.pos[:, 0]) < region)\
                         & (np.abs(g.pos[:, 1]) < region)\
@@ -556,6 +591,9 @@ class PreProcess:
                                 part['initialMass'], part['Z'], part['age'],
                                 part['velocities'], part['masses']))
         np.savetxt(self.workingDir + '/stars.txt', info, header=header)
+        
+        del part, g, starPart
+        gc.collect()
         
         part = {}
         
@@ -655,7 +693,7 @@ class PreProcess:
                                 part['velocities']))
 
         np.savetxt(self.workingDir + '/dusts.txt', info, header=header)
-        
+                
     def __get_properties_survey(self, distance: float, properties: dict) -> dict:
         
         postProcessing = self.config['postProcessing']

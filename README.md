@@ -24,6 +24,10 @@ Created using default parameters for `make_rgb` in Astropy
 
 ## Updates  
 
+- 2025-09-23  
+1. Reduce execution time for calculating angular momentum and integrating dataCubes by numba.  
+2. Convolution of PSF can use pyFFTW backend (optional).   
+
 - 2025-07-01  
 1. Add support for simulation mode of ExtinctionOnly (thanks comments from Maarten Baes, Qi Zeng, Andrea Gebek, Nick Andreads and members of SKIRT team.)  
     ExtinctionOnly is used when extinction and scattering of dust should be considered,  
@@ -68,6 +72,8 @@ Python packages:
 `termcolor==2.4.0`  
 `photutils==2.0.2`  
 `requests==2.32.3`  
+`numba==0.62.0`  
+`pyFFTW` (optional)  
 
 ⚠️: Package versions should strictly match, otherwise there may be compatibility issues.
 
