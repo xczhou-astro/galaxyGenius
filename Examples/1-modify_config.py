@@ -12,13 +12,14 @@ config.add_survey('CSST')
 conf = config.get_config()
 
 # Modify config
-conf['requests'] = True
-conf['apiKey'] = 'your_api_key'
+conf['requests'] = True # Use Web-based API of TNG simulation
+conf['apiKey'] = 'your_api_key' # specify your own key
 conf['simulationMode'] = 'DustEmission'
 conf['includeDust'] = True
 conf['numPackets'] = 1e6
+conf['minStellarMass'] = 1e11
 
-# Modift survey config
+# Modify survey config
 conf['includeBkg_CSST'] = False
 conf['includePSF_CSST'] = False
 

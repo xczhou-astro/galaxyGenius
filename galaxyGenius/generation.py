@@ -3,15 +3,18 @@ import subprocess
 import sys
 import json
 from shutil import copyfile, move, rmtree
-from types import NoneType
 from typing import Union
+
+from .utils import setup_logging, read_properties
 
 class DataGeneration:
     
     def __init__(self, config: dict):
         
         self.workingDir = config['workingDir']
-        self.properties = self.__get_properties()
+        self.logger = setup_logging(os.path.join(self.workingDir, 'galaxyGenius.log'))
+        self.logger.info(f'Initializing DataGeneration class.')
+        self.properties = read_properties(self.workingDir)
         self.config = self.__read_configs()
         
     def __read_configs(self):
@@ -36,6 +39,8 @@ class DataGeneration:
                 os.path.join(directory, 'skirt_log.txt'))
         copyfile(os.path.join(self.workingDir, 'config.json'),
                 os.path.join(directory, 'config.json'))
+        copyfile(os.path.join(self.workingDir, 'galaxyGenius.log'),
+                os.path.join(directory, 'galaxyGenius.log'))
         
     def __saveDataCube(self):
         numViews = int(self.properties['numViews'])
@@ -54,24 +59,26 @@ class DataGeneration:
                 move(os.path.join(self.workingDir, f'skirt_view_{i:02d}_sed.dat'), 
                     os.path.join(dataCubeDir, f'skirt_view_{i:02d}_sed.dat'))
             
-    def __get_properties(self) -> dict:
-        with open(self.workingDir + '/properties.json', 'r') as file:
-            properties = json.load(file)
-        return properties
+    # def __get_properties(self) -> dict:
+    #     with open(self.workingDir + '/properties.json', 'r') as file:
+    #         properties = json.load(file)
+            
+    #     for key in properties.keys():
+    #         if 'value' in properties[key] and 'unit' in properties[key]:
+    #             properties[key] = u.Quantity(properties[key]['value']) * properties[key]['unit']
+                
+    #     return properties
     
     def __check_files(self):
         
         if not os.path.exists(os.path.join(self.workingDir, 'stars.txt')):
-            print('stars.txt not found.')
-            sys.exit()
+            raise FileNotFoundError('stars.txt not found.')
             
         if not os.path.exists(os.path.join(self.workingDir, 'starforming_regions.txt')):
-            print('starforming_regions.txt not found.')
-            sys.exit()
+            raise FileNotFoundError('starforming_regions.txt not found.')
             
         if not os.path.exists(os.path.join(self.workingDir, 'dusts.txt')):
-            print('dusts.txt not found.')
-            sys.exit()
+            raise FileNotFoundError('dusts.txt not found.')
         else:
             with open(os.path.join(self.workingDir, 'dusts.txt'), 'r') as file:
                 lines = ''
@@ -81,12 +88,11 @@ class DataGeneration:
             if self.config['hydrodynamicSolver'] == 'smoothParticle':
                 
                 if not 'smoothing length' in lines:
-                    print('Smoothing length must be provided for particle-based gas representation.')
-                    sys.exit()
+                    raise ValueError('Smoothing length must be provided for particle-based gas representation.')
         
-    def __run_skirt(self, skirtPath: Union[str, NoneType]=None):
-        print('Running SKIRT')
-        print('Subhalo ID: ', self.properties['subhaloID'])
+    def __run_skirt(self, skirtPath: Union[str, None]=None):
+        self.logger.info('Running SKIRT')
+        self.logger.info(f'Subhalo ID: {self.properties["subhaloID"]}')
         
         base = os.getcwd()
         
@@ -105,7 +111,7 @@ class DataGeneration:
         
         run_flag = 0
         if result.returncode != 0:
-            print('SKIRT exited with error.')
+            self.logger.error('SKIRT exited with error.')
             run_flag = 1
             
         os.chdir(base)
@@ -115,7 +121,7 @@ class DataGeneration:
     def __exit(self):
         sys.exit()
     
-    def runSKIRT(self, skirtPath: Union[str, NoneType]=None):
+    def runSKIRT(self, skirtPath: Union[str, None]=None):
         
         """Run SKIRT radiative transfer simulation.
 
@@ -134,9 +140,14 @@ class DataGeneration:
         if run_flag == 1:
             return self.__exit()
         else:
-            self.__saveDataCube()
+            self.logger.info('Cleaning up working directory')
             
-            print('Cleaning up working directory')
-            rmtree(self.workingDir)
+            # Close logger handlers before moving files
+            for handler in self.logger.handlers[:]:
+                handler.close()
+                self.logger.removeHandler(handler)
+            
+            self.__saveDataCube()
+            rmtree(self.workingDir, ignore_errors=True)
         
             return 0

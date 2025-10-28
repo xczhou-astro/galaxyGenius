@@ -3,22 +3,22 @@ from astropy.io import fits
 from astropy.convolution import convolve_fft
 import astropy.units as u
 import astropy.constants as const
+from astropy.table import QTable
 from PIL import Image
 from scipy.interpolate import interp1d
 import os
 from skimage.transform import rescale
 from scipy.integrate import trapezoid
-from .utils import *
 import matplotlib.pyplot as plt
 from matplotlib_scalebar.scalebar import ScaleBar
 from matplotlib_scalebar.dimension import _Dimension
 from photutils.segmentation import make_2dgaussian_kernel
 from typing import Union
-from types import NoneType
 import json
 import numba
 import gc
 import time
+from .utils import read_properties, get_wavelength_unit, extend, convert_to_rgb, setup_logging, read_config, galaxygenius_data_dir
 
 try:
     import pyfftw
@@ -43,31 +43,33 @@ class PostProcess:
 
         self.subhaloID = subhaloID
         self.dataCubeDir = f'dataCubes/Subhalo_{self.subhaloID}'
-        self.properties = self.__get_properties()
-        self.config = self.__read_configs()
-        self.dataDir = self.config['dataDir']
+        self.properties = read_properties(self.dataCubeDir)
+        self.logger = setup_logging(os.path.join(self.dataCubeDir, 'galaxyGenius.log'))
+        self.logger.info(f'Initializing PostProcess class.')
+        self.config = read_config(self.dataCubeDir)
+        self.dataDir = galaxygenius_data_dir()
+        
         self.__precompile_numba()
         
     def __precompile_numba(self):
         dummy_img = np.ones((10, 10, 10), dtype=np.float32)
         dummy_trans = np.ones(10, dtype=np.float32)
         dummy_wave = np.ones(10, dtype=np.float32)
-        dummy_factor = np.float32(1)
-        self.integrate_bandpass(dummy_img, dummy_trans, dummy_wave, dummy_factor)
+        self.integrate_bandpass(dummy_img, dummy_trans, dummy_wave)
         
-    def __read_configs(self):
+    # def __read_configs(self):
         
-        with open(self.dataCubeDir + '/config.json', 'r') as file:
-            config = json.load(file)
+    #     with open(self.dataCubeDir + '/config.json', 'r') as file:
+    #         config = json.load(file)
             
-        return config
+    #     return config
         
-    def __get_properties(self) -> dict:
-        path = os.path.join(self.dataCubeDir, 'properties.json')
-        with open(path, 'r') as file:
-            properties = json.load(file)
+    # def __get_properties(self) -> dict:
+    #     path = os.path.join(self.dataCubeDir, 'properties.json')
+    #     with open(path, 'r') as file:
+    #         properties = json.load(file)
         
-        return properties
+    #     return properties
             
     def __load_method(self, format: str) -> callable:
         if format == '.npy':
@@ -88,10 +90,13 @@ class PostProcess:
         for fil in filters:
             filename = filterLs[filterNames.index(fil)]
             throughput_file = os.path.join(filterDir, filename)
-            wavelength_scale = get_wavelength_scale(throughput_file)
-            throughput = np.loadtxt(throughput_file)
-            throughput[:, 0] = throughput[:, 0] * wavelength_scale
-            throughputs.append(throughput)
+            wavelength_unit = get_wavelength_unit(throughput_file)
+            throughput = np.loadtxt(throughput_file).astype(np.float32)
+            thr_table = QTable([throughput[:, 0] * wavelength_unit, 
+                           throughput[:, 1] * u.dimensionless_unscaled],
+                               names=['wavelength', 'throughput'])
+            # throughput[:, 0] = throughput[:, 0] * wavelength_unit
+            throughputs.append(thr_table)
 
         return throughputs
 
@@ -118,11 +123,11 @@ class PostProcess:
         else:
             numfilters = len(self.config[f'filters_{survey}'])
             fwhm_in_arcsec = self.config[f'PSFFWHM_{survey}']
-            fwhm_in_arcsec = extend(fwhm_in_arcsec, numfilters)
+            fwhm_in_arcsec = extend(fwhm_in_arcsec, numfilters) # with arcsec
             
-            pixelScales = self.properties[f'angleRes_{survey}']
+            pixelScales = self.properties[f'angleRes_{survey}'] # with arcsec
 
-            stds = [fwhm / ps for fwhm, ps in zip(fwhm_in_arcsec, pixelScales)]
+            stds = [(fwhm / ps).value for fwhm, ps in zip(fwhm_in_arcsec, pixelScales)]
             
             PSFs = []
             for std in stds:
@@ -135,17 +140,36 @@ class PostProcess:
             
         return PSFs
 
-    def __calculate_bandpass(self, img: np.ndarray, tran: np.ndarray, 
-                              wave: np.ndarray, factor: float) -> np.ndarray:
-        bandpass_img = factor * trapezoid(img * tran.reshape(-1, 1, 1) \
-                                          * wave.reshape(-1, 1, 1), wave, axis=0)
-        return bandpass_img
+    # def __calculate_bandpass(self, img: np.ndarray, tran: np.ndarray, 
+    #                           wave: np.ndarray, factor: float) -> np.ndarray:
+    #     bandpass_img = factor * trapezoid(img * tran.reshape(-1, 1, 1) \
+    #                                       * wave.reshape(-1, 1, 1), wave, axis=0)
+    #     return bandpass_img
+    
+    # @staticmethod
+    # @numba.njit(
+    # "float32[:, :](float32[:, :, :], float32[:], float32[:], float32)", 
+    # parallel=True, cache=True, fastmath=True)
+    # def integrate_bandpass(img, tran, wave, factor):
+    #     n = len(wave)
+    #     h, w = img.shape[1], img.shape[2]
+    #     out = np.zeros((h, w), dtype=np.float32)
+    #     for i in numba.prange(h):
+    #         for j in range(w):
+    #             integral = 0.0
+    #             for k in range(1, n):
+    #                 y1 = img[k-1, i, j] * tran[k-1] * wave[k-1]
+    #                 y2 = img[k, i, j] * tran[k] * wave[k]
+    #                 dx = wave[k] - wave[k-1]
+    #                 integral += (y1 + y2) / 2.0 * dx
+    #             out[i, j] = factor * integral
+    #     return out
     
     @staticmethod
     @numba.njit(
-    "float32[:, :](float32[:, :, :], float32[:], float32[:], float32)", 
+    "float32[:, :](float32[:, :, :], float32[:], float32[:])", 
     parallel=True, cache=True, fastmath=True)
-    def integrate_bandpass(img, tran, wave, factor):
+    def integrate_bandpass(img, tran, wave):
         n = len(wave)
         h, w = img.shape[1], img.shape[2]
         out = np.zeros((h, w), dtype=np.float32)
@@ -157,123 +181,110 @@ class PostProcess:
                     y2 = img[k, i, j] * tran[k] * wave[k]
                     dx = wave[k] - wave[k-1]
                     integral += (y1 + y2) / 2.0 * dx
-                out[i, j] = factor * integral
+                out[i, j] = integral
         return out
     
     def __bandpass_images(self, dataCube: str, survey: str, throughputs: list,
-                          PSFs: Union[list, NoneType]=None, bkgNoise: Union[dict, NoneType]=None) -> list:
+                          PSFs: Union[list, None]=None, bkgNoise: Union[dict, None]=None) -> list:
         
         file = fits.open(dataCube)
-        wave_sed = (file[1].data['grid_points'] * 10**4).astype(np.float32)
+        wave_sed = (file[1].data['grid_points']).astype(np.float32) * u.um
         numExp = self.properties[f'numExposure_{survey}']
-        exposureTime = self.properties[f'exposureTime_{survey}']
-        areaMirror = np.pi * (self.properties[f'aperture_{survey}'] / 2)**2
+        exposureTime = self.properties[f'exposureTime_{survey}'] # with sec
+        areaMirror = np.pi * (self.properties[f'aperture_{survey}'] / 2)**2 # with m**2
 
-        ps_in_sr = self.properties[f'ps_in_sr_{survey}']
-        interpolate_ratios = self.properties[f'ratios_{survey}']
-        pixelScales = self.properties[f'angleRes_{survey}']
+        ps_in_sr = self.properties[f'ps_in_sr_{survey}'] # with sr
+        interpolate_ratios = self.properties[f'ratios_{survey}'] # list
+        pixelScales = self.properties[f'angleRes_{survey}'] # with arcsec
+        
+        filters = self.properties[f'filters_{survey}']
 
-        numfils = len(throughputs)
-
-        data = file[0].data
+        data = file[0].data.astype(np.float32) * u.MJy / u.sr
         
         conversion_to_Jy = []
         gains = []
         pivots = []
         bandpass_images = []
                 
-        data_norm = None
-        
         for i, thr in enumerate(throughputs):
-    
-            thr = thr.astype(np.float32)
             
-            wave_min, wave_max = np.min(thr[:, 0]), np.max(thr[:, 0])
+            self.logger.info(f'Processing {survey} {filters[i]}.')
+            
+            wave_min, wave_max = np.min(thr['wavelength']), np.max(thr['wavelength'])
             idx = np.where((wave_sed > wave_min) & (wave_sed < wave_max))[0]
             
-            interp = interp1d(thr[:, 0], thr[:, 1])
-            wave_in = wave_sed[idx]
-            trans_in = interp(wave_in)
+            # throughput -- wave (angstrom)
+            interp = interp1d(thr['wavelength'].to(u.angstrom).value, thr['throughput'])
+            wave_in = wave_sed[idx].to(u.angstrom).value.astype(np.float32)
+            trans_in = interp(wave_in).astype(np.float32)
             
-            if data_norm is None or data_norm.shape != (len(idx), data.shape[1], data.shape[2]):
-                if data_norm is not None:
-                    del data_norm
-                    gc.collect()
-                data_norm = np.empty((len(idx), data.shape[1], data.shape[2]), dtype=np.float32)
+            # data is in f_nu (MJy/sr), converted to erg cm**-2 s**-1 angstrom**-1 sr**-1
+            f_lam = (data[idx] * const.c / (wave_in.reshape(-1, 1, 1) * u.angstrom)**2)
+            f_lam = f_lam.to(u.erg / u.cm**2 / u.s / u.angstrom / u.sr)
+            f_lam_unit = f_lam.unit
             
-            np.divide(data[idx], wave_in.reshape(-1, 1, 1)**2, out=data_norm)
+            const_factor = exposureTime[i] * numExp[i] * areaMirror / (const.h * const.c)
+            integral = self.integrate_bandpass(
+                f_lam.value, trans_in, wave_in
+            ) * f_lam_unit * u.angstrom**2
+            image_in_count = const_factor * integral
+            image_in_count = image_in_count.to(u.sr**-1)
             
-            factor = (u.MJy/u.sr) * const.c / u.angstrom**2 \
-                        * numExp[i] * (exposureTime[i] * u.s) \
-                            * (areaMirror * u.m**2) / (const.c * const.h) * u.angstrom**2
-            factor = factor.to(u.sr ** -1)
-            factor = factor.value.astype(np.float32)
+            gain = const.h / (areaMirror * trapezoid(trans_in / wave_in, wave_in))
             
-            gain = const.h / (areaMirror * u.m**2 * trapezoid(trans_in / wave_in, wave_in))
-            numerator = trapezoid(trans_in, wave_in)
-            denominator = trapezoid(trans_in * wave_in ** -2, wave_in)
-            pivot = np.sqrt(numerator / denominator)
+            pivot_numerator = trapezoid(trans_in, wave_in) * u.angstrom
+            pivot_denominator = trapezoid(trans_in * wave_in ** -2, wave_in) * u.angstrom**-1
+            pivot = np.sqrt(pivot_numerator / pivot_denominator)
             
             Jy_converter = trapezoid(trans_in * wave_in, wave_in) * u.angstrom**2
-            
-            Jy_converter = Jy_converter / (const.h * const.c) * areaMirror * u.m**2\
-                            * numExp[i] * (exposureTime[i] * u.s)
-            Jy_converter = (pivot * u.angstrom)**2 / const.c / Jy_converter
-            Jy_converter = Jy_converter.to(u.Jy).value
+            Jy_converter = Jy_converter / (const.h * const.c) * areaMirror\
+                            * numExp[i] * exposureTime[i]
+            Jy_converter = pivot**2 / const.c / Jy_converter
+            Jy_converter = Jy_converter.to(u.Jy)
             
             conversion_to_Jy.append(Jy_converter.astype(np.float32))
             gains.append(gain.astype(np.float32))
             pivots.append(pivot.astype(np.float32))
+            bandpass_images.append(image_in_count)
             
-            bandpass_images.append(self.integrate_bandpass(data_norm, trans_in, wave_in, factor))
-
-        # image_arrs = []
-        # trans = []
-        # waves = []
-        # factors = []
-        # conversion_to_Jy = []
-        # gains = []
-        # pivots = []
-        
-        # data = file[0].data
-        
         # for i, thr in enumerate(throughputs):
-        #     wave_min = np.min(thr[:, 0])
-        #     wave_max = np.max(thr[:, 0])
-        #     interp = interp1d(thr[:, 0], thr[:, 1])
-        #     idx = np.where((wave_sed > wave_min) & (wave_sed < wave_max))[0]
-        #     wave_in = wave_sed[idx]# * u.angstrom
-        #     trans_in = interp(wave_in)
-        #     image_arr = data[idx] / wave_in.reshape(-1, 1, 1)**2 # in flambda/u.sr
-        #     converter = (u.MJy/u.sr) * const.c / u.angstrom**2 \
-        #                 * numExp[i] * (exposureTime[i] * u.s) * (areaMirror * u.m**2) / (const.c * const.h) * u.angstrom**2
-        #     converter = converter.to(u.sr ** -1)
-        #     converter = converter.value
-        #     gain = const.h / (areaMirror * u.m**2 * trapezoid(trans_in / wave_in, wave_in))
-        #     gains.append(gain)
-        #     image_arrs.append(image_arr)
-        #     trans.append(trans_in)
-        #     waves.append(wave_in)
-        #     factors.append(converter)
             
-        #     Jy_converter = trapezoid(trans_in * wave_in, wave_in) * u.angstrom**2
+        #     wave_min, wave_max = np.min(thr['wavelength']), np.max(thr['wavelength'])
+        #     idx = np.where((wave_sed > wave_min) & (wave_sed < wave_max))[0]
+            
+        #     interp = interp1d(thr['wavelength'].to(u.angstrom).value, thr['throughput'])
+        #     wave_in = wave_sed[idx].to(u.angstrom).value
+        #     trans_in = interp(wave_in)
+            
+        #     if data_norm is None or data_norm.shape != (len(idx), data.shape[1], data.shape[2]):
+        #         if data_norm is not None:
+        #             del data_norm
+        #             gc.collect()
+        #         data_norm = np.empty((len(idx), data.shape[1], data.shape[2]), dtype=np.float32)
+            
+        #     np.divide(data[idx], wave_in.reshape(-1, 1, 1)**2, out=data_norm)
+        #     factor = (u.MJy/u.sr) * const.c / u.angstrom**2 \
+        #                 * numExp[i] * exposureTime[i] \
+        #                     * areaMirror / (const.c * const.h) * u.angstrom**2
+        #     factor = factor.to(u.sr**-1)
+        #     factor = factor.value.astype(np.float32)
+            
+        #     gain = const.h / (areaMirror * trapezoid(trans_in / wave_in, wave_in))
         #     numerator = trapezoid(trans_in, wave_in)
         #     denominator = trapezoid(trans_in * wave_in ** -2, wave_in)
         #     pivot = np.sqrt(numerator / denominator)
-        #     pivots.append(pivot)
-        #     Jy_converter = Jy_converter / (const.h * const.c) * areaMirror * u.m**2\
-        #                     * numExp[i] * (exposureTime[i] * u.s)
+            
+        #     Jy_converter = trapezoid(trans_in * wave_in, wave_in) * u.angstrom**2
+        #     Jy_converter = Jy_converter / (const.h * const.c) * areaMirror\
+        #                     * numExp[i] * exposureTime[i]
         #     Jy_converter = (pivot * u.angstrom)**2 / const.c / Jy_converter
         #     Jy_converter = Jy_converter.to(u.Jy).value
-        #     conversion_to_Jy.append(Jy_converter)
-
-        # bandpass_images = []
-        # for img, tran, wave, factor in zip(image_arrs, trans, waves, factors):
-        #     bandpass_images.append(self.__calculate_bandpass(img, tran, wave, factor))
-
-        
-        # bandpass_images = Parallel(n_jobs=numfils, prefer='threads')(delayed(self.__calculate_bandpass)(img, tran, wave, factor)
-        #                                            for img, tran, wave, factor in zip(image_arrs, trans, waves, factors))
+            
+        #     conversion_to_Jy.append(Jy_converter.astype(np.float32))
+        #     gains.append(gain.astype(np.float32))
+        #     pivots.append(pivot.astype(np.float32))
+            
+        #     bandpass_images.append(self.integrate_bandpass(data_norm, trans_in, wave_in, factor))
         
         resized_imgs = []
         for i, ratio in enumerate(interpolate_ratios):
@@ -283,12 +294,13 @@ class PostProcess:
 
         converted_imgs = []
         for i, ps_sr in enumerate(ps_in_sr):
-            converted_imgs.append(bandpass_images[i] * ps_sr)
+            # remove sr, and remove unit
+            converted_imgs.append((bandpass_images[i] * ps_sr).value)
         
         bandpass_images = converted_imgs
 
         # apply PSF effects
-        if PSFs is not None:
+        if PSFs is not None: 
             images_with_psf = []
             for i, img in enumerate(bandpass_images):
                 # print(img.shape, PSFs[i].shape)
@@ -301,19 +313,25 @@ class PostProcess:
             
             if bkgNoise['noiseType'] == 'instrument':
                 
-                skyBkg = np.array(bkgNoise['skyBkg'])
-                darkCurrent = np.array(bkgNoise['darkCurrent'])
-                readOut = np.array(bkgNoise['readOut'])
-                exposureTime = np.array(bkgNoise['exposureTime'])
-                numExposure = np.array(bkgNoise['numExposure'])
+                # skyBkg = np.array(bkgNoise['skyBkg'])
+                # darkCurrent = np.array(bkgNoise['darkCurrent'])
+                # readOut = np.array(bkgNoise['readOut'])
+                # exposureTime = np.array(bkgNoise['exposureTime'])
+                # numExposure = np.array(bkgNoise['numExposure'])
 
+                skyBkg = bkgNoise['skyBkg'] # with s**-1
+                darkCurrent = bkgNoise['darkCurrent'] # with s**-1
+                readOut = bkgNoise['readOut'] # dimless
+                exposureTime = bkgNoise['exposureTime'] # with s
+                numExposure = bkgNoise['numExposure'] # dimless
+                
                 images_with_bkg_in_electron = []
                 for i, img in enumerate(bandpass_images):
-                    mean = (skyBkg[i] + darkCurrent[i]) * exposureTime[i] * numExposure[i]
+                    mean = ((skyBkg[i] + darkCurrent[i]) * exposureTime[i] * numExposure[i]).value
                     img = img + mean
                     img = np.random.poisson(img).astype(np.int32)
-                    for _ in range(numExposure[i]):
-                        readnoise = np.random.normal(loc=0, scale=readOut[i], size=img.shape)
+                    for _ in range(int(numExposure[i])):
+                        readnoise = np.random.normal(loc=0, scale=readOut[i].value, size=img.shape)
                         readnoise = np.around(readnoise, 0).astype(np.int32)
                         img = img + readnoise
                     img = img.astype(np.float32) - mean.astype(np.float32)
@@ -324,35 +342,34 @@ class PostProcess:
                 elif self.config['imageUnit'] == 'flux':
                     images_with_bkg = []
                     for i, img in enumerate(images_with_bkg_in_electron):
-                        img = img * conversion_to_Jy[i]
-                        images_with_bkg.append(img)
+                        img = (img * conversion_to_Jy[i]) # with Jy
+                        images_with_bkg.append(img.value)
             
             elif bkgNoise['noiseType'] == 'limitingMagnitude':
                 
-                limitMag = np.array(bkgNoise['limitMag'])
-                limitSNR = np.array(bkgNoise['limitSNR'])
-                limitAperture = np.array(bkgNoise['limitAperture'])
-                zeroPoint = np.array(bkgNoise['zeroPoint'])
-                exposureTime = np.array(bkgNoise['exposureTime'])
-                numExposure = np.array(bkgNoise['numExposure'])
-                
-                pixelScales = np.array(pixelScales)
+                limitMag = bkgNoise['limitMag'] # dimless
+                limitSNR = bkgNoise['limitSNR'] # dimless
+                limitAperture = bkgNoise['limitAperture'] # arcsec
+                zeroPoint = bkgNoise['zeroPoint'] # dimless
+                exposureTime = bkgNoise['exposureTime'] # with s
+                numExposure = bkgNoise['numExposure'] # dimless
                 
                 npix = (np.pi * (limitAperture / 2)**2) / (pixelScales**2)
                 
                 images_with_bkg_in_Jy = []
                 for i, img in enumerate(bandpass_images):
                     img_in_Jy = img * conversion_to_Jy[i]
-                    first_term = (gains[i] * img_in_Jy * u.Jy) / (numExposure[i] * exposureTime[i] * u.s)
-                    # first_term = (gains[i] * img_in_Jy * u.Jy * pivots[i]**2 * u.angstrom**2) / (numExposure[i] * exposureTime[i] * u.s * const.c)
+                    first_term = (gains[i] * img_in_Jy) / (numExposure[i] * exposureTime[i])
                     second_term = ((1 / limitSNR[i]) * 10**((zeroPoint[i] - limitMag[i]) / 2.5) * u.Jy)**2 * (1 / npix[i])
-                    third_term = (gains[i]) / (numExposure[i] * exposureTime[i] * u.s * npix[i]) * 10**((zeroPoint[i] - limitMag[i]) / 2.5) * u.Jy
-                    # third_term = (gains[i] * pivots[i]**2 * u.angstrom**2) / (numExposure[i] * exposureTime[i] * u.s * const.c * npix[i]) \
-                    #     * 10**((zeroPoint[i] - limitMag[i]) / 2.5) * u.Jy
+                    third_term = gains[i] / (numExposure[i] * exposureTime[i] * npix[i]) * 10**((zeroPoint[i] - limitMag[i]) / 2.5) * u.Jy
                     
-                    total = (first_term + second_term - third_term).to(u.Jy**2).value
+                    first_term = first_term.to(u.Jy**2)
+                    second_term = second_term.to(u.Jy**2)
+                    third_term = third_term.to(u.Jy**2)
                     
-                    noise = np.sqrt(total) # in Jy
+                    total = (first_term + second_term - third_term).value
+                    
+                    noise = np.sqrt(total) # in Jy, without unit
                     noises = np.random.normal(loc=0, scale=noise, size=img.shape)
                     images_with_bkg_in_Jy.append(img + noises)
                     
@@ -360,13 +377,14 @@ class PostProcess:
                     images_with_bkg = []
                     for i, img in enumerate(images_with_bkg_in_Jy):
                         img = img / conversion_to_Jy[i]
-                        images_with_bkg.append(img)
+                        images_with_bkg.append(img.value)
                         
                 elif self.config['imageUnit'] == 'flux':
                     images_with_bkg = images_with_bkg_in_Jy
+                    
+            bandpass_images = images_with_bkg
         
-        return images_with_bkg
-
+        return bandpass_images
             
     def __saveBandpassImages(self, images: list, survey: str):
 
@@ -391,7 +409,7 @@ class PostProcess:
             header = fits.Header()
             header['SNAPNUM'] = (self.config['snapNum'], 'Snapshot ID')
             header['ID'] = (self.properties['subhaloID'], 'Subhalo ID')
-            header['MASS'] = (self.properties['stellarMass'], 'Subhalo stellar mass, in log10 scale (Msun)')
+            header['MASS'] = (np.log10(self.properties['stellarMass'].value), 'Subhalo stellar mass, in log10 scale (Msun)')
             header['SURVEY'] = (survey, 'Survey')
             header['NFILTERS'] = (numfilters, 'Number of filters')
             header['NUMVIEWS'] = (self.properties['numViews'], 'Number of views')
@@ -402,18 +420,19 @@ class PostProcess:
                 header[f'AZIMU_{count:02d}'] = (self.properties['azimuths'][count], 
                                                   f'Azimuth angle, in deg for view {count:02d}')
             header['FILTER'] = (self.properties[f'filters_{survey}'][i], 'Filter')
-            header['EXPTIME'] = (self.properties[f'exposureTime_{survey}'][i], 'Exposure time, in s')
-            header['EXPNUM'] = (self.properties[f'numExposure_{survey}'][i], 'Number of exposures')
-            header['APERTURE'] = (self.properties[f'aperture_{survey}'], 'Aperture size, in meter')
+            header['EXPTIME'] = (self.properties[f'exposureTime_{survey}'][i].value, 'Exposure time, in s')
+            header['EXPNUM'] = (int(self.properties[f'numExposure_{survey}'][i]), 'Number of exposures')
+            header['APERTURE'] = (self.properties[f'aperture_{survey}'].value, 'Aperture size, in meter')
             header['UNIT'] = (imageUnit, imageUnitComment)
-            header['REDSHIFT'] = (self.properties['redshift'], 'Redshift')
+            if self.properties['viewRedshift'] is not None:
+                header['REDSHIFT'] = (self.properties['viewRedshift'], 'Viewing redshift')
             header['COSMO'] = (self.properties['cosmology'], 'Cosmology')
-            header['BOXSIZE'] = (self.properties['boxLength'], 'Box size, in pc')
-            header['FOV'] = (self.properties['fieldOfView'], 'Field of view, in arcsec')
-            header['PHYFOV'] = (self.properties['fovSize'], 'Physical field of view, in pc')
-            header['LUMIDIS'] = (self.properties['lumiDis'], 'Luminosity distance, in Mpc')
-            header['RESOL'] = (self.properties[f'resolution_{survey}'][i], 'Pixel scale, in pc')
-            header['PS'] = (self.properties[f'angleRes_{survey}'][i], 'Pixel scale, in arcsec')
+            header['BOXSIZE'] = (self.properties['boxLength'].to(u.pc).value, 'Box size, in pc')
+            header['FOV'] = (self.properties['fieldOfView'].value, 'Field of view, in arcsec')
+            header['PHYFOV'] = (self.properties['fovSize'].value, 'Physical field of view, in pc')
+            header['LUMIDIS'] = (self.properties['lumiDis'].value, 'Luminosity distance, in Mpc')
+            header['RESOL'] = (self.properties[f'resolution_{survey}'][i].value, 'Pixel scale, in pc')
+            header['PS'] = (self.properties[f'angleRes_{survey}'][i].value, 'Pixel scale, in arcsec')
             
             if imageUnit == 'electron':
                 header['E2JY'] = (self.conversion_to_Jy[i], 'Conversion factor from electron to Jy')
@@ -452,10 +471,11 @@ class PostProcess:
             header['FUNIT'] = ('Jy', 'Units of flux in F_nu')
             header['INCLI'] = (self.properties['inclinations'][i], 'Inclination angle, in deg')
             header['AZIMUTH'] = (self.properties['azimuths'][i], 'Azimuth angle, in deg')
-            header['REDSHIFT'] = (self.properties['redshift'], 'Redshift')
-            header['lumiDis'] = (self.properties['lumiDis'], 'luminosity distance, in Mpc')
-            header['FOV'] = (self.properties['fieldOfView'], 'Field of view, in arcsec')
-            header['PHYFOV'] = (self.properties['fovSize'], 'Physical field of view, in pc')
+            if self.properties['viewRedshift'] is not None:
+                header['REDSHIFT'] = (self.properties['viewRedshift'], 'Viewing redshift')
+            header['lumiDis'] = (self.properties['lumiDis'].value, 'luminosity distance, in Mpc')
+            header['FOV'] = (self.properties['fieldOfView'].value, 'Field of view, in arcsec')
+            header['PHYFOV'] = (self.properties['fovSize'].value, 'Physical field of view, in pc')
             header['VIEW'] = (i, 'View index')
             
             hdulist.append(tbhdu)
@@ -463,13 +483,17 @@ class PostProcess:
         savedSEDName = f'mock_{survey}/Subhalo_{self.subhaloID}/galaxy_SEDs.fits'
         hdulist.writeto(savedSEDName, overwrite=True)
 
-    def __plot_image(self, image: np.ndarray, pixelscale: float,
-                     savedFilename: Union[str, NoneType]=None):
+    def __plot_image(self, image: np.ndarray, pixelscale: float, resolution: float,
+                     savedFilename: Union[str, None]=None):
 
         numPixels = np.array(image).shape[0]
         
-        z = str(np.around(self.properties['redshift'], 2))
-        logM = str(np.around(self.properties['stellarMass'], 1))
+        if self.properties['viewRedshift'] is not None:
+            z = str(np.around(self.properties['viewRedshift'], 2))
+        else:
+            z = '0.00'
+        
+        logM = str(np.around(np.log10(self.properties['stellarMass'].value), 1))
         
         fig, ax = plt.subplots()
         ax.axis('off')
@@ -491,6 +515,27 @@ class PostProcess:
                             fixed_value=scalebarSize, fixed_units=scalebarUnit, frameon=False,
                             location='lower right', scale_loc='top',
                             color='white', font_properties={'size': 12})
+        
+        
+        if scalebarSize < 1: # 1 in arcsec
+            # fall back to show physical scale when pixel scale is too small
+            scalebarSize = 0.25 * numPixels * resolution
+            
+            if scalebarSize > 10**3:
+                scalebarUnit = 'kpc'
+                scalebarSize = np.around(scalebarSize / 10**3, 2)
+                res = resolution / 10**3
+            else:
+                scalebarUnit = 'pc'
+                scalebarSize = np.around(scalebarSize, 2)
+                res = resolution
+            
+            parsec_dim = ParsecDimension()
+            scalebar = ScaleBar(res, scalebarUnit, dimension=parsec_dim,
+                                fixed_value=scalebarSize, fixed_units=scalebarUnit,
+                                frameon=False, location='lower right', scale_loc='top',
+                                color='white', font_properties={'size': 12})
+        
         ax.add_artist(scalebar)
         ax.text(x=0.05, y=0.15, s=fr'${{\rm log}}M_{{\star}} = {logM}$',
                          fontsize=12, transform=ax.transAxes, color='white')
@@ -508,9 +553,17 @@ class PostProcess:
             plt.show()
 
     def __plot_sed(self, sed: np.ndarray, waveRange: list, logscale: bool=True,
-                   savedFilename: Union[str, NoneType]=None):
+                   savedFilename: Union[str, None]=None):
+        
+        minWave = waveRange[0]
+        maxWave = waveRange[1]
+        
+        # to avoid the border effect
+        maxWave95 = maxWave * 0.95
+        idx = np.where(sed[:, 0] * 10**4 < maxWave95)[0]
+        
         plt.figure()
-        plt.plot(sed[:, 0] * 10**4, sed[:, 1], label='Total')
+        plt.plot(sed[idx, 0] * 10**4, sed[idx, 1], label='Total')
         if logscale:
             plt.xscale('log')
         # plt.legend(frameon=False)
@@ -578,13 +631,13 @@ class PostProcess:
         
         if self.config['postProcessing']:
             
-            print('Run Postprocessing')
+            self.logger.info('Run Postprocessing')
         
             surveys = self.config['surveys']
             
             for survey in surveys:
                 
-                print(f'Begin postprocessing for {survey}')
+                self.logger.info(f'Begin postprocessing for {survey}')
                 
                 if self.config['outputSEDOnly']:
                     sedFilenames = [self.dataCubeDir + f'/skirt_view_{i:02d}_sed.dat' 
@@ -628,7 +681,8 @@ class PostProcess:
                                         'readOut': readOut, 
                                         'exposureTime': self.properties[f'exposureTime_{survey}'],
                                         'numExposure': self.properties[f'numExposure_{survey}']}
-                        
+
+                            
                         elif self.config[f'noiseType_{survey}'] == 'limitingMagnitude':
                             limitMag = self.config[f'limitMag_{survey}']
                             limitSNR = self.config[f'limitSNR_{survey}']
@@ -651,18 +705,21 @@ class PostProcess:
                     # start_time = time.time()
                     images = []
                     for i in range(self.properties['numViews']):
+                        self.logger.info(f'Generating images for view {i}.')
                         images.append(self.__bandpass_images(dataCubeFilenames[i], survey,
                                                         throughputs, PSFs, bkgNoise))
                     # end_time = time.time()
                     # print(f'Time taken to generate images: {end_time - start_time} seconds')
                     
                     # start_time = time.time()
+                    self.logger.info('Saving bandpass images.')
                     self.__saveBandpassImages(images, survey)
                     # end_time = time.time()
                     # print(f'Time taken to save images: {end_time - start_time} seconds')
 
                     sedFilenames = [self.dataCubeDir + f'/skirt_view_{i:02d}_sed.dat' 
                                     for i in range(self.properties['numViews'])]
+                    self.logger.info('Saving SEDs')
                     self.__saveSEDs(sedFilenames, survey)
 
                     if self.config[f'imgDisplay_{survey}']:
@@ -671,28 +728,25 @@ class PostProcess:
                             RGBFilters = self.config[f'RGBFilters_{survey}']
                             RGBidx = [filters.index(RGBFilters[i]) for i in range(3)]
                             # res = self.properties[f'resolution_{survey}'][RGBidx[0]]
-                            pixelscale = self.properties[f'angleRes_{survey}'][RGBidx[0]] # pixel scale in arcsec
+                            pixelscale = self.properties[f'angleRes_{survey}'][RGBidx[0]].value # pixel scale in arcsec
+                            resolution = self.properties[f'resolution_{survey}'][RGBidx[0]].value # resolution in pc
 
                             for i in range(self.properties['numViews']):
                                 
-                                # print(images[i][RGBidx[0]].shape)
-                                # print(images[i][RGBidx[1]].shape)
-                                # print(images[i][RGBidx[2]].shape)
-                                
                                 RGBImg = convert_to_rgb(images[i], RGBidx)
                                 savedFilename = f'mock_{survey}/Subhalo_{self.subhaloID}/galaxy_view_{i:02d}.png'
-                                self.__plot_image(RGBImg, pixelscale, savedFilename=savedFilename)
+                                self.__plot_image(RGBImg, pixelscale, resolution, savedFilename=savedFilename)
                         
                         else:
                             displayFilter = self.config[f'displayFilter_{survey}']
                             filteridx = filters.index(displayFilter)
                             # res = self.properties[f'resolution_{survey}'][filteridx]
-                            pixelscale = self.properties[f'angleRes_{survey}'][filteridx] # pixel scale in arcsec
+                            pixelscale = self.properties[f'angleRes_{survey}'][filteridx].value # pixel scale in arcsec
                         
                             for i in range(self.properties['numViews']):
                                 img = images[i][filteridx]
                                 savedFilename = f'mock_{survey}/Subhalo_{self.subhaloID}/galaxy_view_{i:02d}.png'
-                                self.__plot_image(img, pixelscale, savedFilename=savedFilename)
+                                self.__plot_image(img, pixelscale, resolution, savedFilename=savedFilename)
 
                     if self.config['displaySED']:
                         
@@ -702,12 +756,12 @@ class PostProcess:
                             savedFilename = f'mock_{survey}/Subhalo_{self.subhaloID}/galaxy_SED_view_{i:02d}.png'
 
                             logscale = self.config['displaySEDxlogscale']
-                            minWave = self.properties['minWavelength']
-                            maxWave = self.properties['maxWavelength']
-                            redshift = self.properties['redshift']
-                            minWave = minWave * 10**4 # angstrom
-                            maxWave = maxWave * 10**4 # angstrom
-                            # print(logscale)
+                            minWave = self.properties['minWavelength'].to(u.angstrom).value
+                            maxWave = self.properties['maxWavelength'].to(u.angstrom).value
+                            # redshift = 0 if self.properties['viewRedshift'] == None else self.properties['viewRedshift']
+                            # minWave = minWave * (1 + redshift)
+                            # maxWave = maxWave * (1 + redshift)
+                            
                             self.__plot_sed(sed,  waveRange=[minWave, maxWave], logscale=logscale,
                                         savedFilename=savedFilename)
                     
@@ -716,7 +770,7 @@ class PostProcess:
                     if showImages:
                     
                         if env == 'CommandLine' or env == 'IPythonTerminal':
-                            print('Running in command line or IPython terminal, showImages can only be False.')
+                            self.logger.info('Running in command line or IPython terminal, showImages can only be False.')
                             showImages = False
                         elif env == 'Jupyter':
                             showImages = showImages
@@ -729,8 +783,8 @@ class PostProcess:
                                         for i in range(self.properties['numViews'])]
                         self.__show_images(imgFilenames, sedFilenames, self.subhaloID, survey)
                     
-                    print(f'Finish postprocessing for {survey}')
+                    self.logger.info(f'Finish postprocessing for {survey}')
                     end_time = time.time()
                     duration = end_time - start_time
-                    print(f'Time taken to postprocess for {survey}: {duration:.2f} seconds')
+                    self.logger.info(f'Time taken to postprocess for {survey}: {duration:.2f} seconds')
                     

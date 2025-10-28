@@ -5,7 +5,7 @@ with open("requirements.txt", "r") as f:
 
 setup(
     name="GalaxyGenius",
-    version="1.0.0",
+    version="1.5.0",
     description="A Mock Galaxy Image Generator for Various Telescopes from Hydrodynamical Simulations",
     author="Xingchen Zhou et al.",
     author_email="xczhou95@gmail.com",

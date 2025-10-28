@@ -12,3 +12,5 @@ PSF_plots/
 test/
 _templates/
 galaxyGenius/preprocess_bk.py
+.DS_Store
+Data/.DS_Store
