@@ -24,6 +24,12 @@ Created using default parameters for `make_rgb` in Astropy
 
 ## Updates  
 
+- 2025-10-27 (Big Update)  
+1. Add support to input subhalo data file in h5 format (Please refer to `Examples/2-input_subhalo_file.py`).  
+2. Add support to input extracted particles from subhalo (Please refer to `EAGLE/eagle.ipynb`).  
+3. Add a singleton for unit conventions for various simulations (Please refer to `Examples/2-input_subhalo_file.py` for usage).  
+4. Add logging for galaxyGenius routine.  
+
 - 2025-07-01  
 1. Add support for simulation mode of ExtinctionOnly (thanks comments from Maarten Baes, Qi Zeng, Andrea Gebek, Nick Andreads and members of SKIRT team.)  
     ExtinctionOnly is used when extinction and scattering of dust should be considered,  

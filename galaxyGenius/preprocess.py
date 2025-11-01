@@ -47,6 +47,8 @@ class PreProcess:
         
     def __init(self):
         
+        os.makedirs(self.workingDir, exist_ok=True)
+        
         self.snapRedshift = self.config['snapRedshift']
         self.viewRedshift = self.config['viewRedshift']
         

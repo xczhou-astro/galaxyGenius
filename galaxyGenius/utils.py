@@ -85,21 +85,29 @@ class Units:
         """
         print(self.explain.__doc__)
         
-def setup_logging(log_file="galaxygenius.log", log_level=logging.INFO):
-    """Set up logging configuration that can be used across multiple modules"""
+def setup_logging(log_file="galaxygenius.log", log_level=logging.INFO, force_reconfigure=False):
+    """Set up logging configuration that can be used across multiple modules
+    
+    Args:
+        log_file: Path to the log file
+        log_level: Logging level (default: logging.INFO)
+        force_reconfigure: If True, forces reconfiguration even if handlers exist.
+                          Use this after moving log files to update file handlers.
+    """
     
     root_logger = logging.getLogger()
     
     # Check if we need to reconfigure (different log file or no handlers)
-    needs_reconfigure = False
-    if not root_logger.handlers:
-        needs_reconfigure = True
-    elif log_file:
-        # Check if any existing FileHandler points to a different file
-        existing_log_files = [h.baseFilename for h in root_logger.handlers 
-                             if isinstance(h, logging.FileHandler)]
-        if not existing_log_files or os.path.abspath(log_file) not in existing_log_files:
+    needs_reconfigure = force_reconfigure
+    if not needs_reconfigure:
+        if not root_logger.handlers:
             needs_reconfigure = True
+        elif log_file:
+            # Check if any existing FileHandler points to a different file
+            existing_log_files = [h.baseFilename for h in root_logger.handlers 
+                                 if isinstance(h, logging.FileHandler)]
+            if not existing_log_files or os.path.abspath(log_file) not in existing_log_files:
+                needs_reconfigure = True
     
     if needs_reconfigure:
         # Remove all existing handlers to prevent duplicate logging

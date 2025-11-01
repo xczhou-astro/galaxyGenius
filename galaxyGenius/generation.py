@@ -6,6 +6,7 @@ from shutil import copyfile, move, rmtree
 from typing import Union
 
 from .utils import setup_logging, read_properties
+import logging
 
 class DataGeneration:
     
@@ -46,6 +47,8 @@ class DataGeneration:
         numViews = int(self.properties['numViews'])
         
         dataCubeDir = f'dataCubes/Subhalo_{self.properties["subhaloID"]}'
+        self.dataCubeDir = dataCubeDir
+        
         os.makedirs(dataCubeDir, exist_ok=True)
         self.__save_basics(dataCubeDir)
         for i in range(numViews):
@@ -142,12 +145,15 @@ class DataGeneration:
         else:
             self.logger.info('Cleaning up working directory')
             
-            # Close logger handlers before moving files
-            for handler in self.logger.handlers[:]:
+            root_logger = logging.getLogger()
+            for handler in root_logger.handlers[:]:
                 handler.close()
-                self.logger.removeHandler(handler)
+                root_logger.removeHandler(handler)
             
             self.__saveDataCube()
             rmtree(self.workingDir, ignore_errors=True)
+            
+            new_log_path = os.path.join(self.dataCubeDir, 'galaxyGenius.log')
+            self.logger = setup_logging(new_log_path, force_reconfigure=True)
         
             return 0
