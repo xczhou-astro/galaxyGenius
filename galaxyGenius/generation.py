@@ -32,8 +32,9 @@ class DataGeneration:
                 os.path.join(directory, 'stars.txt'))
         copyfile(os.path.join(self.workingDir, 'starforming_regions.txt'),
                 os.path.join(directory, 'starforming_regions.txt'))
-        copyfile(os.path.join(self.workingDir, 'dusts.txt'),
-                os.path.join(directory, 'dusts.txt'))
+        if self.config['includeDust']:
+            copyfile(os.path.join(self.workingDir, 'dusts.txt'),
+                    os.path.join(directory, 'dusts.txt'))
         copyfile(os.path.join(self.workingDir, 'properties.json'),
                 os.path.join(directory ,'properties.json'))
         copyfile(os.path.join(self.workingDir, 'skirt_log.txt'),
@@ -79,20 +80,22 @@ class DataGeneration:
             
         if not os.path.exists(os.path.join(self.workingDir, 'starforming_regions.txt')):
             raise FileNotFoundError('starforming_regions.txt not found.')
-            
-        if not os.path.exists(os.path.join(self.workingDir, 'dusts.txt')):
-            raise FileNotFoundError('dusts.txt not found.')
-        else:
-            with open(os.path.join(self.workingDir, 'dusts.txt'), 'r') as file:
-                lines = ''
-                for _ in range(20):
-                    lines += file.readline()
-            
-            if self.config['hydrodynamicSolver'] == 'smoothParticle':
-                
-                if not 'smoothing length' in lines:
-                    raise ValueError('Smoothing length must be provided for particle-based gas representation.')
         
+        if self.config['includeDust']:
+            
+            if not os.path.exists(os.path.join(self.workingDir, 'dusts.txt')):
+                raise FileNotFoundError('dusts.txt not found.')
+            else:
+                with open(os.path.join(self.workingDir, 'dusts.txt'), 'r') as file:
+                    lines = ''
+                    for _ in range(20):
+                        lines += file.readline()
+                
+                if self.config['hydrodynamicSolver'] == 'smoothParticle':
+                    
+                    if not 'smoothing length' in lines:
+                        raise ValueError('Smoothing length must be provided for particle-based gas representation.')
+    
     def __run_skirt(self, skirtPath: Union[str, None]=None):
         self.logger.info('Running SKIRT')
         self.logger.info(f'Subhalo ID: {self.properties["subhaloID"]}')

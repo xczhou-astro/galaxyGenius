@@ -864,6 +864,10 @@ class PreProcess:
             properties['star formation rate'] = (particles['GFM_InitialMass'][idx] / self.config['ageThreshold']).to(u.Msun / u.yr)
             properties['metallicity'] = particles['GFM_Metallicity'][idx]
             # from Kapoor et al. 2021
+            
+            # random_seed = 42
+            # print(random_seed)
+            # np.random.seed(random_seed)
             properties['compactness'] = np.random.normal(loc=self.config['logCompactnessMean'], 
                                                         scale=self.config['logCompactnessStd'], size=idx.shape[0]) * u.dimensionless_unscaled
             
@@ -892,8 +896,8 @@ class PreProcess:
                         os.path.join(self.workingDir, 'starforming_regions.txt'), 
                         starFormingFunction)
         
+        
         if self.config['includeDust']:
-            
             def dustFunction(particles):
                 
                 particles['Temperature'] = u2temp(particles['InternalEnergy'],
@@ -924,11 +928,11 @@ class PreProcess:
                 properties['x-velocity'] = particles['Velocities'][:, 0][idx]
                 properties['y-velocity'] = particles['Velocities'][:, 1][idx]
                 properties['z-velocity'] = particles['Velocities'][:, 2][idx]
-                    
+            
                 return properties
         
             paramNames = ['x-coordinate', 'y-coordinate', 'z-coordinate', 'mass',
-                          'metallicity', 'temperature', 'x-velocity', 'y-velocity', 'z-velocity']
+                            'metallicity', 'temperature', 'x-velocity', 'y-velocity', 'z-velocity']
             # paramUnits = ['kpc', 'kpc', 'kpc', 'Msun', '1', 'K', 'km/s']
             
             self.createFile(paramNames, 'dust', 
@@ -952,8 +956,6 @@ class PreProcess:
             Function used to process particles.
 
         """
-        
-    
         if partType in ['star', 'stars', 'stellar', 'starforming', 'starformingRegions']:
             particles = self.starPart
         elif partType in ['gas', 'gases', 'dust']:
@@ -971,6 +973,10 @@ class PreProcess:
         
         properties = function(particles)
         
+        if len(properties) == 0:
+            np.savetxt(f'{saveFilename}', [])
+            return
+                
         paramUnits = []
         for name in paramNames:
             unit = properties[name].unit
@@ -1345,16 +1351,17 @@ class PreProcess:
             json.dump(properties, file, 
                       default=custom_serialier, indent=4)
 
-        self.logger.info('------estimate memory usage------')
-        self.logger.info(f'numViews: {numViews}')
-        self.logger.info(f'numSpatialPixels: {numPixels}')
-        self.logger.info(f'numWavelengthPixels: {numWavelengths}')
-        
-        factor = 7 if recordComponents == 'true' else 1
-        numPixels = np.int64(numPixels) # avoid overflow
-        dataCubeSize = np.int64(numPixels ** 2 * numWavelengths * numViews)
-        dataSize_in_GB = np.around(dataCubeSize * 8 * factor * 1e-9, 3)
-        self.logger.info(f'Estimated memory usage: {dataSize_in_GB} GB')
+        if not self.config['outputSEDOnly']:
+            self.logger.info('------estimate memory usage------')
+            self.logger.info(f'numViews: {numViews}')
+            self.logger.info(f'numSpatialPixels: {numPixels}')
+            self.logger.info(f'numWavelengthPixels: {numWavelengths}')
+            
+            factor = 7 if recordComponents == 'true' else 1
+            numPixels = np.int64(numPixels) # avoid overflow
+            dataCubeSize = np.int64(numPixels ** 2 * numWavelengths * numViews)
+            dataSize_in_GB = np.around(dataCubeSize * 8 * factor * 1e-9, 3)
+            self.logger.info(f'Estimated memory usage: {dataSize_in_GB} GB')
         
     def __save_configs(self):
         
