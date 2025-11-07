@@ -1,7 +1,7 @@
 import os
 
 # Set the GALAXYGENIUS_DATA_DIR environment variable
-os.environ['GALAXYGENIUS_DATA_DIR'] = 'your/galaxygenius/Data'
+os.environ['GALAXYGENIUS_DATA_DIR'] = '/home/xczhou/nis/xczhou/mock_galaxy/galaxyGenius/Data'
 
 import json
 from astropy.cosmology import Planck15
@@ -16,12 +16,14 @@ config = Configuration()
 config.add_survey('CSST,HSC') # add two surveys, CSST and HSC
 
 conf = config.get_config()
+
 config.save_config(conf)
 
 # The units singleton for specific hydrodymical simulation
 # If not defined, the default unit convention is for Planck15 at snapshot redshift
 units = Units(cosmology=Planck15, 
               snapRedshift=conf['snapRedshift'])
+
 
 # Initialize PreProcess
 # The calculation in PreProcess will use the unit conventions in units singleton
