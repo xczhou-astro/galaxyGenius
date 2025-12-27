@@ -209,15 +209,18 @@ class Configuration:
         values.
         """
         
+        # save config should be unitless
         if conf is not None:
         
             for key in list(self.config.keys()):
                 if isinstance(conf[key], u.Quantity):
-                    self.config[key] = str(conf[key])
+                    self.config[key] = u.Quantity(conf[key]).value.tolist()
+                    # self.config[key] = str(conf[key])
                 elif isinstance(conf[key], str):
                     try:
                         u.Quantity(conf[key]).unit
-                        self.config[key] = str(u.Quantity(conf[key]))
+                        self.config[key] = u.Quantity(conf[key]).value.tolist()
+                        # self.config[key] = str(u.Quantity(conf[key]))
                     except:
                         self.config[key] = conf[key]
                 else:
@@ -230,11 +233,11 @@ class Configuration:
             for survey in self.surveys:
                 for key in list(self.survey_configs[survey]):
                     if isinstance(conf[key + f'_{survey}'], u.Quantity):
-                        self.survey_configs[survey][key] = str(conf[key + f'_{survey}'])
+                        self.survey_configs[survey][key] = u.Quantity(conf[key + f'_{survey}']).value.tolist()
                     elif isinstance(conf[key + f'_{survey}'], str):
                         try:
                             u.Quantity(conf[key + f'_{survey}']).unit
-                            self.survey_configs[survey][key] = str(u.Quantity(conf[key + f'_{survey}']))
+                            self.survey_configs[survey][key] = u.Quantity(conf[key + f'_{survey}']).value.tolist()
                         except:
                             self.survey_configs[survey][key] = conf[key + f'_{survey}']
                     else:

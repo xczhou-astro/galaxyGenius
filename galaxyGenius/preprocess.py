@@ -37,7 +37,7 @@ class PreProcess:
         dummy_pos = np.ones((10, 3), dtype=np.float64)
         dummy_vel = np.ones((10, 3), dtype=np.float64)
         dummy_mass = np.ones(10, dtype=np.float64)
-        self.angular_momentum(dummy_pos, dummy_vel, dummy_mass)
+        self._angular_momentum(dummy_pos, dummy_vel, dummy_mass)
         
     def __fage(self) -> interp1d:
         z = np.linspace(0, 4, 1000)
@@ -285,26 +285,26 @@ class PreProcess:
         self.partRegion = self.partRegion * u.kpc
         
     @staticmethod
-    @numba.njit(parallel=True, fastmath=True, cache=True)
-    def angular_momentum(positions, velocities, masses):
-        n = len(positions)
-        partial = np.zeros((n, 3), dtype=positions.dtype)
+    @numba.njit(fastmath=True, cache=True)
+    def _angular_momentum(coords, vels, masses):
+        """Calculates Total L with mass weighting."""
+        Lx = 0.0
+        Ly = 0.0
+        Lz = 0.0
+        n = coords.shape[0]
         
-        for i in numba.prange(n):
-            
-            r = positions[i]
-            v = velocities[i]
+        for i in range(n):
+            # Extract components for readability
+            rx, ry, rz = coords[i, 0], coords[i, 1], coords[i, 2]
+            vx, vy, vz = vels[i, 0], vels[i, 1], vels[i, 2]
             m = masses[i]
-
-            lx = r[1] * m * v[2] - r[2] * m * v[1]
-            ly = r[2] * m * v[0] - r[0] * m * v[2]
-            lz = r[0] * m * v[1] - r[1] * m * v[0]
             
-            partial[i, 0] = lx.item()
-            partial[i, 1] = ly.item()
-            partial[i, 2] = lz.item()
-
-        return partial.sum(axis=0)
+            # Cross Product (r x v) * m and accumulate
+            Lx += (ry * vz - rz * vy) * m
+            Ly += (rz * vx - rx * vz) * m
+            Lz += (rx * vy - ry * vx) * m
+            
+        return Lx, Ly, Lz
     
     def __calculate_angular_momentum_and_angles(self) -> tuple:
         
@@ -329,6 +329,8 @@ class PreProcess:
             
             idx_columns = idx_coordinates + idx_velocities + idx_masses
             
+            # print(idx_columns)
+            
             particles = np.loadtxt(particle_file, usecols=idx_columns)
             positions = particles[:, :3]
             velocities = particles[:, 3:6]
@@ -338,57 +340,43 @@ class PreProcess:
             velocities = self.starPart['Velocities'].to(u.km/u.s).value
             masses = self.starPart['Masses'].to(u.Msun).value
         
-        # Initialize total angular momentum vector
-        total_angular_momentum = np.zeros(3)
         
-        mask = np.where((np.abs(positions[:, 0]) < 30) \
-                    & (np.abs(positions[:, 1]) < 30) \
-                    & (np.abs(positions[:, 2]) < 30))[0]
+        mask = np.where((np.abs(positions[:, 0]) < 20) \
+                    & (np.abs(positions[:, 1]) < 20) \
+                    & (np.abs(positions[:, 2]) < 20))[0]
         
         positions = positions[mask]
         velocities = velocities[mask]
         masses = masses[mask]
 
-        total_angular_momentum = self.angular_momentum(positions, velocities, masses)
-
-        # Calculate angular momentum for each particle
-        # for i in range(len(positions)):
-        #     r = positions[i]
-        #     v = velocities[i]
-        #     m = masses[i]
+        Lx, Ly, Lz = self._angular_momentum(positions, velocities, masses)
+        L_norm = np.sqrt(Lx**2 + Ly**2 + Lz**2)
+        
+        Lx /= L_norm
+        Ly /= L_norm
+        Lz /= L_norm
+        
+        inc_rad = np.arccos(Lz)
+        azi_rad = np.arctan2(Ly, Lx)
+        
+        face_inc = np.degrees(inc_rad)
+        face_azi = np.degrees(azi_rad)
+        
+        edge_inc_raw = face_inc + 90.0
+        edge_azi_raw = face_azi
+        
+        if edge_inc_raw > 180.0:
+            edge_inc = 360.0 - edge_inc_raw
+            edge_azi = edge_azi_raw + 180.0
+        else:
+            edge_inc = edge_inc_raw
+            edge_azi = edge_azi_raw
+        
+        # edge_azi = (edge_azi + 180) % 360 - 180
+        
+        incs = [face_inc, edge_inc]
+        azis = [face_azi, edge_azi]
             
-        #     # Calculate angular momentum for the current particle
-        #     angular_momentum = np.cross(r, m * v)
-            
-        #     # Add to total angular momentum
-        #     total_angular_momentum += angular_momentum
-
-        # Normalize the angular momentum vector to get the direction
-        norm = np.linalg.norm(total_angular_momentum)
-        angular_momentum_direction = total_angular_momentum / norm if norm != 0 else total_angular_momentum
-        
-        # Calculate inclination and azimuth angles
-        x, y, z = angular_momentum_direction
-        inclination = np.arccos(z / np.linalg.norm(angular_momentum_direction)) if norm != 0 else 0
-        azimuth = np.arctan2(y, x)
-        
-        # Calculate perpendicular direction
-        # Choose an arbitrary vector not parallel to angular_momentum_direction
-        arbitrary_vector = np.array([1, 0, 0]) if x != 0 else np.array([0, 1, 0])
-        perpendicular_direction = np.cross(angular_momentum_direction, arbitrary_vector)
-        perpendicular_direction /= np.linalg.norm(perpendicular_direction)  # Normalize
-
-        # Calculate perpendicular inclination and azimuth
-        x_perp, y_perp, z_perp = perpendicular_direction
-        perp_inclination = np.arccos(z_perp)  # Inclination with respect to z-axis
-        perp_azimuth = np.arctan2(y_perp, x_perp)  # Azimuth in the xy-plane
-        
-        incs = [inclination, perp_inclination] # in radians
-        azis = [azimuth, perp_azimuth] # in radians
-        
-        incs = [np.rad2deg(inc) for inc in incs]
-        azis = [np.rad2deg(azi) for azi in azis]
-        
         self.logger.info(f'Face-on angle (inc, azi): {incs[0]:.2f} deg, {azis[0]:.2f} deg')
         self.logger.info(f'Edge-on angle (inc, azi): {incs[1]:.2f} deg, {azis[1]:.2f} deg')
         
@@ -865,9 +853,7 @@ class PreProcess:
             properties['metallicity'] = particles['GFM_Metallicity'][idx]
             # from Kapoor et al. 2021
             
-            # random_seed = 42
-            # print(random_seed)
-            # np.random.seed(random_seed)
+
             properties['compactness'] = np.random.normal(loc=self.config['logCompactnessMean'], 
                                                         scale=self.config['logCompactnessStd'], size=idx.shape[0]) * u.dimensionless_unscaled
             

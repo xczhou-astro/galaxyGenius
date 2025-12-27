@@ -381,7 +381,6 @@ def _assign(value, unit):
     else:
         value = u.Quantity(value) * unit
     return value
-        
     
 def check_exist_and_assign_unit(conf, key, unit):
     if key in conf:
@@ -389,6 +388,43 @@ def check_exist_and_assign_unit(conf, key, unit):
         
     return conf
         
+def handle_array(key, conf, unit):
+    
+    if key in conf:
+        if isinstance(conf[key], list):
+            conf[key] = _assign(conf[key], unit)
+        elif isinstance(conf[key], (int, float)):
+            conf[key] = _assign(conf[key], unit)
+        else:
+            match = re.match(r"\[([^\]]+)\]\s*(.+)", conf[key])
+            if match:
+                values_str, unit_str = match.groups()
+                values = np.fromstring(values_str, sep=" ")
+                unit = u.Unit(unit_str)
+                
+            conf[key] = _assign(values, unit)
+            
+# def _assign(value, unit):
+#     try: 
+#         value = u.Quantity(value)
+#         value = value.to(unit)
+#     except:
+#         value = u.Quantity * unit
+        
+#     return value
+
+# def _assign(key, unit, conf):
+    
+#     if key in conf:
+#         if isinstance(conf[key], list):
+#             conf[key] = conf[key] * unit
+#         elif isinstance(conf[key], str):
+#             match = re.match(r"\[([^\]]+)\]\s*(.+)", conf[key])
+#             values_str, unit_str = match.groups()
+#             values = np.fromstring(values_str, sep=" ")
+
+        
+
 def assign_unit(conf):
     
     conf['minWavelength'] = _assign(conf['minWavelength'], u.um)
@@ -403,25 +439,16 @@ def assign_unit(conf):
     conf['PDRClearingTimescale'] = _assign(conf['PDRClearingTimescale'], u.Myr)
     conf['temperatureThreshold'] = _assign(conf['temperatureThreshold'], u.K)
     for survey in conf['surveys']:
-        check_exist_and_assign_unit(conf, f'resolution_{survey}', u.pc)
-        check_exist_and_assign_unit(conf, f'pixelScales_{survey}', u.arcsec)
-        check_exist_and_assign_unit(conf, f'exposureTime_{survey}', u.s)
         check_exist_and_assign_unit(conf, f'aperture_{survey}', u.m)
-        if f'skyBkg_{survey}' in conf:
-            if isinstance(conf[f'skyBkg_{survey}'], list):
-                conf[f'skyBkg_{survey}'] = _assign(conf[f'skyBkg_{survey}'], u.s**-1)
-            else:
-                match = re.match(r"\[([^\]]+)\]\s*(.+)", conf[f'skyBkg_{survey}'])
-                if match:
-                    values_str, unit_str = match.groups()
-                    values = np.fromstring(values_str, sep=" ")
-                    unit = u.Unit(unit_str)
-                conf[f'skyBkg_{survey}'] = _assign(values, unit)
-                
-                
-        check_exist_and_assign_unit(conf, f'darkCurrent_{survey}', u.s**-1)
-        check_exist_and_assign_unit(conf, f'readOut_{survey}', u.dimensionless_unscaled)
-        check_exist_and_assign_unit(conf, f'PSFFWHM_{survey}', u.arcsec)
+        
+        handle_array(f'resolution_{survey}', conf, u.pc)
+        handle_array(f'pixelScales_{survey}', conf, u.arcsec)
+        handle_array(f'exposureTime_{survey}', conf, u.s)
+        handle_array(f'PSFFWHM_{survey}', conf, u.arcsec)
+        handle_array(f'skyBkg_{survey}', conf, u.s**-1)
+        handle_array(f'darkCurrent_{survey}', conf, u.s**-1)
+        handle_array(f'readOut_{survey}', conf, u.dimensionless_unscaled)
+
         check_exist_and_assign_unit(conf, f'limitAperture_{survey}', u.arcsec)
     
     return conf

@@ -51,11 +51,11 @@ class PostProcess:
         
         self.__precompile_numba()
         
-    def __precompile_numba(self):
-        dummy_img = np.ones((10, 10, 10), dtype=np.float32)
-        dummy_trans = np.ones(10, dtype=np.float32)
-        dummy_wave = np.ones(10, dtype=np.float32)
-        self.integrate_bandpass(dummy_img, dummy_trans, dummy_wave)
+    # def __precompile_numba(self):
+    #     dummy_img = np.ones((10, 10, 10), dtype=np.float32)
+    #     dummy_trans = np.ones(10, dtype=np.float32)
+    #     dummy_wave = np.ones(10, dtype=np.float32)
+    #     self.integrate_bandpass(dummy_img, dummy_trans, dummy_wave)
         
     # def __read_configs(self):
         
@@ -497,7 +497,7 @@ class PostProcess:
         
         fig, ax = plt.subplots()
         ax.axis('off')
-        im = ax.imshow(image)
+        im = ax.imshow(image, origin='lower')
         
         scalebarSize = 0.25 * numPixels * pixelscale
         if scalebarSize > 60:
@@ -597,7 +597,7 @@ class PostProcess:
 
             fig, ax = plt.subplots()
             ax.axis('off')
-            plt.imshow(combined_img)
+            plt.imshow(combined_img, origin='lower')
             plt.suptitle(f'SubhaloID: {subhaloID} ({survey} View {i:02d})', 
                          fontsize=12, y=0.7)
             plt.show()
