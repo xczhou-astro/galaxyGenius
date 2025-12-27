@@ -438,6 +438,8 @@ def assign_unit(conf):
     conf['ageThreshold'] = _assign(conf['ageThreshold'], u.Myr)
     conf['PDRClearingTimescale'] = _assign(conf['PDRClearingTimescale'], u.Myr)
     conf['temperatureThreshold'] = _assign(conf['temperatureThreshold'], u.K)
+    conf['cloudNumberDensity'] = _assign(conf['cloudNumberDensity'], u.cm**-3)
+    
     for survey in conf['surveys']:
         check_exist_and_assign_unit(conf, f'aperture_{survey}', u.m)
         

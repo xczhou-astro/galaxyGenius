@@ -36,6 +36,9 @@ dustEmissionType = "Equilibrium"
 # dust model, ZubkoDustMix, DraineLiDustMix or ThemisDustMix
 dustModel = "ZubkoDustMix"
 
+# if include velocity for SKIRT
+includeVelocity = false
+
 # rest-frame wavelength range considered, in micron
 # maxWavelength should be larger than the maximum wavelength of filters considered
 minWavelength = 0.1
@@ -77,12 +80,12 @@ SEDFamily = "BC03"
 # Chabrier, Kroupa or Salpeter for FSPS family
 initialMassFunction = "Chabrier"
 
+# sed family for star forming region, MAPPINGS or TODDLERS
+starformingSEDFamily = "MAPPINGS"
+
 # stellar mass range for subhalos in Msun, inf for infinite
 minStellarMass = 1e10
 maxStellarMass = inf
-
-# morphological estimation for the galaxy is either a spiral or other types
-estimateMorph = false
 
 # if use face-on and edge-on angles derived by angular momentum
 faceAndEdge = true
@@ -168,6 +171,30 @@ PDRClearingTimescale = 3
 
 # in K, temperature of gas particles lower than temperatureThreshold will be considered as dust
 temperatureThreshold = 8000
+
+# PAH fraction, only for TODDLERS in NoMedium mode
+pahfraction = "High"
+
+# sed mode for TODDLERS, SFRNormalized or Cloud
+sedMode = "SFRNormalized"
+
+# stellar template for TODDLERS, SB99Kroupa100Sin, BPASSChab100Bin or BPASSChab300Bin
+stellarTemplate = "BPASSChab100Bin"
+
+# sfr period, only used in SFRNormalized mode
+sfrPeriod = 10
+
+# star formation efficiency for TODDLERS
+starFormationEfficiency = 0.025
+
+# cloud number density for TODDLERS
+cloudNumberDensity = 320
+
+# alpha for power-law distribution of cloud mass for TODDLERS
+alpha = -1.8
+
+# scaling for TODDLERS
+scaling = 1
 
 # Fraction of the metallic gas locked up in dust
 massFraction = 0.3

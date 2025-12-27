@@ -49,13 +49,13 @@ class PostProcess:
         self.config = read_config(self.dataCubeDir)
         self.dataDir = galaxygenius_data_dir()
         
-        self.__precompile_numba()
+        # self.__precompile_numba()
         
-    # def __precompile_numba(self):
-    #     dummy_img = np.ones((10, 10, 10), dtype=np.float32)
-    #     dummy_trans = np.ones(10, dtype=np.float32)
-    #     dummy_wave = np.ones(10, dtype=np.float32)
-    #     self.integrate_bandpass(dummy_img, dummy_trans, dummy_wave)
+    def __precompile_numba(self):
+        dummy_img = np.ones((10, 10, 10), dtype=np.float32)
+        dummy_trans = np.ones(10, dtype=np.float32)
+        dummy_wave = np.ones(10, dtype=np.float32)
+        self.integrate_bandpass(dummy_img, dummy_trans, dummy_wave)
         
     # def __read_configs(self):
         

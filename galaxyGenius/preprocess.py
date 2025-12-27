@@ -31,7 +31,7 @@ class PreProcess:
         self.inputMethod = 'snapshot' # subhaloFile, snapshot, provided
         
         self.__init()
-        self.__precompile_numba()
+        # self.__precompile_numba()
         
     def __precompile_numba(self):
         dummy_pos = np.ones((10, 3), dtype=np.float64)
@@ -406,9 +406,9 @@ class PreProcess:
     def __init_params(self):
         
         self.starParams = ['GFM_InitialMass', 'GFM_Metallicity', 'GFM_StellarFormationTime',
-                    'Coordinates', 'Velocities', 'Masses']
+                    'Coordinates', 'Velocities', 'Masses', 'StellarHsml']
         self.starParamsUnits = [self.units.mass, self.units.dimless, self.units.dimless, 
-                                self.units.distance, self.units.velocity, self.units.mass]
+                                self.units.distance, self.units.velocity, self.units.mass, self.units.distance]
 
         
         if self.config['includeDust']:
@@ -790,7 +790,7 @@ class PreProcess:
         
         def starFunction(particles):
             
-            smoothLength = self.__get_smoothingLength() # with kpc
+            # smoothLength = self.__get_smoothingLength() # with kpc
             
             starFormationMask = np.where(particles['GFM_StellarFormationTime'] > 0)[0]
             snapshotAge = self.fage(self.snapRedshift) * u.Myr
@@ -809,7 +809,7 @@ class PreProcess:
             properties['x-coordinate'] = particles['Coordinates'][:, 0][idx]
             properties['y-coordinate'] = particles['Coordinates'][:, 1][idx]
             properties['z-coordinate'] = particles['Coordinates'][:, 2][idx]
-            properties['smoothing length'] = np.full(idx.shape[0], smoothLength.value) * smoothLength.unit
+            properties['smoothing length'] = particles['StellarHsml'][idx]
             properties['initial mass'] = particles['GFM_InitialMass'][idx]
             properties['metallicity'] = particles['GFM_Metallicity'][idx]
             properties['age'] = particles['age'][idx]
@@ -820,8 +820,18 @@ class PreProcess:
             
             return properties
         
-        paramNames = ['x-coordinate', 'y-coordinate', 'z-coordinate', 'smoothing length',
-                      'initial mass', 'metallicity', 'age', 'x-velocity', 'y-velocity', 'z-velocity', 'mass']
+        if self.config['includeVelocity']:
+        
+            paramNames = ['x-coordinate', 'y-coordinate', 'z-coordinate', 'smoothing length', 
+                        'x-velocity', 'y-velocity', 'z-velocity',
+                        'initial mass', 'metallicity', 'age', 'mass']
+        else:
+            
+            paramNames = ['x-coordinate', 'y-coordinate', 'z-coordinate', 'smoothing length', 
+                        'initial mass', 'metallicity', 'age', 'mass', 
+                        'x-velocity', 'y-velocity', 'z-velocity'] # for momentum calculation
+        
+        self.logger.info(f'Processing star particles...')
         
         self.createFile(paramNames, 'star', 
                         os.path.join(self.workingDir, 'stars.txt'), 
@@ -829,7 +839,7 @@ class PreProcess:
         
         def starFormingFunction(particles):
             
-            smoothLength = self.__get_smoothingLength()
+            # smoothLength = self.__get_smoothingLength()
             
             starFormationMask = np.where(particles['GFM_StellarFormationTime'] > 0)[0]
             snapshotAge = self.fage(self.snapRedshift) * u.Myr
@@ -848,12 +858,11 @@ class PreProcess:
             properties['x-coordinate'] = particles['Coordinates'][:, 0][idx]
             properties['y-coordinate'] = particles['Coordinates'][:, 1][idx]
             properties['z-coordinate'] = particles['Coordinates'][:, 2][idx]
-            properties['smoothing length'] = np.full(idx.shape[0], smoothLength.value) * smoothLength.unit
+            properties['smoothing length'] = particles['StellarHsml'][idx]
             properties['star formation rate'] = (particles['GFM_InitialMass'][idx] / self.config['ageThreshold']).to(u.Msun / u.yr)
             properties['metallicity'] = particles['GFM_Metallicity'][idx]
             # from Kapoor et al. 2021
             
-
             properties['compactness'] = np.random.normal(loc=self.config['logCompactnessMean'], 
                                                         scale=self.config['logCompactnessStd'], size=idx.shape[0]) * u.dimensionless_unscaled
             
@@ -872,18 +881,115 @@ class PreProcess:
             
             return properties
         
-        paramNames = ['x-coordinate', 'y-coordinate', 'z-coordinate', 'smoothing length',
-                      'star formation rate', 'metallicity', 'compactness', 'pressure', 'covering factor',
-                      'x-velocity', 'y-velocity', 'z-velocity', 'mass']
-        # paramUnits = ['kpc', 'kpc', 'kpc', 'kpc', 'Msun/yr',
-        #               '1', '1', 'J/m3', '1', 'km/s', 'Msun']
+        def starFormingFunctionTODDLERS(particles):
+            
+            # https://skirt.ugent.be/skirt9/class_toddlers_s_e_d_family.html
+            
+            # smoothLength = self.__get_smoothingLength()
+            starFormationMask = np.where(particles['GFM_StellarFormationTime'] > 0)[0]
+            snapshotAge = self.fage(self.snapRedshift) * u.Myr
+            particles['age'] = snapshotAge - self.fage(1/particles['GFM_StellarFormationTime'] - 1) * u.Myr
+            ageMask = np.where(particles['age'] < self.config['ageThreshold'])[0]
+            
+            idx = np.intersect1d(starFormationMask, ageMask)
+            
+            self.logger.info(f'Star forming regions: {len(idx)}')
+            
+            if len(idx) == 0:
+                self.logger.info('No star forming regions found.')
+                return {}
+            
+            properties = {}
+            properties['x-coordinate'] = particles['Coordinates'][:, 0][idx]
+            properties['y-coordinate'] = particles['Coordinates'][:, 1][idx]
+            properties['z-coordinate'] = particles['Coordinates'][:, 2][idx]
+            properties['x-velocity'] = particles['Velocities'][:, 0][idx] # in km/s
+            properties['y-velocity'] = particles['Velocities'][:, 1][idx] # in km/s
+            properties['z-velocity'] = particles['Velocities'][:, 2][idx] # in km/s
+            
+            properties['smoothing length'] = particles['StellarHsml'][idx]
+            properties['metallicity'] = particles['GFM_Metallicity'][idx]
+            
+            starFormationEfficiency = np.full(idx.shape[0], self.config['starFormationEfficiency']) * u.dimensionless_unscaled
+            properties['star formation efficiency'] = starFormationEfficiency
+
+            cloudNumberDensity = self.config['cloudNumberDensity']
+            cloudNumberDensity = np.full(idx.shape[0], cloudNumberDensity.value) * cloudNumberDensity.unit
+            properties['cloud number density'] = cloudNumberDensity
+            
+            if self.config['sedMode'] == 'SFRNormalized':
+                properties['star formation rate'] = (particles['GFM_InitialMass'][idx] / self.config['ageThreshold']).to(u.Msun / u.yr)
+            elif self.config['sedMode'] == 'Cloud':
+                properties['age'] = particles['age'][idx]
+                
+                def sample_cloud_mass(n_samples, alpha=-1.8, m_min=1e5, m_max=10**6.75):
+                    # Calculate the exponent for the CDF (integral of PDF)
+                    p = alpha + 1  # This is -0.8
+                    
+                    # Inverse Transform Sampling
+                    u = np.random.random(n_samples)
+                    term1 = m_max**p - m_min**p
+                    masses = (term1 * u + m_min**p)**(1/p)
+                    
+                    return masses
+                
+                alpha = self.config['alpha']
+                properties['cloud mass'] = sample_cloud_mass(idx.shape[0], alpha=alpha) * u.Msun
+                properties['scaling'] = np.full(idx.shape[0], self.config['scaling']) * u.dimensionless_unscaled
+                
+            return properties
         
-        self.createFile(paramNames, 'starforming', 
-                        os.path.join(self.workingDir, 'starforming_regions.txt'), 
-                        starFormingFunction)
+        if self.config['starformingSEDFamily'] == 'MAPPINGS':
+            
+            if self.config['includeVelocity']:
+        
+                paramNames = ['x-coordinate', 'y-coordinate', 'z-coordinate', 'smoothing length',
+                            'x-velocity', 'y-velocity', 'z-velocity',
+                            'star formation rate', 'metallicity', 'compactness', 'pressure', 'covering factor',
+                            'mass']
+        
+            else:
+                
+                paramNames = ['x-coordinate', 'y-coordinate', 'z-coordinate', 'smoothing length',
+                            'star formation rate', 'metallicity', 'compactness', 'pressure', 'covering factor',
+                            'mass']
+            
+            self.logger.info(f'Processing star forming regions...')
+            
+            self.createFile(paramNames, 'starforming', 
+                            os.path.join(self.workingDir, 'starforming_regions.txt'), 
+                            starFormingFunction)
+            
+        elif self.config['starformingSEDFamily'] == 'TODDLERS':
+            
+            if self.config['includeVelocity']:
+                paramNames = ['x-coordinate', 'y-coordinate', 'z-coordinate', 'smoothing length', 
+                              'x-velocity', 'y-velocity', 'z-velocity']
+                
+            else:
+                paramNames = ['x-coordinate', 'y-coordinate', 'z-coordinate', 'smoothing length']
+            
+            if self.config['sedMode'] == 'SFRNormalized':
+                
+                extensions = ['metallicity', 'star formation efficiency', 'cloud number density', 
+                             'star formation rate']
+                
+            elif self.config['sedMode'] == 'Cloud':
+                
+                extensions = ['age', 'metallicity', 'star formation efficiency', 
+                             'cloud number density', 'cloud mass', 'scaling']
+                
+            paramNames.extend(extensions)
+            
+            self.logger.info(f'Processing star forming regions...')
+            
+            self.createFile(paramNames, 'starforming', 
+                            os.path.join(self.workingDir, 'starforming_regions.txt'), 
+                            starFormingFunctionTODDLERS)
         
         
         if self.config['includeDust']:
+            
             def dustFunction(particles):
                 
                 particles['Temperature'] = u2temp(particles['InternalEnergy'],
@@ -917,9 +1023,11 @@ class PreProcess:
             
                 return properties
         
-            paramNames = ['x-coordinate', 'y-coordinate', 'z-coordinate', 'mass',
-                            'metallicity', 'temperature', 'x-velocity', 'y-velocity', 'z-velocity']
-            # paramUnits = ['kpc', 'kpc', 'kpc', 'Msun', '1', 'K', 'km/s']
+            paramNames = ['x-coordinate', 'y-coordinate', 'z-coordinate',
+                          'mass', 'metallicity', 'temperature', 
+                          'x-velocity', 'y-velocity', 'z-velocity']
+            
+            self.logger.info(f'Processing dust particles...')
             
             self.createFile(paramNames, 'dust', 
                             os.path.join(self.workingDir, 'dusts.txt'), 
@@ -962,7 +1070,7 @@ class PreProcess:
         if len(properties) == 0:
             np.savetxt(f'{saveFilename}', [])
             return
-                
+        
         paramUnits = []
         for name in paramNames:
             unit = properties[name].unit
@@ -985,11 +1093,14 @@ class PreProcess:
             arr_size = (size, len(paramNames))
             
         info_array = np.zeros(arr_size)
-        for i, key in enumerate(properties):
+        
+        # if os.path.exists(saveFilename):
+        #     return
+        
+        for i, key in enumerate(paramNames):
             info_array[:, i] = properties[key]
         
         np.savetxt(f'{saveFilename}', info_array, header=header)
-    
     
     def __get_properties_survey(self, distance: Union[float, u.Quantity], properties: dict) -> dict:
         
@@ -1073,10 +1184,10 @@ class PreProcess:
         azimuths = self.config['azimuths']
         numViews = self.config['numViews']
         
-        estimateMorph = self.config['estimateMorph']
-        if estimateMorph:
-            galmorph = self.__estimate_morphology()
-            properties['morph'] = galmorph
+        # estimateMorph = self.config['estimateMorph']
+        # if estimateMorph:
+        #     galmorph = self.__estimate_morphology()
+        #     properties['morph'] = galmorph
         
         if faceAndEdge:
             
@@ -1196,8 +1307,33 @@ class PreProcess:
         data = data.replace('BruzualCharlotSEDFamily', SEDFamily)
         data = data.replace('Chabrier', initialMassFunction)
         
+        sfSEDFamily = '<MappingsSEDFamily/>'
+        if self.config['starformingSEDFamily'] == 'TODDLERS':
+            replace_str = '<ToddlersSEDFamily sedMode="Cloud" stellarTemplate="BPASSChab100Bin" includeDust="true" resolution="High" sfrPeriod="Period10Myr"/>'
+        
+            sedMode = self.config['sedMode']
+            replace_str = replace_str.replace('sedMode="Cloud"', f'sedMode="{sedMode}"')
+            stellarTemplate = self.config['stellarTemplate']
+            replace_str = replace_str.replace('stellarTemplate="BPASSChab100Bin"', f'stellarTemplate="{stellarTemplate}"')
+            if self.config['includeDust']:
+                includeDust = 'true'
+            else:
+                includeDust = 'false'
+            replace_str = replace_str.replace('includeDust="true"', f'includeDust="{includeDust}"')
+            sfrPeriod = int(self.config['sfrPeriod'])
+            replace_str = replace_str.replace('sfrPeriod="Period10Myr"', f'sfrPeriod="Period{sfrPeriod}Myr"')
+
+            data = data.replace(sfSEDFamily, replace_str)
+            
+        elif self.config['starformingSEDFamily'] == 'MAPPINGS':
+            pass
+        
         numPackets = self.config['numPackets']
         data = data.replace('numPackets="1e7"', f'numPackets="{numPackets}"')
+        
+        includeVelocity = self.config['includeVelocity']
+        if includeVelocity:
+            data = data.replace('importVelocity="false"', 'importVelocity="true"')
         
         if self.config['inLocal']:
             minWavelength = self.config['minWavelength'].to(u.um)
@@ -1274,6 +1410,7 @@ class PreProcess:
             
         properties['fovSize'] = fovSize
         properties['fieldOfView'] = fieldOfView
+        
         
         if self.config['outputSEDOnly']:
             replace_str = '<SEDInstrument instrumentName="view" distance="0 Mpc" inclination="0 deg" azimuth="0 deg" '
