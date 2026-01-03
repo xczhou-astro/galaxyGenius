@@ -5,15 +5,15 @@ import json
 from shutil import copyfile, move, rmtree
 from typing import Union
 
-from .utils import setup_logging, read_properties
-import logging
+from .utils import read_properties, setup_logging
 
 class DataGeneration:
     
     def __init__(self, config: dict):
         
         self.workingDir = config['workingDir']
-        self.logger = setup_logging(os.path.join(self.workingDir, 'galaxyGenius.log'))
+        self.logger = setup_logging(os.path.join(os.getcwd(), 'galaxyGenius.log'))
+        
         self.logger.info(f'Initializing DataGeneration class.')
         self.properties = read_properties(self.workingDir)
         self.config = self.__read_configs()
@@ -41,8 +41,6 @@ class DataGeneration:
                 os.path.join(directory, 'skirt_log.txt'))
         copyfile(os.path.join(self.workingDir, 'config.json'),
                 os.path.join(directory, 'config.json'))
-        copyfile(os.path.join(self.workingDir, 'galaxyGenius.log'),
-                os.path.join(directory, 'galaxyGenius.log'))
         
     def __saveDataCube(self):
         numViews = int(self.properties['numViews'])
@@ -148,15 +146,9 @@ class DataGeneration:
         else:
             self.logger.info('Cleaning up working directory')
             
-            root_logger = logging.getLogger()
-            for handler in root_logger.handlers[:]:
-                handler.close()
-                root_logger.removeHandler(handler)
-            
             self.__saveDataCube()
             rmtree(self.workingDir, ignore_errors=True)
             
-            new_log_path = os.path.join(self.dataCubeDir, 'galaxyGenius.log')
-            self.logger = setup_logging(new_log_path, force_reconfigure=True)
+            # Logging continues to base directory - no need to reconfigure
         
             return 0

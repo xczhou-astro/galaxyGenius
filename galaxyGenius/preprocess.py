@@ -12,20 +12,21 @@ from scipy.interpolate import interp1d
 from typing import Union
 import sys
 import time
-import gc
 import numba
 from typing import Union, Optional
 
-from .utils import Units, u2temp, extend, custom_serialier, setup_logging, galaxygenius_data_dir
+from .utils import Units, u2temp, extend, custom_serialier, galaxygenius_data_dir, setup_logging
 
 class PreProcess:
     
     def __init__(self, config: dict):
         
         self.config = config
+        self.config_ori = config.copy() # set aside original config
         self.workingDir = self.config['workingDir']
         os.makedirs(self.workingDir, exist_ok=True)
-        self.logger = setup_logging(os.path.join(self.workingDir, 'galaxyGenius.log'))
+        
+        self.logger = setup_logging(os.path.join(os.getcwd(), 'galaxyGenius.log'))
         self.logger.info(f'Initializing PreProcess class.')
         
         self.inputMethod = 'snapshot' # subhaloFile, snapshot, provided
@@ -810,6 +811,7 @@ class PreProcess:
             properties['y-coordinate'] = particles['Coordinates'][:, 1][idx]
             properties['z-coordinate'] = particles['Coordinates'][:, 2][idx]
             properties['smoothing length'] = particles['StellarHsml'][idx]
+            # properties['smoothing length'] = np.full(idx.shape[0], smoothLength.value) * u.kpc
             properties['initial mass'] = particles['GFM_InitialMass'][idx]
             properties['metallicity'] = particles['GFM_Metallicity'][idx]
             properties['age'] = particles['age'][idx]
@@ -859,6 +861,7 @@ class PreProcess:
             properties['y-coordinate'] = particles['Coordinates'][:, 1][idx]
             properties['z-coordinate'] = particles['Coordinates'][:, 2][idx]
             properties['smoothing length'] = particles['StellarHsml'][idx]
+            # properties['smoothing length'] = np.full(idx.shape[0], smoothLength.value) * u.kpc
             properties['star formation rate'] = (particles['GFM_InitialMass'][idx] / self.config['ageThreshold']).to(u.Msun / u.yr)
             properties['metallicity'] = particles['GFM_Metallicity'][idx]
             # from Kapoor et al. 2021
@@ -1723,6 +1726,9 @@ class PreProcess:
     
     def prepare(self, arguments: Union[dict, None]=None):
         
+        # Use existing logger - no need to reconfigure
+        self.logger.info(f'Preparing data...')
+        
         # if arguments is not None:
         #     exist_keys = self.config.keys()
         #     for key, value in arguments.items():
@@ -1747,3 +1753,5 @@ class PreProcess:
         
         self.__create_ski()
         self.__save_configs()
+        
+        self.config = self.config_ori.copy() # reset config to original

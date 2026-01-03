@@ -97,47 +97,50 @@ def setup_logging(log_file="galaxygenius.log", log_level=logging.INFO, force_rec
     
     root_logger = logging.getLogger()
     
-    # Check if we need to reconfigure (different log file or no handlers)
-    needs_reconfigure = force_reconfigure
-    if not needs_reconfigure:
-        if not root_logger.handlers:
-            needs_reconfigure = True
-        elif log_file:
-            # Check if any existing FileHandler points to a different file
-            existing_log_files = [h.baseFilename for h in root_logger.handlers 
-                                 if isinstance(h, logging.FileHandler)]
-            if not existing_log_files or os.path.abspath(log_file) not in existing_log_files:
-                needs_reconfigure = True
+    # Always remove existing file handlers to prevent accumulation
+    # Keep console handlers, but replace file handlers
+    file_handlers_to_remove = []
+    for handler in root_logger.handlers[:]:
+        if isinstance(handler, logging.FileHandler):
+            file_handlers_to_remove.append(handler)
     
-    if needs_reconfigure:
-        # Remove all existing handlers to prevent duplicate logging
-        for handler in root_logger.handlers[:]:
+    # Close and remove file handlers
+    for handler in file_handlers_to_remove:
+        try:
+            handler.flush()
             handler.close()
-            root_logger.removeHandler(handler)
-        
-        # Create formatter
-        formatter = logging.Formatter(
-            '%(asctime)s - %(levelname)s - %(message)s'
-        )
-        
-        # Console handler
+        except Exception:
+            pass
+        root_logger.removeHandler(handler)
+    
+    # Check if we need to add a console handler
+    has_console_handler = any(isinstance(h, logging.StreamHandler) 
+                              for h in root_logger.handlers)
+    
+    # Create formatter
+    formatter = logging.Formatter(
+        '%(asctime)s - %(levelname)s - %(message)s'
+    )
+    
+    # Console handler (only add once)
+    if not has_console_handler:
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setFormatter(formatter)
         root_logger.addHandler(console_handler)
+    
+    # File handler (always create new one for the specified file)
+    if log_file:
+        # Ensure log directory exists
+        log_dir = os.path.dirname(log_file)
+        if log_dir and not os.path.exists(log_dir):
+            os.makedirs(log_dir)
         
-        # File handler
-        if log_file:
-            # Ensure log directory exists
-            log_dir = os.path.dirname(log_file)
-            if log_dir and not os.path.exists(log_dir):
-                os.makedirs(log_dir)
-                
-            file_handler = logging.FileHandler(log_file, mode='a')  # Append mode
-            file_handler.setFormatter(formatter)
-            root_logger.addHandler(file_handler)
-        
-        # Set log level
-        root_logger.setLevel(log_level)
+        file_handler = logging.FileHandler(log_file, mode='a')  # Append mode
+        file_handler.setFormatter(formatter)
+        root_logger.addHandler(file_handler)
+    
+    # Set log level
+    root_logger.setLevel(log_level)
     
     # Return logger for the calling module
     caller_module = inspect.currentframe().f_back.f_globals['__name__']

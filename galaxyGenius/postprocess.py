@@ -14,9 +14,7 @@ from matplotlib_scalebar.scalebar import ScaleBar
 from matplotlib_scalebar.dimension import _Dimension
 from photutils.segmentation import make_2dgaussian_kernel
 from typing import Union
-import json
 import numba
-import gc
 import time
 from .utils import read_properties, get_wavelength_unit, extend, convert_to_rgb, setup_logging, read_config, galaxygenius_data_dir
 
@@ -44,7 +42,7 @@ class PostProcess:
         self.subhaloID = subhaloID
         self.dataCubeDir = f'dataCubes/Subhalo_{self.subhaloID}'
         self.properties = read_properties(self.dataCubeDir)
-        self.logger = setup_logging(os.path.join(self.dataCubeDir, 'galaxyGenius.log'))
+        self.logger = setup_logging(os.path.join(os.getcwd(), 'galaxyGenius.log'))
         self.logger.info(f'Initializing PostProcess class.')
         self.config = read_config(self.dataCubeDir)
         self.dataDir = galaxygenius_data_dir()
