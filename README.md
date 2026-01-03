@@ -23,6 +23,10 @@ Created using default parameters for `make_rgb` in Astropy
 
 
 ## Updates  
+- 2026-01-03  
+1. Fix loggging functionality.  
+2. Add Toddlers SED family ([Kapoor et al. 2023](https://academic.oup.com/mnras/article/526/3/3871/7287615), [2024](https://www.aanda.org/10.1051/0004-6361/202451207)) to process star forming regions.  
+3. Modify default smoothing length to employ 32+-1 nearest stellar particles (`StellarHsml`) for star and star-forming regions ([Baes et al. 2024](https://www.aanda.org/10.1051/0004-6361/202348418)). Note that the values can be changed by defining your own `starFunction` and `starformingFunction`, see `EAGLE/eagle.ipynb` for details.  
 
 - 2025-10-27 (Big Update)  
 1. Add support to input subhalo data file in h5 format (Please refer to `Examples/2-input_subhalo_file.py`).  
