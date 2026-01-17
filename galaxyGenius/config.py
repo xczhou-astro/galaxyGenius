@@ -1,16 +1,15 @@
 import os
-from types import NoneType
 from termcolor import colored
 import numpy as np
 from pathlib import Path
 from tomlkit import parse, dumps
 from typing import Union
 from copy import deepcopy
+import astropy.units as u
 from .utils import *
-import subprocess
 
 class Configuration:
-    def __init__(self, surveys: Union[str, list[str], NoneType] = None):
+    def __init__(self, surveys: Union[str, list[str], None] = None):
         
         if surveys is not None:
             if isinstance(surveys, str):
@@ -20,16 +19,8 @@ class Configuration:
         else:
             self.surveys = []
         
-        if os.environ.get('GALAXYGENIUS_DATA_DIR') is not None:
-            self.dataDir = os.environ.get('GALAXYGENIUS_DATA_DIR').split(':')[0]
-        else:
-            print('GALAXYGENIUS_DATA_DIR not set in environment variables. ' + 'Data directory falling to default path: ../Data')
-            self.dataDir = '../Data'
-            if not os.path.exists(self.dataDir):
-                self.__issue('Data directory not found. Please set GALAXYGENIUS_DATA_DIR environment variable.')
-                sys.exit()
+        self.dataDir = galaxygenius_data_dir()
             
-        
         self.main_config_template = self.__read_config(
             os.path.join(self.dataDir, 'config/config_main.toml')
         )
@@ -68,9 +59,13 @@ class Configuration:
         
         self.__update_config()
         self.check_config()
-        self.save_config()
+        config = self.__config_to_dict()
+        config_dict = dict(config)
+        config_with_unit = assign_unit(config_dict)
         
-    def add_survey(self, surveys: Union[str, list[str], NoneType] = None):
+        self.save_config(config_with_unit)
+        
+    def add_survey(self, surveys: Union[str, list[str], None] = None):
         
         '''
         Add surveys. Call ``get_config()`` to get the updated configs.
@@ -100,7 +95,7 @@ class Configuration:
         
         self.surveys += added_surveys
     
-    def remove_survey(self, surveys: Union[str, list[str], NoneType] = None):
+    def remove_survey(self, surveys: Union[str, list[str], None] = None):
         
         '''
         Remove surveys. Call ``get_config()`` to get the updated configs.
@@ -147,9 +142,6 @@ class Configuration:
             config = self.__read_config(f'config_{survey}.toml')
             
             self.survey_configs[survey] = config
-            
-        
-        
             
         self.__modify_main_config()
     
@@ -207,7 +199,7 @@ class Configuration:
         return config
               
     
-    def save_config(self, conf: Union[dict, NoneType] = None):
+    def save_config(self, conf: Union[dict, None] = None):
         
         """
         Manually save the current configuration to the specified TOML files.
@@ -217,19 +209,43 @@ class Configuration:
         values.
         """
         
+        # save config should be unitless
         if conf is not None:
         
             for key in list(self.config.keys()):
-                if conf[key] != self.config[key]:
+                if isinstance(conf[key], u.Quantity):
+                    self.config[key] = u.Quantity(conf[key]).value.tolist()
+                    # self.config[key] = str(conf[key])
+                elif isinstance(conf[key], str):
+                    try:
+                        u.Quantity(conf[key]).unit
+                        self.config[key] = u.Quantity(conf[key]).value.tolist()
+                        # self.config[key] = str(u.Quantity(conf[key]))
+                    except:
+                        self.config[key] = conf[key]
+                else:
                     self.config[key] = conf[key]
-                    
-            self.config['dataDir'] = self.dataDir
             
+                # if conf[key] != self.config[key]:
+                #     self.config[key] = str(conf[key])
                     
+            
             for survey in self.surveys:
                 for key in list(self.survey_configs[survey]):
-                    if conf[key + f'_{survey}'] != self.survey_configs[survey][key]:
+                    if isinstance(conf[key + f'_{survey}'], u.Quantity):
+                        self.survey_configs[survey][key] = u.Quantity(conf[key + f'_{survey}']).value.tolist()
+                    elif isinstance(conf[key + f'_{survey}'], str):
+                        try:
+                            u.Quantity(conf[key + f'_{survey}']).unit
+                            self.survey_configs[survey][key] = u.Quantity(conf[key + f'_{survey}']).value.tolist()
+                        except:
+                            self.survey_configs[survey][key] = conf[key + f'_{survey}']
+                    else:
                         self.survey_configs[survey][key] = conf[key + f'_{survey}']
+                    
+                    
+                    # if conf[key + f'_{survey}'] != self.survey_configs[survey][key]:
+                    #     self.survey_configs[survey][key] = str(conf[key + f'_{survey}'])
         
         with open('config.toml', 'w') as f:
             f.write(dumps(self.config))
@@ -237,7 +253,6 @@ class Configuration:
         for survey in self.surveys:
             with open(f'config_{survey}.toml', 'w') as f:
                 f.write(dumps(self.survey_configs[survey]))
-        
                 
     def get_config(self):
         
@@ -251,9 +266,12 @@ class Configuration:
         self.__update_config()
         self.check_config()
         config = self.__config_to_dict()
-        config['dataDir'] = self.dataDir
+        # config['dataDir'] = self.dataDir
         
-        return dict(config)
+        config_dict = dict(config)
+        config_with_unit = assign_unit(config_dict)
+        
+        return dict(config_with_unit)
     
     def __adapt_survey(self, survey: str, survey_config: dict) -> dict:
         if survey == 'HST':
@@ -380,12 +398,14 @@ class Configuration:
     def __issue(self, message: str):
         print(colored(message, 'red'))
 
-    def __exist(self, key: str, threshold: Union[float, NoneType] = None) -> bool:
+    def __exist(self, key: str, threshold: Union[float, None] = None) -> bool:
         if key in self.all_config:
             if threshold is not None:
                 values = self.all_config[f'{key}']
                 if isinstance(values, (int, float)):
                     values = [values]
+                elif isinstance(values, str):
+                    values = [u.Quantity(values).value]
                 values = np.array([np.float32(val) for val in values])
                 check = (values > threshold).all()
                 if check == False:
@@ -453,6 +473,19 @@ class Configuration:
         
         self.all_config = self.__config_to_dict()
         
+        for key in self.all_config.keys():
+            if isinstance(self.all_config[key], str):
+                match = re.match(r"\[([^\]]+)\]\s*(.+)", self.all_config[key])
+                if match:
+                    values_str, unit_str = match.groups()
+                    values = np.fromstring(values_str, sep=" ")
+                    self.all_config[key] = values.tolist()
+                else:
+                    try:
+                        self.all_config[key] = u.Quantity(self.all_config[key]).value
+                    except:
+                        pass
+        
         self.flag_count = 0
         
         # skirtPATH = self.__exist_return('skirtPath')
@@ -512,14 +545,14 @@ class Configuration:
         
         simulationMode = self.__exist_return('simulationMode')
         if simulationMode:
-            if not simulationMode in ['NoMedium', 'DustEmission']:
+            if not simulationMode in ['NoMedium', 'DustEmission', 'ExtinctionOnly']:
                 self.__issue('simulationMode unrecognized.')
                 self.flag_count += 1
 
-                if simulationMode == 'DustEmission':
+                if simulationMode in ['DustEmission', 'ExtinctionOnly']:
                     includeDust = self.__exist_return('includeDust')
                     if not includeDust:
-                        self.__issue('includeDust should be True if simulationMode is DustEmission.')
+                        self.__issue('includeDust should be True if simulationMode is DustEmission or ExtinctionOnly.')
                         self.flag_count += 1
                     
                     dustEmissionType = self.__exist_return('dustEmissionType')
@@ -720,12 +753,20 @@ class Configuration:
             if (len(pivots) > 0) & (self.__exist('maxWavelength')) & (self.__exist('minWavelength')):
                 max_pivot = np.max(pivots)
                 min_pivot = np.min(pivots)
-
-                redshift = self.__exist_return('viewRedshift')
-                if np.isclose(redshift, 0, atol=0.005):
-                    redshift = 0.005
-                redshift = np.float32(redshift)
+            
+                min_pivot_round = np.round(min_pivot / 1e4, 2)
+                max_pivot_round = np.round(max_pivot / 1e4, 2)
                 
+                print(f'Minimum pivot wavelength: {min_pivot_round:.2f} micron')
+                print(f'Maximum pivot wavelength: {max_pivot_round:.2f} micron')
+
+                if self.__exist_return('inLocal'):
+                    redshift = 0.0
+                else:
+                    redshift = self.__exist_return('viewRedshift')
+                    if np.isclose(redshift, 0, atol=0.005):
+                        redshift = 0.005
+                    redshift = np.float32(redshift)
                 
                 maxWavelength = np.float32(self.all_config['maxWavelength']) * 10**4 * (1 + redshift)
                 minWaveLength = np.float32(self.all_config['minWavelength']) * 10**4 * (1 + redshift)

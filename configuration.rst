@@ -11,7 +11,7 @@ Main config
     API key for IllustrisTNG, required if ``requests`` is True.
 
 ``simulation`` (str):
-    Simulation name. TNG50, TNG100, TNG300, etc.
+    Simulation name. TNG50-1, TNG100-1, TNG300-1, etc.
 
 ``hydrodynamicSolver`` (str):
     hydrodynamic solver for gas particles, can be VoronoiMesh (TNG) or smoothParticle (EAGLE)  
@@ -26,16 +26,22 @@ Main config
     Working directory for running SKIRT code. 
 
 ``simulationMode`` (str):
-    Simulation mode. NoMedium or DustEmission.
+    Simulation mode. NoMedium, ExtinctionOnly or DustEmission.  
+    NoMedium is an ideal case with no medium;  
+    ExtinctionOnly is employed when extinction and scattering for dust are considered;  
+    DustEmission also includes secondary emission from dust.
 
 ``includeDust`` (bool):
-    Whether to include dust particles. Be True if simulationMode is DustEmission
+    Whether to include dust particles. Be True if simulationMode is ExtinctionOnly or DustEmission
 
 ``dustEmissionType`` (str):
     Dust emission type. Equilibrium or Stochastic.
 
 ``dustModel`` (str):
     Dust model. ZubkoDustMix, DraineLiDustMix or ThemisDustMix.
+
+``includeVelocity`` (bool):
+    Whether to include velocities for particle data.
 
 ``minWavelength``, ``maxWavelength`` (float):
     Wavelength range in rest frame, in micron.
@@ -44,7 +50,7 @@ Main config
     Particles are retrieved from the box with length ``halfStellarMassRadius * boxLengthScale``.
 
 ``maxBoxLength`` (float):
-    Maximum box length.
+    Maximum box length in kpc.
 
 ``fieldOfView`` (float)
     Field of view in arcsec, equals to box length if 0.
@@ -65,19 +71,20 @@ Main config
     SED family for quenched star particles. BC03 or FSPS.
 
 ``initialMassFunction`` (str):
-    Initial mass function for quenched star particles. Chabrier or Salpeter for BC03 SED family. Chabrier, Kroupa or Salpeter for FSPS family.
+    Initial mass function for quenched star particles.  
+    Chabrier or Salpeter for BC03 SED family. Chabrier, Kroupa or Salpeter for FSPS family.
+
+``starformingSEDFamily`` (str):
+    SED family for star-forming regions. MAPPINGS (`Groves et al. 2008 <https://iopscience.iop.org/article/10.1086/528711>`_) or TODDLERS (`Kapoor et al. 2023 <https://academic.oup.com/mnras/article/526/3/3871/7287615>`_, `2024 <https://www.aanda.org/articles/aa/full_html/2024/12/aa51207-24/aa51207-24.html>`_).
 
 ``minStellarMass``, ``maxStellarMass`` (float):
     Stellar mass range for subhalos in Msun, inf for infinite.
-
-``estimateMorph`` (bool):
-    Estimate the morphology of current galaxy using S/T ratios, either a spiral or non-spiral.
 
 ``faceAndEdge`` (bool):
     Whether to use face-on and edge-on angles derived by angular momentum.
 
 ``numViews`` (int):
-    Number of instrument views.
+    Number of instrument views (observing directions).
 
 ``randomViews`` (bool):
     Whether to use random viewing angles.
@@ -89,13 +96,13 @@ Main config
     Whether to perform postprocessing.
 
 ``spatialResol`` (float):
-    Base spatial resolution, must be provided if postprocessing is False.
+    Base spatial resolution in pc, must be provided if postprocessing is False.
 
 ``imageUnit`` (str):
     Unit type of bandpass image output. electron or flux.
 
 ``surveys`` (list):
-    Surveys considered.
+    Surveys considered. Euclid, JWST, HST, CSST, HSC are built-in.
 
 ``displaySED`` (bool):
     Whether to display SED.
@@ -110,7 +117,7 @@ Main config
     Snapshot ID.
 
 ``snapRedshift`` (float):
-    Snapshot redshift of Snapshot with ID.
+    Snapshot redshift of Snapshot ID.
 
 ``viewRedshift`` (float):
     viewing redshift, should be close to snapRedshift.  
@@ -127,36 +134,77 @@ Main config
     Number of threads. No speedup for threads larger than 24.
 
 ``recordComponents`` (bool):
-    Whether to record individual components including transparent, primary direct, primary scattered
-    and secondarytransparent, secondarydirect, secondaryscattered, apart from total components.
+    Whether to record individual components including transparent, primary direct, primary scattered  
+    and secondarytransparent, secondarydirect, secondaryscattered, apart from total components.  
     Memory cosumptions will be 7 times if True.
 
 ``ageThreshold`` (float):
     Age threshold for discriminating star-forming regions and quenched star particles, in Myr.
 
 ``logCompactnessMean``, ``logCompactnessStd`` (float):
-    Logarithmic mean and standard deviation of compactness for star-forming star particles, see `Kapoor et al. 2021 <https://academic.oup.com/mnras/article/506/4/5703/6324023>`_.
+    Only used when starformingSEDFamily is MAPPINGS.  
+    Logarithmic mean and standard deviation of compactness for star-forming star particles,  
+    see `Kapoor et al. 2021 <https://academic.oup.com/mnras/article/506/4/5703/6324023>`_.
 
 ``logPressure`` (float):
+    Only used when starformingSEDFamily is MAPPINGS.  
     Logarithmic pressure for star-forming star particles. log10[(Pressure/k_B)/cm^-3 K] = logPressure
 
 ``constantCoveringFactor`` (bool):
+    Only used when starformingSEDFamily is MAPPINGS.  
     Whether to use constant covering factor.
 
 ``coveringFactor`` (float):
-    Constant covering factor, if constantCoveringFactor is True, see `Groves et al. 2008 <https://iopscience.iop.org/article/10.1086/528711>`_.
+    Only used when starformingSEDFamily is MAPPINGS.  
+    Constant covering factor, if constantCoveringFactor is True,  
+    see `Groves et al. 2008 <https://iopscience.iop.org/article/10.1086/528711>`_.
 
 ``PDRClearingTimescale`` (float):
-    PDR clearing timescale, in Myr, if constantCoveringFactor is False, see `Baes et al. 2024 <https://www.aanda.org/articles/aa/full_html/2024/03/aa48418-23/aa48418-23.html>`_.
+    Only used when starformingSEDFamily is MAPPINGS.  
+    PDR clearing timescale, in Myr, if constantCoveringFactor is False,  
+    see `Baes et al. 2024 <https://www.aanda.org/articles/aa/full_html/2024/03/aa48418-23/aa48418-23.html>`_.
 
 ``temperatureThreshold`` (float):
     Temperature threshold for creating dusts from gas particles, in K.
+
+``pahfraction`` (float):
+    Only used when starformingSEDFamily is TODDLERS.  
+    Fraction of PAH mass in dust.
+
+``sedMode`` (str):
+    Only used when starformingSEDFamily is TODDLERS.  
+    SED mode, Cloud or SFRNormalized.
+
+``stellarTemplate`` (str):
+    Only used when starformingSEDFamily is TODDLERS.  
+    Stellar template, SB99Kroupa100Sin, BPASSChab100Bin or BPASSChab300Bin.
+
+``sfrPeriod`` (int):
+    Only used in SFRNormalized mode.  
+    SFR period in Myr, can be 10 or 30.
+
+``starFormationEfficiency`` (float):
+    Only used when starformingSEDFamily is TODDLERS.  
+    star formation efficiency.
+
+``cloudNumberDensity`` (float):
+    Only used when starformingSEDFamily is TODDLERS.  
+    Cloud number density, in cm^-3.
+
+``alpha`` (float):
+    Only used when starformingSEDFamily is TODDLERS.  
+    Alpha for power-law distribution of cloud mass.
+
+``scaling`` (float):
+    Only used when starformingSEDFamily is TODDLERS.  
+    Scaling factor.
 
 ``massFraction`` (float):
     Fraction of the metallic gas locked up in dust.
 
 ``DISMModel`` (str):
-    Dust ISM recipe. `Camps_2016 <https://academic.oup.com/mnras/article/462/1/1057/2589990>`_ or `Torrey_2012 <https://academic.oup.com/mnras/article/427/3/2224/1099996>`_.
+    Dust ISM recipe. `Camps_2016 <https://academic.oup.com/mnras/article/462/1/1057/2589990>`_  
+    or `Torrey_2012 <https://academic.oup.com/mnras/article/427/3/2224/1099996>`_.
 
 ``numSilicateSizes``, ``numGraphiteSizes``, ``numPAHSizes``, ``numHydrocarbonSizes`` (int):
     Number of bins for dust grains.
