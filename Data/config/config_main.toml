@@ -59,12 +59,6 @@ wavelengthGrid = "Linear"
 # wavelength bins for SKIRT calculation
 numWavelengths = 300
 
-# rest-frame wavelengths for output
-minWaveOutput = 0.1
-maxWaveOutput = 1.2
-numWaveOutput = 300
-waveGridOutput = "Linear"
-
 # octree min/max level refinement for dust calculation of SKIRT
 minLevel = 6
 maxLevel = 10
