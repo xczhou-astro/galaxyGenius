@@ -71,32 +71,22 @@
              
   <h1>Source code for galaxyGenius.config</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">types</span><span class="w"> </span><span class="kn">import</span> <span class="n">NoneType</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">termcolor</span><span class="w"> </span><span class="kn">import</span> <span class="n">colored</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tomlkit</span><span class="w"> </span><span class="kn">import</span> <span class="n">parse</span><span class="p">,</span> <span class="n">dumps</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Union</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">astropy.units</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">u</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
 
 <div class="viewcode-block" id="Configuration">
 <a class="viewcode-back" href="../../api.html#galaxyGenius.config.Configuration">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Configuration</span><span class="p">:</span>
 <div class="viewcode-block" id="Configuration.__init__">
 <a class="viewcode-back" href="../../api.html#galaxyGenius.config.Configuration.__init__">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">surveys</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">NoneType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Initialize a Configuration object for GalaxyGenius.</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        surveys : str, list[str], or None, optional</span>
-<span class="sd">            Survey names to process. Can be a single survey name as a string,</span>
-<span class="sd">            a list of survey names, or None. If None, an empty list will be used.</span>
-<span class="sd">            Default is None.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">surveys</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        
         <span class="k">if</span> <span class="n">surveys</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">surveys</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">surveys</span> <span class="o">=</span> <span class="n">split</span><span class="p">(</span><span class="n">surveys</span><span class="p">)</span>
@@ -105,16 +95,8 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">surveys</span> <span class="o">=</span> <span class="p">[]</span>
         
-        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;GALAXYGENIUS_DATA_DIR&#39;</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">dataDir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;GALAXYGENIUS_DATA_DIR&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;GALAXYGENIUS_DATA_DIR not set in environment variables. &#39;</span> <span class="o">+</span> <span class="s1">&#39;Data directory falling to default path: ../Data&#39;</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">dataDir</span> <span class="o">=</span> <span class="s1">&#39;../Data&#39;</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataDir</span><span class="p">):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">__issue</span><span class="p">(</span><span class="s1">&#39;Data directory not found. Please set GALAXYGENIUS_DATA_DIR environment variable.&#39;</span><span class="p">)</span>
-                <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataDir</span> <span class="o">=</span> <span class="n">galaxygenius_data_dir</span><span class="p">()</span>
             
-        
         <span class="bp">self</span><span class="o">.</span><span class="n">main_config_template</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__read_config</span><span class="p">(</span>
             <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataDir</span><span class="p">,</span> <span class="s1">&#39;config/config_main.toml&#39;</span><span class="p">)</span>
         <span class="p">)</span>
@@ -156,12 +138,16 @@
         
         <span class="bp">self</span><span class="o">.</span><span class="n">__update_config</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">check_config</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">save_config</span><span class="p">()</span></div>
+        <span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__config_to_dict</span><span class="p">()</span>
+        <span class="n">config_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        <span class="n">config_with_unit</span> <span class="o">=</span> <span class="n">assign_unit</span><span class="p">(</span><span class="n">config_dict</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_config</span><span class="p">(</span><span class="n">config_with_unit</span><span class="p">)</span></div>
 
         
 <div class="viewcode-block" id="Configuration.add_survey">
 <a class="viewcode-back" href="../../api.html#galaxyGenius.config.Configuration.add_survey">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">add_survey</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">surveys</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">NoneType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_survey</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">surveys</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Add surveys. Call ``get_config()`` to get the updated configs.</span>
@@ -194,7 +180,7 @@
     
 <div class="viewcode-block" id="Configuration.remove_survey">
 <a class="viewcode-back" href="../../api.html#galaxyGenius.config.Configuration.remove_survey">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">remove_survey</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">surveys</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">NoneType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">remove_survey</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">surveys</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Remove surveys. Call ``get_config()`` to get the updated configs.</span>
@@ -242,9 +228,6 @@
             <span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__read_config</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;config_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">.toml&#39;</span><span class="p">)</span>
             
             <span class="bp">self</span><span class="o">.</span><span class="n">survey_configs</span><span class="p">[</span><span class="n">survey</span><span class="p">]</span> <span class="o">=</span> <span class="n">config</span>
-            
-        
-        
             
         <span class="bp">self</span><span class="o">.</span><span class="n">__modify_main_config</span><span class="p">()</span>
     
@@ -304,34 +287,53 @@
     
 <div class="viewcode-block" id="Configuration.save_config">
 <a class="viewcode-back" href="../../api.html#galaxyGenius.config.Configuration.save_config">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">save_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conf</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">dict</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conf</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">dict</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Save the current configuration to files.</span>
+<span class="sd">        Manually save the current configuration to the specified TOML files.</span>
 
-<span class="sd">        The configuration is saved to config.toml for the main settings, and separate</span>
-<span class="sd">        config_{survey}.toml files for each survey&#39;s specific settings.</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        conf : dict or None, optional</span>
-<span class="sd">            Dictionary containing configuration updates to apply before saving.</span>
-<span class="sd">            If None, saves the current configuration without modifications.</span>
+<span class="sd">        Parameters:</span>
+<span class="sd">        conf (dict, optional): A dictionary containing configuration </span>
+<span class="sd">        values.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         
+        <span class="c1"># save config should be unitless</span>
         <span class="k">if</span> <span class="n">conf</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         
             <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
-                <span class="k">if</span> <span class="n">conf</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="n">key</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">conf</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">u</span><span class="o">.</span><span class="n">Quantity</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Quantity</span><span class="p">(</span><span class="n">conf</span><span class="p">[</span><span class="n">key</span><span class="p">])</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+                    <span class="c1"># self.config[key] = str(conf[key])</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">conf</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="nb">str</span><span class="p">):</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">u</span><span class="o">.</span><span class="n">Quantity</span><span class="p">(</span><span class="n">conf</span><span class="p">[</span><span class="n">key</span><span class="p">])</span><span class="o">.</span><span class="n">unit</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Quantity</span><span class="p">(</span><span class="n">conf</span><span class="p">[</span><span class="n">key</span><span class="p">])</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+                        <span class="c1"># self.config[key] = str(u.Quantity(conf[key]))</span>
+                    <span class="k">except</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">conf</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">conf</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
-                    
-            <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;dataDir&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataDir</span>
             
+                <span class="c1"># if conf[key] != self.config[key]:</span>
+                <span class="c1">#     self.config[key] = str(conf[key])</span>
                     
+            
             <span class="k">for</span> <span class="n">survey</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">surveys</span><span class="p">:</span>
                 <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">survey_configs</span><span class="p">[</span><span class="n">survey</span><span class="p">]):</span>
-                    <span class="k">if</span> <span class="n">conf</span><span class="p">[</span><span class="n">key</span> <span class="o">+</span> <span class="sa">f</span><span class="s1">&#39;_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">survey_configs</span><span class="p">[</span><span class="n">survey</span><span class="p">][</span><span class="n">key</span><span class="p">]:</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">conf</span><span class="p">[</span><span class="n">key</span> <span class="o">+</span> <span class="sa">f</span><span class="s1">&#39;_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">],</span> <span class="n">u</span><span class="o">.</span><span class="n">Quantity</span><span class="p">):</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">survey_configs</span><span class="p">[</span><span class="n">survey</span><span class="p">][</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Quantity</span><span class="p">(</span><span class="n">conf</span><span class="p">[</span><span class="n">key</span> <span class="o">+</span> <span class="sa">f</span><span class="s1">&#39;_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+                    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">conf</span><span class="p">[</span><span class="n">key</span> <span class="o">+</span> <span class="sa">f</span><span class="s1">&#39;_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">],</span> <span class="nb">str</span><span class="p">):</span>
+                        <span class="k">try</span><span class="p">:</span>
+                            <span class="n">u</span><span class="o">.</span><span class="n">Quantity</span><span class="p">(</span><span class="n">conf</span><span class="p">[</span><span class="n">key</span> <span class="o">+</span> <span class="sa">f</span><span class="s1">&#39;_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">unit</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">survey_configs</span><span class="p">[</span><span class="n">survey</span><span class="p">][</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Quantity</span><span class="p">(</span><span class="n">conf</span><span class="p">[</span><span class="n">key</span> <span class="o">+</span> <span class="sa">f</span><span class="s1">&#39;_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+                        <span class="k">except</span><span class="p">:</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">survey_configs</span><span class="p">[</span><span class="n">survey</span><span class="p">][</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">conf</span><span class="p">[</span><span class="n">key</span> <span class="o">+</span> <span class="sa">f</span><span class="s1">&#39;_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span>
+                    <span class="k">else</span><span class="p">:</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">survey_configs</span><span class="p">[</span><span class="n">survey</span><span class="p">][</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">conf</span><span class="p">[</span><span class="n">key</span> <span class="o">+</span> <span class="sa">f</span><span class="s1">&#39;_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span>
+                    
+                    
+                    <span class="c1"># if conf[key + f&#39;_{survey}&#39;] != self.survey_configs[survey][key]:</span>
+                    <span class="c1">#     self.survey_configs[survey][key] = str(conf[key + f&#39;_{survey}&#39;])</span>
         
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;config.toml&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
             <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">))</span>
@@ -340,7 +342,6 @@
             <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;config_</span><span class="si">{</span><span class="n">survey</span><span class="si">}</span><span class="s1">.toml&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
                 <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">survey_configs</span><span class="p">[</span><span class="n">survey</span><span class="p">]))</span></div>
 
-        
                 
 <div class="viewcode-block" id="Configuration.get_config">
 <a class="viewcode-back" href="../../api.html#galaxyGenius.config.Configuration.get_config">[docs]</a>
@@ -356,9 +357,12 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">__update_config</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">check_config</span><span class="p">()</span>
         <span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__config_to_dict</span><span class="p">()</span>
-        <span class="n">config</span><span class="p">[</span><span class="s1">&#39;dataDir&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataDir</span>
+        <span class="c1"># config[&#39;dataDir&#39;] = self.dataDir</span>
         
-        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">config</span><span class="p">)</span></div>
+        <span class="n">config_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        <span class="n">config_with_unit</span> <span class="o">=</span> <span class="n">assign_unit</span><span class="p">(</span><span class="n">config_dict</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">config_with_unit</span><span class="p">)</span></div>
 
     
     <span class="k">def</span><span class="w"> </span><span class="nf">__adapt_survey</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">survey</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">survey_config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
@@ -486,12 +490,14 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">__issue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
         <span class="nb">print</span><span class="p">(</span><span class="n">colored</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="s1">&#39;red&#39;</span><span class="p">))</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">__exist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">threshold</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__exist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">threshold</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_config</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">threshold</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_config</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span>
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
                     <span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="n">values</span><span class="p">]</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                    <span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="n">u</span><span class="o">.</span><span class="n">Quantity</span><span class="p">(</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">value</span><span class="p">]</span>
                 <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">values</span><span class="p">])</span>
                 <span class="n">check</span> <span class="o">=</span> <span class="p">(</span><span class="n">values</span> <span class="o">&gt;</span> <span class="n">threshold</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
                 <span class="k">if</span> <span class="n">check</span> <span class="o">==</span> <span class="kc">False</span><span class="p">:</span>
@@ -561,6 +567,19 @@
         
         <span class="bp">self</span><span class="o">.</span><span class="n">all_config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__config_to_dict</span><span class="p">()</span>
         
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_config</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">all_config</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\[([^\]]+)\]\s*(.+)&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_config</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
+                    <span class="n">values_str</span><span class="p">,</span> <span class="n">unit_str</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">groups</span><span class="p">()</span>
+                    <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">values_str</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot; &quot;</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">all_config</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">all_config</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Quantity</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">all_config</span><span class="p">[</span><span class="n">key</span><span class="p">])</span><span class="o">.</span><span class="n">value</span>
+                    <span class="k">except</span><span class="p">:</span>
+                        <span class="k">pass</span>
+        
         <span class="bp">self</span><span class="o">.</span><span class="n">flag_count</span> <span class="o">=</span> <span class="mi">0</span>
         
         <span class="c1"># skirtPATH = self.__exist_return(&#39;skirtPath&#39;)</span>
@@ -620,14 +639,14 @@
         
         <span class="n">simulationMode</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="s1">&#39;simulationMode&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">simulationMode</span><span class="p">:</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">simulationMode</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;NoMedium&#39;</span><span class="p">,</span> <span class="s1">&#39;DustEmission&#39;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">simulationMode</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;NoMedium&#39;</span><span class="p">,</span> <span class="s1">&#39;DustEmission&#39;</span><span class="p">,</span> <span class="s1">&#39;ExtinctionOnly&#39;</span><span class="p">]:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">__issue</span><span class="p">(</span><span class="s1">&#39;simulationMode unrecognized.&#39;</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">flag_count</span> <span class="o">+=</span> <span class="mi">1</span>
 
-                <span class="k">if</span> <span class="n">simulationMode</span> <span class="o">==</span> <span class="s1">&#39;DustEmission&#39;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">simulationMode</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;DustEmission&#39;</span><span class="p">,</span> <span class="s1">&#39;ExtinctionOnly&#39;</span><span class="p">]:</span>
                     <span class="n">includeDust</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="s1">&#39;includeDust&#39;</span><span class="p">)</span>
                     <span class="k">if</span> <span class="ow">not</span> <span class="n">includeDust</span><span class="p">:</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">__issue</span><span class="p">(</span><span class="s1">&#39;includeDust should be True if simulationMode is DustEmission.&#39;</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">__issue</span><span class="p">(</span><span class="s1">&#39;includeDust should be True if simulationMode is DustEmission or ExtinctionOnly.&#39;</span><span class="p">)</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">flag_count</span> <span class="o">+=</span> <span class="mi">1</span>
                     
                     <span class="n">dustEmissionType</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="s1">&#39;dustEmissionType&#39;</span><span class="p">)</span>
@@ -828,12 +847,20 @@
             <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pivots</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="s1">&#39;maxWavelength&#39;</span><span class="p">))</span> <span class="o">&amp;</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__exist</span><span class="p">(</span><span class="s1">&#39;minWavelength&#39;</span><span class="p">)):</span>
                 <span class="n">max_pivot</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">pivots</span><span class="p">)</span>
                 <span class="n">min_pivot</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">pivots</span><span class="p">)</span>
-
-                <span class="n">redshift</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="s1">&#39;viewRedshift&#39;</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">redshift</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">0.005</span><span class="p">):</span>
-                    <span class="n">redshift</span> <span class="o">=</span> <span class="mf">0.005</span>
-                <span class="n">redshift</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">(</span><span class="n">redshift</span><span class="p">)</span>
+            
+                <span class="n">min_pivot_round</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">min_pivot</span> <span class="o">/</span> <span class="mf">1e4</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+                <span class="n">max_pivot_round</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">max_pivot</span> <span class="o">/</span> <span class="mf">1e4</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
                 
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Minimum pivot wavelength: </span><span class="si">{</span><span class="n">min_pivot_round</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1"> micron&#39;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Maximum pivot wavelength: </span><span class="si">{</span><span class="n">max_pivot_round</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1"> micron&#39;</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="s1">&#39;inLocal&#39;</span><span class="p">):</span>
+                    <span class="n">redshift</span> <span class="o">=</span> <span class="mf">0.0</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">redshift</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__exist_return</span><span class="p">(</span><span class="s1">&#39;viewRedshift&#39;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">redshift</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">0.005</span><span class="p">):</span>
+                        <span class="n">redshift</span> <span class="o">=</span> <span class="mf">0.005</span>
+                    <span class="n">redshift</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">(</span><span class="n">redshift</span><span class="p">)</span>
                 
                 <span class="n">maxWavelength</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">all_config</span><span class="p">[</span><span class="s1">&#39;maxWavelength&#39;</span><span class="p">])</span> <span class="o">*</span> <span class="mi">10</span><span class="o">**</span><span class="mi">4</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">redshift</span><span class="p">)</span>
                 <span class="n">minWaveLength</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">all_config</span><span class="p">[</span><span class="s1">&#39;minWavelength&#39;</span><span class="p">])</span> <span class="o">*</span> <span class="mi">10</span><span class="o">**</span><span class="mi">4</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">redshift</span><span class="p">)</span>

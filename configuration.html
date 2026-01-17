@@ -80,12 +80,12 @@
 <h1>Configuration<a class="headerlink" href="#configuration" title="Link to this heading"></a></h1>
 <section id="main-config">
 <h2>Main config<a class="headerlink" href="#main-config" title="Link to this heading"></a></h2>
-<dl class="simple">
+<dl>
 <dt><code class="docutils literal notranslate"><span class="pre">requests</span></code> (bool):</dt><dd><p>Whether to use Web-based API to retrieve data.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">apiKey</span></code> (str):</dt><dd><p>API key for IllustrisTNG, required if <code class="docutils literal notranslate"><span class="pre">requests</span></code> is True.</p>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">simulation</span></code> (str):</dt><dd><p>Simulation name. TNG50, TNG100, TNG300, etc.</p>
+<dt><code class="docutils literal notranslate"><span class="pre">simulation</span></code> (str):</dt><dd><p>Simulation name. TNG50-1, TNG100-1, TNG300-1, etc.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">hydrodynamicSolver</span></code> (str):</dt><dd><p>hydrodynamic solver for gas particles, can be VoronoiMesh (TNG) or smoothParticle (EAGLE)</p>
 </dd>
@@ -95,19 +95,26 @@
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">workingDir</span></code> (str):</dt><dd><p>Working directory for running SKIRT code.</p>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">simulationMode</span></code> (str):</dt><dd><p>Simulation mode. NoMedium or DustEmission.</p>
+<dt><code class="docutils literal notranslate"><span class="pre">simulationMode</span></code> (str):</dt><dd><div class="line-block">
+<div class="line">Simulation mode. NoMedium, ExtinctionOnly or DustEmission.</div>
+<div class="line">NoMedium is an ideal case with no medium;</div>
+<div class="line">ExtinctionOnly is employed when extinction and scattering for dust are considered;</div>
+<div class="line">DustEmission also includes secondary emission from dust.</div>
+</div>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">includeDust</span></code> (bool):</dt><dd><p>Whether to include dust particles. Be True if simulationMode is DustEmission</p>
+<dt><code class="docutils literal notranslate"><span class="pre">includeDust</span></code> (bool):</dt><dd><p>Whether to include dust particles. Be True if <code class="docutils literal notranslate"><span class="pre">simulationMode</span></code> is ExtinctionOnly or DustEmission</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">dustEmissionType</span></code> (str):</dt><dd><p>Dust emission type. Equilibrium or Stochastic.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">dustModel</span></code> (str):</dt><dd><p>Dust model. ZubkoDustMix, DraineLiDustMix or ThemisDustMix.</p>
 </dd>
+<dt><code class="docutils literal notranslate"><span class="pre">includeVelocity</span></code> (bool):</dt><dd><p>Whether to include velocities for particle data.</p>
+</dd>
 <dt><code class="docutils literal notranslate"><span class="pre">minWavelength</span></code>, <code class="docutils literal notranslate"><span class="pre">maxWavelength</span></code> (float):</dt><dd><p>Wavelength range in rest frame, in micron.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">boxLengthScale</span></code> (float):</dt><dd><p>Particles are retrieved from the box with length <code class="docutils literal notranslate"><span class="pre">halfStellarMassRadius</span> <span class="pre">*</span> <span class="pre">boxLengthScale</span></code>.</p>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">maxBoxLength</span></code> (float):</dt><dd><p>Maximum box length.</p>
+<dt><code class="docutils literal notranslate"><span class="pre">maxBoxLength</span></code> (float):</dt><dd><p>Maximum box length in kpc.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">fieldOfView</span></code> (float)</dt><dd><p>Field of view in arcsec, equals to box length if 0.</p>
 </dd>
@@ -117,19 +124,22 @@
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">minLevel</span></code>, <code class="docutils literal notranslate"><span class="pre">maxLevel</span></code> (int):</dt><dd><p>Octree min/max level refinement for dust calculation of SKIRT.</p>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">numPackets</span></code> (float):</dt><dd><p>Number of photon packets. Main parameter to affect the SNR of SKIRT calculation.</p>
+<dt><code class="docutils literal notranslate"><span class="pre">numPackets</span></code> (float):</dt><dd><p>Number of photon packets. Main parameter to affect the SNR of SKIRT simulation.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">SEDFamily</span></code> (str):</dt><dd><p>SED family for quenched star particles. BC03 or FSPS.</p>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">initialMassFunction</span></code> (str):</dt><dd><p>Initial mass function for quenched star particles. Chabrier or Salpeter for BC03 SED family. Chabrier, Kroupa or Salpeter for FSPS family.</p>
+<dt><code class="docutils literal notranslate"><span class="pre">initialMassFunction</span></code> (str):</dt><dd><div class="line-block">
+<div class="line">Initial mass function for quenched star particles.</div>
+<div class="line">Chabrier or Salpeter for BC03 SED family. Chabrier, Kroupa or Salpeter for FSPS family.</div>
+</div>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">starformingSEDFamily</span></code> (str):</dt><dd><p>SED family for star-forming regions. MAPPINGS (<a class="reference external" href="https://iopscience.iop.org/article/10.1086/528711">Groves et al. 2008</a>) or TODDLERS (<a class="reference external" href="https://academic.oup.com/mnras/article/526/3/3871/7287615">Kapoor et al. 2023</a>, <a class="reference external" href="https://www.aanda.org/articles/aa/full_html/2024/12/aa51207-24/aa51207-24.html">2024</a>).</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">minStellarMass</span></code>, <code class="docutils literal notranslate"><span class="pre">maxStellarMass</span></code> (float):</dt><dd><p>Stellar mass range for subhalos in Msun, inf for infinite.</p>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">estimateMorph</span></code> (bool):</dt><dd><p>Estimate the morphology of current galaxy using S/T ratios, either a spiral or non-spiral.</p>
-</dd>
 <dt><code class="docutils literal notranslate"><span class="pre">faceAndEdge</span></code> (bool):</dt><dd><p>Whether to use face-on and edge-on angles derived by angular momentum.</p>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">numViews</span></code> (int):</dt><dd><p>Number of instrument views.</p>
+<dt><code class="docutils literal notranslate"><span class="pre">numViews</span></code> (int):</dt><dd><p>Number of instrument views (observing directions).</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">randomViews</span></code> (bool):</dt><dd><p>Whether to use random viewing angles.</p>
 </dd>
@@ -137,11 +147,11 @@
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">postProcessing</span></code> (bool):</dt><dd><p>Whether to perform postprocessing.</p>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">spatialResol</span></code> (float):</dt><dd><p>Base spatial resolution, must be provided if postprocessing is False.</p>
+<dt><code class="docutils literal notranslate"><span class="pre">spatialResol</span></code> (float):</dt><dd><p>Base spatial resolution in pc, must be provided if postprocessing is False.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">imageUnit</span></code> (str):</dt><dd><p>Unit type of bandpass image output. electron or flux.</p>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">surveys</span></code> (list):</dt><dd><p>Surveys considered.</p>
+<dt><code class="docutils literal notranslate"><span class="pre">surveys</span></code> (list[str]):</dt><dd><p>Surveys considered. Euclid, JWST, HST, CSST, HSC are built-in.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">displaySED</span></code> (bool):</dt><dd><p>Whether to display SED.</p>
 </dd>
@@ -151,11 +161,13 @@
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">snapNum</span></code> (int):</dt><dd><p>Snapshot ID.</p>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">snapRedshift</span></code> (float):</dt><dd><p>Snapshot redshift of Snapshot with ID.</p>
+<dt><code class="docutils literal notranslate"><span class="pre">snapRedshift</span></code> (float):</dt><dd><p>Snapshot redshift of Snapshot ID.</p>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">viewRedshift</span></code> (float):</dt><dd><p>viewing redshift, should be close to snapRedshift.
-For generating galaxies at continous redshift with a small offset on snapRedshift.
-For example, viewRedshift can be 0.105 for snapshot-91 at 0.1.</p>
+<dt><code class="docutils literal notranslate"><span class="pre">viewRedshift</span></code> (float):</dt><dd><div class="line-block">
+<div class="line">viewing redshift, should be close to snapRedshift.</div>
+<div class="line">For generating galaxies at continous redshift with a small offset on snapRedshift.</div>
+<div class="line">For example, viewRedshift can be 0.105 for snapshot-91 at 0.1.</div>
+</div>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">inLocal</span></code> (bool):</dt><dd><p>if use local cosmology.</p>
 </dd>
@@ -163,23 +175,80 @@ For example, viewRedshift can be 0.105 for snapshot-91 at 0.1.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">numThreads</span></code> (int):</dt><dd><p>Number of threads. No speedup for threads larger than 24.</p>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">recordComponents</span></code> (bool):</dt><dd><p>Whether to record individual components including transparent, primary direct, primary scattered
-and secondarytransparent, secondarydirect, secondaryscattered, apart from total components.
-Memory cosumptions will be 7 times if True.</p>
+<dt><code class="docutils literal notranslate"><span class="pre">recordComponents</span></code> (bool):</dt><dd><div class="line-block">
+<div class="line">Whether to record individual components including transparent, primary direct, primary scattered</div>
+<div class="line">and secondarytransparent, secondarydirect, secondaryscattered, apart from total components.</div>
+<div class="line">Memory cosumptions will be 7 times if True.</div>
+</div>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">ageThreshold</span></code> (float):</dt><dd><p>Age threshold for discriminating star-forming regions and quenched star particles, in Myr.</p>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">logCompactnessMean</span></code>, <code class="docutils literal notranslate"><span class="pre">logCompactnessStd</span></code> (float):</dt><dd><p>Logarithmic mean and standard deviation of compactness for star-forming star particles, see <a class="reference external" href="https://academic.oup.com/mnras/article/506/4/5703/6324023">Kapoor et al. 2021</a>.</p>
+<dt><code class="docutils literal notranslate"><span class="pre">logCompactnessMean</span></code>, <code class="docutils literal notranslate"><span class="pre">logCompactnessStd</span></code> (float):</dt><dd><div class="line-block">
+<div class="line">Only used when starformingSEDFamily is MAPPINGS.</div>
+<div class="line">Logarithmic mean and standard deviation of compactness for star-forming star particles, see <a class="reference external" href="https://academic.oup.com/mnras/article/506/4/5703/6324023">Kapoor et al. 2021</a>.</div>
+</div>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">logPressure</span></code> (float):</dt><dd><p>Logarithmic pressure for star-forming star particles. log10[(Pressure/k_B)/cm^-3 K] = logPressure</p>
+<dt><code class="docutils literal notranslate"><span class="pre">logPressure</span></code> (float):</dt><dd><div class="line-block">
+<div class="line">Only used when starformingSEDFamily is MAPPINGS.</div>
+<div class="line">Logarithmic pressure for star-forming star particles. log10[(Pressure/k_B)/cm^-3 K] = logPressure</div>
+</div>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">constantCoveringFactor</span></code> (bool):</dt><dd><p>Whether to use constant covering factor.</p>
+<dt><code class="docutils literal notranslate"><span class="pre">constantCoveringFactor</span></code> (bool):</dt><dd><div class="line-block">
+<div class="line">Only used when starformingSEDFamily is MAPPINGS.</div>
+<div class="line">Whether to use constant covering factor.</div>
+</div>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">coveringFactor</span></code> (float):</dt><dd><p>Constant covering factor, if constantCoveringFactor is True, see <a class="reference external" href="https://iopscience.iop.org/article/10.1086/528711">Groves et al. 2008</a>.</p>
+<dt><code class="docutils literal notranslate"><span class="pre">coveringFactor</span></code> (float):</dt><dd><div class="line-block">
+<div class="line">Only used when starformingSEDFamily is MAPPINGS.</div>
+<div class="line">Constant covering factor, if constantCoveringFactor is True, see <a class="reference external" href="https://iopscience.iop.org/article/10.1086/528711">Groves et al. 2008</a>.</div>
+</div>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">PDRClearingTimescale</span></code> (float):</dt><dd><p>PDR clearing timescale, in Myr, if constantCoveringFactor is False, see <a class="reference external" href="https://www.aanda.org/articles/aa/full_html/2024/03/aa48418-23/aa48418-23.html">Baes et al. 2024</a>.</p>
+<dt><code class="docutils literal notranslate"><span class="pre">PDRClearingTimescale</span></code> (float):</dt><dd><div class="line-block">
+<div class="line">Only used when starformingSEDFamily is MAPPINGS.</div>
+<div class="line">PDR clearing timescale, in Myr, if constantCoveringFactor is False, see <a class="reference external" href="https://www.aanda.org/articles/aa/full_html/2024/03/aa48418-23/aa48418-23.html">Baes et al. 2024</a>.</div>
+</div>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">temperatureThreshold</span></code> (float):</dt><dd><p>Temperature threshold for creating dusts from gas particles, in K.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">pahfraction</span></code> (float):</dt><dd><div class="line-block">
+<div class="line">Only used when starformingSEDFamily is TODDLERS.</div>
+<div class="line">Fraction of PAH mass in dust.</div>
+</div>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">sedMode</span></code> (str):</dt><dd><div class="line-block">
+<div class="line">Only used when starformingSEDFamily is TODDLERS.</div>
+<div class="line">SED mode, Cloud or SFRNormalized.</div>
+</div>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">stellarTemplate</span></code> (str):</dt><dd><div class="line-block">
+<div class="line">Only used when starformingSEDFamily is TODDLERS.</div>
+<div class="line">Stellar template, SB99Kroupa100Sin, BPASSChab100Bin or BPASSChab300Bin.</div>
+</div>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">sfrPeriod</span></code> (int):</dt><dd><div class="line-block">
+<div class="line">Only used in SFRNormalized mode.</div>
+<div class="line">SFR period in Myr, can be 10 or 30.</div>
+</div>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">starFormationEfficiency</span></code> (float):</dt><dd><div class="line-block">
+<div class="line">Only used when starformingSEDFamily is TODDLERS.</div>
+<div class="line">star formation efficiency.</div>
+</div>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">cloudNumberDensity</span></code> (float):</dt><dd><div class="line-block">
+<div class="line">Only used when starformingSEDFamily is TODDLERS.</div>
+<div class="line">Cloud number density, in cm^-3.</div>
+</div>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">alpha</span></code> (float):</dt><dd><div class="line-block">
+<div class="line">Only used when starformingSEDFamily is TODDLERS.</div>
+<div class="line">Alpha for power-law distribution of cloud mass.</div>
+</div>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">scaling</span></code> (float):</dt><dd><div class="line-block">
+<div class="line">Only used when starformingSEDFamily is TODDLERS.</div>
+<div class="line">Scaling factor.</div>
+</div>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">massFraction</span></code> (float):</dt><dd><p>Fraction of the metallic gas locked up in dust.</p>
 </dd>
@@ -191,16 +260,16 @@ Memory cosumptions will be 7 times if True.</p>
 </section>
 <section id="survey-config">
 <h2>Survey config<a class="headerlink" href="#survey-config" title="Link to this heading"></a></h2>
-<dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">filters</span></code> (list):</dt><dd><p>Considered filters for survey.</p>
+<dl>
+<dt><code class="docutils literal notranslate"><span class="pre">filters</span></code> (list[str]):</dt><dd><p>Considered filters for survey.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">resolFromPix</span></code> (bool):</dt><dd><p>Whether to use resolution derived from pixel scale.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">resolution</span></code> (float):</dt><dd><p>Spatial resolution, in pc, must be provided if resolFromPix is False, override spatialResol in config.ini.</p>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">pixelScales</span></code> (float, list):</dt><dd><p>Pixel scale for considered filters, in arcsec.</p>
+<dt><code class="docutils literal notranslate"><span class="pre">pixelScales</span></code> (float, list[float]):</dt><dd><p>Pixel scale for considered filters, in arcsec.</p>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">numExposure</span></code> (float, list):</dt><dd><p>Number of exposure for considered filters.</p>
+<dt><code class="docutils literal notranslate"><span class="pre">numExposure</span></code> (float, list[float]):</dt><dd><p>Number of exposure for considered filters.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">exposureTime</span></code> (float):</dt><dd><p>Exposure time, in second.</p>
 </dd>
@@ -210,35 +279,39 @@ Memory cosumptions will be 7 times if True.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">PSFFromFile</span></code> (bool):</dt><dd><p>Whether to use PSF from file.</p>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">PSFFWHM</span></code> (list):</dt><dd><p>FWHM of PSF, in arcsec.</p>
+<dt><code class="docutils literal notranslate"><span class="pre">PSFFWHM</span></code> (float, list[float]):</dt><dd><p>FWHM of PSF, in arcsec.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">includeBkg</span></code> (bool):</dt><dd><p>Whether to include background.</p>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">noiseType</span></code> (str):</dt><dd><p>By what parameters noise levels are calculated, can be instrument or limitingMagnitude.
-For noiseType == instrument, skyBkg, darkCurrent, readOut are required.
-For noiseType == limitingMagnitude, limitMag, limitSNR, limitAperture and zeroPoint are required.</p>
+<dt><code class="docutils literal notranslate"><span class="pre">noiseType</span></code> (str):</dt><dd><div class="line-block">
+<div class="line">By what parameters noise levels are calculated, can be instrument or limitingMagnitude.</div>
+<div class="line">For noiseType == instrument, skyBkg, darkCurrent, readOut are required.</div>
+<div class="line">For noiseType == limitingMagnitude, limitMag, limitSNR, limitAperture and zeroPoint are required.</div>
+</div>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">skyBkg</span></code> (list):</dt><dd><p>Background level for considered filters. Please refer to notebook <a class="reference external" href="https://github.com/xczhou-astro/galaxyGenius/blob/main/Bkg/calc_sky_bkg.ipynb">calc_sky_bkg.ipynb</a> for calculating skyBkg.</p>
+<dt><code class="docutils literal notranslate"><span class="pre">skyBkg</span></code> (list[float]):</dt><dd><p>Background level for considered filters. Please refer to notebook <a class="reference external" href="https://github.com/xczhou-astro/galaxyGenius/blob/main/Bkg/calc_sky_bkg.ipynb">calc_sky_bkg.ipynb</a> for calculating skyBkg.</p>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">darkCurrent</span></code> (float, list):</dt><dd><p>Dark current.</p>
+<dt><code class="docutils literal notranslate"><span class="pre">darkCurrent</span></code> (float, list[float]):</dt><dd><p>Dark current.</p>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">readOut</span></code> (float, list):</dt><dd><p>Readout noise.</p>
+<dt><code class="docutils literal notranslate"><span class="pre">readOut</span></code> (float, list[float]):</dt><dd><p>Readout noise.</p>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">limitMag</span></code> (float, list):</dt><dd><p>limiting magnitudes.</p>
+<dt><code class="docutils literal notranslate"><span class="pre">limitMag</span></code> (float, list[float]):</dt><dd><p>limiting magnitudes.</p>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">limitSNR</span></code> (float, list):</dt><dd><p>SNR for the limiting magnitude.</p>
+<dt><code class="docutils literal notranslate"><span class="pre">limitSNR</span></code> (float, list[float]):</dt><dd><p>SNR for the limiting magnitude.</p>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">limitAperture</span></code> (float, list):</dt><dd><p>The aperture used to measure the limiting magnitude, in arcsec.</p>
+<dt><code class="docutils literal notranslate"><span class="pre">limitAperture</span></code> (float, list[float]):</dt><dd><p>The aperture used to measure the limiting magnitude, in arcsec.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">zeroPoint</span></code> (float):</dt><dd><p>Zero point for magnitude system.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">imgDisplay</span></code> (bool):</dt><dd><p>Whether to display image.</p>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">RGBImg</span></code> (bool):</dt><dd><p>Whether to create and display RGB image.
-RGB image is created from <cite>astropy.visualization.make_rgb</cite>, a new feature added in version 7.0.0.
-The RGB image may not be as one expected, feel free to edit the <cite>convert_to_rgb</cite> function in <cite>utils.py</cite>.</p>
+<dt><code class="docutils literal notranslate"><span class="pre">RGBImg</span></code> (bool):</dt><dd><div class="line-block">
+<div class="line">Whether to create and display RGB image.</div>
+<div class="line">RGB image is created from <cite>astropy.visualization.make_rgb</cite>, a new feature added in version 7.0.0.</div>
+<div class="line">The RGB image may not be as one expected, feel free to edit the <cite>convert_to_rgb</cite> function in <cite>utils.py</cite>.</div>
+</div>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">RGBFilters</span></code> (list, 3):</dt><dd><p>Considered three filters for RGB image.</p>
+<dt><code class="docutils literal notranslate"><span class="pre">RGBFilters</span></code> (list[str, str, str]):</dt><dd><p>Considered three filters for RGB image.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">displayFilter</span></code> (str):</dt><dd><p>Filter for displaying image if RGBImg is False.</p>
 </dd>

@@ -4,10 +4,10 @@ API Reference
 This page provides detailed information about the galaxyGenius API.
 
 Core Classes
------------
+------------
 
 Configuration
-~~~~~~~~~~~~
+~~~~~~~~~~~~~
 
 .. autoclass:: galaxyGenius.config.Configuration
    :members:
@@ -21,7 +21,7 @@ Configuration
    - Configuration validation and management
 
 PreProcess
-~~~~~~~~~
+~~~~~~~~~~
 
 .. autoclass:: galaxyGenius.preprocess.PreProcess
    :members:
@@ -36,7 +36,7 @@ PreProcess
    - Managing simulation parameters
 
 DataGeneration
-~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 .. autoclass:: galaxyGenius.generation.DataGeneration
    :members:
@@ -50,7 +50,7 @@ DataGeneration
    - Handling data cube generation
 
 PostProcess
-~~~~~~~~~~
+~~~~~~~~~~~
 
 .. autoclass:: galaxyGenius.postprocess.PostProcess
    :members:
@@ -65,7 +65,7 @@ PostProcess
    - Visualizing results
 
 Utility Functions
----------------
+-----------------
 
 .. automodule:: galaxyGenius.utils
    :members:
