@@ -1,0 +1,42 @@
+cff-version: 1.1.0
+message: "Please cite the following works when using this software: https://ui.adsabs.harvard.edu/abs/2026ascl.soft03007Z"
+authors:
+- family-names: Zhou
+  given-names: Xingchen
+- family-names: Yang
+  given-names: Hang
+- family-names: Li
+  given-names: Nan
+- family-names: Xiong
+  given-names: Qi
+- family-names: Deng
+  given-names: Furen
+- family-names: Meng
+  given-names: Xian-Min
+- family-names: Ye
+  given-names: Renhao
+- family-names: Shen
+  given-names: Shiyin
+- family-names: Wei
+  given-names: Peng
+- family-names: Cui
+  given-names: Qifan
+- family-names: He
+  given-names: Zizhao
+- family-names: Ibitoye
+  given-names: Ayodeji
+- family-names: Wei
+  given-names: Chengliang
+- family-names: Fang
+  given-names: Yuedong
+title: "GalaxyGenius: Synthetic galaxy image generation from hydrodynamical simulations"
+version: PLACEHOLDER
+date-released: PLACEHOLDER
+identifiers:
+ - type: "ascl-id"
+   value: "2603.007"
+ - type: "doi"
+   value: PLACEHOLDER
+ - type: "bibcode"
+   value: "2026ascl.soft03007Z"
+abstract: "GalaxyGenius generates synthetic galaxy images for astronomical surveys using outputs from hydrodynamical simulations. The code extracts particle properties from simulation snapshots, assigns spectral energy distributions, and performs radiative transfer calculations to produce ideal data cubes. It then simulates observational images by applying telescope filter throughputs, point spread functions, and instrumental noise. The workflow is organized into modules for data preprocessing, ideal data cube generation, and mock observation. GalaxyGenius supports simulations such as IllustrisTNG and EAGLE and can generate images for multiple ground- and space-based surveys."
