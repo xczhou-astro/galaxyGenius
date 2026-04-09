@@ -21,46 +21,6 @@ This work is published on A&A at https://doi.org/10.1051/0004-6361/202554287
 Created using default parameters for `make_rgb` in Astropy  
 ![RGB](assets/subhalo_253881_rgb.png)  
 
-
-## Updates  
-- 2026-01-03  
-1. Fix loggging functionality.  
-2. Add Toddlers SED family ([Kapoor et al. 2023](https://academic.oup.com/mnras/article/526/3/3871/7287615), [2024](https://www.aanda.org/10.1051/0004-6361/202451207)) to process star forming regions.  
-3. Modify default smoothing length to employ 32+-1 nearest stellar particles (`StellarHsml`) for star and star-forming regions ([Baes et al. 2024](https://www.aanda.org/10.1051/0004-6361/202348418)). Note that the values can be changed by defining your own `starFunction` and `starformingFunction`, see `EAGLE/eagle.ipynb` for details.  
-
-- 2025-10-27 (Big Update)  
-1. Add support to input subhalo data file in h5 format (Please refer to `Examples/2-input_subhalo_file.py`).  
-2. Add support to input extracted particles from subhalo (Please refer to `EAGLE/eagle.ipynb`).  
-3. Add a singleton for unit conventions for various simulations (Please refer to `Examples/2-input_subhalo_file.py` for usage).  
-4. Add logging for galaxyGenius routine.  
-
-- 2025-07-01  
-1. Add support for simulation mode of ExtinctionOnly (thanks comments from Maarten Baes, Qi Zeng, Andrea Gebek, Nick Andreads and members of SKIRT team.)  
-    ExtinctionOnly is used when extinction and scattering of dust should be considered,  
-    DustEmission is used when extinction and scattering along with secondary emission caused by dust should be considered,  
-    NoMedium is an ideal case with no dust elements.  
-
-- 2025-06-03  
-1. Add support for deriving noise level from limiting magnitudes.  
-2. Add support for estimating if galaxy is a spiral or not (Please use with caution).  
-
-- 2025-05-30  
-1. Add return code for `runSKIRT` in `generation.py`.  
-
-- 2025-04-28  
-1. Add support for viewRedshift.  
-2. Bug several fixes.  
-
-- 2025-04-22:   
-1. Add support for local cosmology, and view distance for instrument.  
-2. Add check for hydrodynamic solver: VoronoiMesh (TNG) and smoothParticle (EAGLE).  
-3. Replace ExtinctionOnly simulation mode to NoMedium.  
-4. Add support for field of view instead of setting it equal boxlength.  
-5. Add support for only output SEDs.  
-
-- 2025-02-20:  
-1. Add check and retry features for requests to handle failure of Web-based API.  
-
 ## Dependence
 Python verison:  
 `python>=3.11`  
@@ -229,3 +189,63 @@ Galaxy images in each band are saved in each extension of the fits file, and eac
 
 ## Documentaion
 For classes and configuration sets, please refer to [documentation](https://xczhou-astro.github.io/galaxyGenius/).
+
+## Citatiom
+```bash
+@ARTICLE{2025A&A...700A.120Z,
+       author = {{Zhou}, Xingchen and {Yang}, Hang and {Li}, Nan and {Xiong}, Qi and {Deng}, Furen and {Meng}, Xian-Min and {Ye}, Renhao and {Shen}, Shiyin and {Wei}, Peng and {Cui}, Qifan and {He}, Zizhao and {Ibitoye}, Ayodeji and {Wei}, Chengliang and {Fang}, Yuedong},
+        title = "{GalaxyGenius: Mock galaxy image generator for various telescopes from hydrodynamical simulations}",
+      journal = {\aap},
+     keywords = {radiative transfer, methods: data analysis, galaxies: formation, Instrumentation and Methods for Astrophysics, Cosmology and Nongalactic Astrophysics, Astrophysics of Galaxies},
+         year = 2025,
+        month = aug,
+       volume = {700},
+          eid = {A120},
+        pages = {A120},
+          doi = {10.1051/0004-6361/202554287},
+archivePrefix = {arXiv},
+       eprint = {2506.15060},
+ primaryClass = {astro-ph.IM},
+       adsurl = {https://ui.adsabs.harvard.edu/abs/2025A&A...700A.120Z},
+      adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+}
+```
+
+## Updates  
+- 2026-01-03  
+1. Fix loggging functionality.  
+2. Add Toddlers SED family ([Kapoor et al. 2023](https://academic.oup.com/mnras/article/526/3/3871/7287615), [2024](https://www.aanda.org/10.1051/0004-6361/202451207)) to process star forming regions.  
+3. Modify default smoothing length to employ 32+-1 nearest stellar particles (`StellarHsml`) for star and star-forming regions ([Baes et al. 2024](https://www.aanda.org/10.1051/0004-6361/202348418)). Note that the values can be changed by defining your own `starFunction` and `starformingFunction`, see `EAGLE/eagle.ipynb` for details.  
+
+- 2025-10-27 (Big Update)  
+1. Add support to input subhalo data file in h5 format (Please refer to `Examples/2-input_subhalo_file.py`).  
+2. Add support to input extracted particles from subhalo (Please refer to `EAGLE/eagle.ipynb`).  
+3. Add a singleton for unit conventions for various simulations (Please refer to `Examples/2-input_subhalo_file.py` for usage).  
+4. Add logging for galaxyGenius routine.  
+
+- 2025-07-01  
+1. Add support for simulation mode of ExtinctionOnly (thanks comments from Maarten Baes, Qi Zeng, Andrea Gebek, Nick Andreads and members of SKIRT team.)  
+    ExtinctionOnly is used when extinction and scattering of dust should be considered,  
+    DustEmission is used when extinction and scattering along with secondary emission caused by dust should be considered,  
+    NoMedium is an ideal case with no dust elements.  
+
+- 2025-06-03  
+1. Add support for deriving noise level from limiting magnitudes.  
+2. Add support for estimating if galaxy is a spiral or not (Please use with caution).  
+
+- 2025-05-30  
+1. Add return code for `runSKIRT` in `generation.py`.  
+
+- 2025-04-28  
+1. Add support for viewRedshift.  
+2. Bug several fixes.  
+
+- 2025-04-22:   
+1. Add support for local cosmology, and view distance for instrument.  
+2. Add check for hydrodynamic solver: VoronoiMesh (TNG) and smoothParticle (EAGLE).  
+3. Replace ExtinctionOnly simulation mode to NoMedium.  
+4. Add support for field of view instead of setting it equal boxlength.  
+5. Add support for only output SEDs.  
+
+- 2025-02-20:  
+1. Add check and retry features for requests to handle failure of Web-based API.  
