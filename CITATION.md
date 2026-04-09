@@ -1,3 +1,4 @@
+```Bash
 @ARTICLE{2025A&A...700A.120Z,
        author = {{Zhou}, Xingchen and {Yang}, Hang and {Li}, Nan and {Xiong}, Qi and {Deng}, Furen and {Meng}, Xian-Min and {Ye}, Renhao and {Shen}, Shiyin and {Wei}, Peng and {Cui}, Qifan and {He}, Zizhao and {Ibitoye}, Ayodeji and {Wei}, Chengliang and {Fang}, Yuedong},
         title = "{GalaxyGenius: Mock galaxy image generator for various telescopes from hydrodynamical simulations}",
@@ -15,3 +16,4 @@ archivePrefix = {arXiv},
        adsurl = {https://ui.adsabs.harvard.edu/abs/2025A&A...700A.120Z},
       adsnote = {Provided by the SAO/NASA Astrophysics Data System}
 }
+```
