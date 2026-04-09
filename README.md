@@ -190,7 +190,8 @@ Galaxy images in each band are saved in each extension of the fits file, and eac
 ## Documentaion
 For classes and configuration sets, please refer to [documentation](https://xczhou-astro.github.io/galaxyGenius/).
 
-## Citatiom
+## Citation
+Please cite the paper by:  
 ```bash
 @ARTICLE{2025A&A...700A.120Z,
        author = {{Zhou}, Xingchen and {Yang}, Hang and {Li}, Nan and {Xiong}, Qi and {Deng}, Furen and {Meng}, Xian-Min and {Ye}, Renhao and {Shen}, Shiyin and {Wei}, Peng and {Cui}, Qifan and {He}, Zizhao and {Ibitoye}, Ayodeji and {Wei}, Chengliang and {Fang}, Yuedong},
