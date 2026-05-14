@@ -1,4 +1,10 @@
 import numpy as np
+try:
+    _trapezoid = np.trapz
+except:
+    _trapezoid = np.trapezoid
+
+
 import astropy.units as u
 import astropy.constants as const
 from astropy.cosmology import Planck15
@@ -303,8 +309,8 @@ def calc_pivot(dataDir: str, survey: str, filter: str) -> float:
     
     transmission[:, 0] = transmission[:, 0] * wavelength_scale
     
-    numerator = np.trapz(transmission[:, 1], transmission[:, 0])
-    denomerator = np.trapz(transmission[:, 1] * transmission[:, 0]**-2,
+    numerator = _trapezoid(transmission[:, 1], transmission[:, 0])
+    denomerator = _trapezoid(transmission[:, 1] * transmission[:, 0]**-2,
                                transmission[:, 0])
     pivot = np.sqrt(numerator/denomerator)
     

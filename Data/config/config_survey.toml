@@ -51,6 +51,7 @@ zeroPoint = 8.9
 
 # display options
 imgDisplay = true
+enlargeRatio = 1
 RGBImg = true
 RGBFilters = ["g", "r", "z"]
 displayFilter = "r"

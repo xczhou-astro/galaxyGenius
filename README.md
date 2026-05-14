@@ -9,14 +9,14 @@ This work is published on A&A at https://doi.org/10.1051/0004-6361/202554287
 ![workflow](assets/galaxyGenius.png)
 ### SEDs
 ![SEDs](assets/fiducial_sed.png)  
-### HSC
-![HSC](assets/HSC_combined.png)  
-### JWST NIRCam
-![JWST](assets/JWST_combined.png)  
 ### CSST
 ![CSST](assets/CSST_combined.png)  
 ### Euclid
 ![Euclid](assets/Euclid_combined.png)  
+### JWST NIRCam
+![JWST](assets/JWST_combined.png)  
+### HSC
+![HSC](assets/HSC_combined.png)  
 ### RGB  
 Created using default parameters for `make_rgb` in Astropy  
 ![RGB](assets/subhalo_253881_rgb.png)  
@@ -25,24 +25,23 @@ Created using default parameters for `make_rgb` in Astropy
 Python verison:  
 `python>=3.11`  
 
-Python packages:
-`tomlkit==0.13.2`  
-`numpy==1.24.0` ⚠️  
-`scipy==1.13.1`  
-`matplotlib==3.9.2`  
-`astropy==7.0.0` ⚠️  
-`scikit-image==0.24.0`  
-`joblib==1.4.2`  
-`matplotlib_scalebar==0.8.1`  
-`h5py==3.9.0` ⚠️  
-`termcolor==2.4.0`  
-`photutils==2.0.2`  
-`requests==2.32.3`  
-
-⚠️: Package versions should strictly match, otherwise there may be compatibility issues.
+Python packages:  
+`tomlkit`  
+`numpy`  
+`scipy`  
+`matplotlib`  
+`astropy`  
+`scikit-image`  
+`joblib`  
+`matplotlib_scalebar`  
+`h5py`  
+`termcolor`  
+`photutils`  
+`requests`  
+[`illustris_python`](https://github.com/illustristng/illustris_python)  
+`numba`  
 
 Other packages:  
-[`illustris_python`](https://github.com/illustristng/illustris_python)  
 [`SKIRT9`](https://skirt.ugent.be/root/_installation_guide.html)  
 
 A new Python environment is recommended  
@@ -58,6 +57,7 @@ pip install .
 ```Bash
 export GALAXYGENIUS_DATA_DIR=/path/to/Data
 ```
+or add `os.environ['GALAXYGENIUS_DATA_DIR'] = '/path/to/Data'` in your python script.
 
 ## Recommended folder tree
 ```Bash
@@ -93,9 +93,9 @@ We provide a helper notebook for calculation of instrumental noises in [Notebook
 ## Usage
 ### Initialization
 ```Python
-python init.py --workspace=workspace --surveys="CSST,HST"
+python init.py --workspace=workspace --surveys="CSST,HSC"
 ```
-`config.ini`, `config_CSST.ini` and `config_HST.ini` will be created in `workspace` directory. Please freely edit them as wish.  
+`config.toml`, `config_CSST.toml` and `config_HSC.toml` will be created in `workspace` directory. Please freely edit them as wish.  
 
 if `surveys` are not specified, `postPostprocessing` will be set as False.
 
@@ -146,14 +146,40 @@ then `python run.py`.
 
 Or you can interactively run in jupyter as illustrated in [Notebooks/tutorial.ipynb](https://github.com/xczhou-astro/galaxyGenius/blob/main/Notebooks/tutorial.ipynb).  
 
-### For hydrodynamical simulations except TNG
+### Particle Input Methods
 
-Necessary particle data and properties need to be created and saved in `workingDir (run)` in advance, and call `preprocess.inputs(data)` and subsequent methods to perform the galaxy generation. An example for EAGLE simulation is provided in [EAGLE/eagle.ipynb](https://github.com/xczhou-astro/galaxyGenius/blob/main/EAGLE/eagle.ipynb).  
-data: `dict`  
-`snapRedshift`, `cosmology`, `stellarMass`, `subhaloID`, `boxLength` keys are required.  
+The `PreProcess` stage supports five distinct methods for obtaining subhalo and particle data:
 
-#### JWST for EAGLE  
-![eagle](assets/JWST_eagle_combined.png)  
+1. **From Local TNG Snapshots**: The default behavior when `requests = False` in the configuration. The pipeline uses `illustris_python` to automatically extract subhalos and particles from a local TNG snapshot directory.
+2. **From TNG Web API**: Activated by setting `requests = True` in the configuration. The pipeline will query the TNG project's API to download subhalo cutouts dynamically. This is slower but requires no local snapshot data.
+3. **From a Local Subhalo File (For TNG)**: If you have downloaded an individual cutout and metadata for a TNG subhalo in advance, you can load the local HDF5 file directly using `preprocess.inputSubhaloParticleFile(filepath, subhaloInfo)`. See `Examples/2-input_subhalo_file.py`.
+
+For other simulations (e.g., EAGLE), two additional methods are available:
+
+4. **From Particles in Memory (`preprocess.inputParticles`)**: Load extracted particles into memory as dictionaries of `astropy.units.Quantity` objects. Then, customize `starFunction`, `starFormingFunction`, and `dustFunction` to process them into `stars.txt`, `dusts.txt`, and `starforming_regions.txt` files using `preprocess.createFile()`. An example implementation is provided in [EAGLE/eagle.ipynb](https://github.com/xczhou-astro/galaxyGenius/blob/main/EAGLE/eagle.ipynb).
+5. **From Particle Files Created in Advance (`preprocess.inputs`)**: If you have already generated the `stars.txt`, `dusts.txt`, and `starforming_regions.txt` files independently, use `preprocess.inputs(data)` to point the pipeline to them. The `data` argument is a `dict` requiring three metadata keys: `['SubhaloID', 'stellarMass', 'halfStellarMassRadius']`.
+
+## Example for EAGLE
+
+### SED
+<p float="left">
+  <img src="assets/eagle_SED_21109761.png" width="49%" />
+  <img src="assets/eagle_SED_20695120.png" width="49%" /> 
+</p>
+
+### CSST
+![CSST](assets/CSST_eagle_all_bands_view_00_21109761.png)
+![CSST](assets/CSST_eagle_all_bands_view_00_20695120.png)
+
+### Euclid
+![Euclid](assets/Euclid_eagle_all_bands_view_00_21109761.png)
+![Euclid](assets/Euclid_eagle_all_bands_view_00_20695120.png)
+
+### JWST
+![JWST](assets/JWST_eagle_all_bands_view_00_21109761.png)
+![JWST](assets/JWST_eagle_all_bands_view_00_20695120.png)
+
+
 
 
 ### Outputs
@@ -250,3 +276,7 @@ archivePrefix = {arXiv},
 
 - 2025-02-20:  
 1. Add check and retry features for requests to handle failure of Web-based API.  
+
+- 2026-05-15:
+1. Add visualization for all band images.
+2. Fix several bugs.

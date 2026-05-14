@@ -10,6 +10,7 @@ import os
 from skimage.transform import rescale
 from scipy.integrate import trapezoid
 import matplotlib.pyplot as plt
+from matplotlib.gridspec import GridSpec
 from matplotlib_scalebar.scalebar import ScaleBar
 from matplotlib_scalebar.dimension import _Dimension
 from photutils.segmentation import make_2dgaussian_kernel
@@ -46,9 +47,45 @@ class PostProcess:
         self.logger.info(f'Initializing PostProcess class.')
         self.config = read_config(self.dataCubeDir)
         self.dataDir = galaxygenius_data_dir()
-        
-        # self.__precompile_numba()
-        
+
+    def __survey_enlarge_ratio(self, survey: str) -> float:
+        """Angular zoom for display-only figures; missing or invalid → 1 (legacy behavior)."""
+        try:
+            r = float(self.config.get(f'enlargeRatio_{survey}', 1.0))
+        except (TypeError, ValueError):
+            return 1.0
+        if not np.isfinite(r) or r <= 0:
+            return 1.0
+        return max(1.0, r)
+
+    def __center_enlarge_for_display(self, arr: np.ndarray, ratio: float) -> np.ndarray:
+        """Center-crop to ``1/ratio`` of the linear extent (``ratio``>1); native pixels only, no resampling."""
+        if ratio <= 1.0 or not np.isfinite(ratio):
+            return arr
+        a = np.asarray(arr)
+        if a.ndim == 2:
+            h, w = a.shape
+        elif a.ndim == 3 and a.shape[2] == 3:
+            h, w = a.shape[0], a.shape[1]
+        else:
+            return arr
+        ch = max(1, int(round(h / ratio)))
+        cw = max(1, int(round(w / ratio)))
+        ch = min(ch, h)
+        cw = min(cw, w)
+        y0 = (h - ch) // 2
+        x0 = (w - cw) // 2
+        if a.ndim == 2:
+            return np.asarray(a[y0 : y0 + ch, x0 : x0 + cw])
+        return np.asarray(a[y0 : y0 + ch, x0 : x0 + cw, :])
+
+    @staticmethod
+    def __scalebar_fixed_display(value: float) -> float:
+        """Round scale bar numeric label to two decimals (compact, no float noise)."""
+        if not np.isfinite(value):
+            return 0.0
+        return float(f'{float(value):.2f}')
+
     def __precompile_numba(self):
         dummy_img = np.ones((10, 10, 10), dtype=np.float32)
         dummy_trans = np.ones(10, dtype=np.float32)
@@ -164,9 +201,7 @@ class PostProcess:
     #     return out
     
     @staticmethod
-    @numba.njit(
-    "float32[:, :](float32[:, :, :], float32[:], float32[:])", 
-    parallel=True, cache=True, fastmath=True)
+    @numba.njit(parallel=True, cache=True, fastmath=True)
     def integrate_bandpass(img, tran, wave):
         n = len(wave)
         h, w = img.shape[1], img.shape[2]
@@ -482,57 +517,94 @@ class PostProcess:
         hdulist.writeto(savedSEDName, overwrite=True)
 
     def __plot_image(self, image: np.ndarray, pixelscale: float, resolution: float,
-                     savedFilename: Union[str, None]=None):
+                     savedFilename: Union[str, None]=None, enlarge_ratio: float = 1.0):
 
-        numPixels = np.array(image).shape[0]
-        
+        arr = self.__center_enlarge_for_display(np.asarray(image), enlarge_ratio)
+        # Cropped pixels keep the same on-sky / physical scale as the simulation grid.
+        eff_pixelscale = pixelscale
+        eff_resolution = resolution
+        numPixels = arr.shape[0]
+        is_rgb = arr.ndim == 3 and arr.shape[2] == 3
+
         if self.properties['viewRedshift'] is not None:
             z = str(np.around(self.properties['viewRedshift'], 2))
         else:
             z = '0.00'
-        
+
         logM = str(np.around(np.log10(self.properties['stellarMass'].value), 1))
-        
-        fig, ax = plt.subplots()
-        ax.axis('off')
-        im = ax.imshow(image, origin='lower')
-        
-        scalebarSize = 0.25 * numPixels * pixelscale
+
+        if is_rgb:
+            fig, ax = plt.subplots()
+            ax.axis('off')
+            im = ax.imshow(arr, origin='lower')
+        else:
+            show_img = arr.astype(float).copy()
+            show_img[show_img < 0] = 0.0
+            show_img = show_img + 1e-5
+            log_data = np.log10(show_img)
+            vmin = float(np.min(log_data))
+            vmax = float(np.max(log_data))
+            if not np.isfinite(vmin) or not np.isfinite(vmax) or vmax <= vmin:
+                vmax = vmin + 1e-6
+            image_unit = self.config['imageUnit']
+            if image_unit == 'electron':
+                cbar_label = r'$\log_{10}\,e$'
+            else:
+                cbar_label = r'$\log_{10}\,F_\nu\ [{\rm Jy}]$'
+            fig = plt.figure(figsize=(7.0, 5.5))
+            gs = GridSpec(1, 2, figure=fig, width_ratios=[1.0, 0.06], wspace=0.2)
+            ax = fig.add_subplot(gs[0, 0])
+            cax = fig.add_subplot(gs[0, 1])
+            ax.set_axis_off()
+            im = ax.imshow(
+                log_data,
+                origin='lower',
+                cmap='gray',
+                vmin=vmin,
+                vmax=vmax,
+            )
+            cbar_text_color = 'black'
+            cb = fig.colorbar(im, cax=cax)
+            cb.set_label(cbar_label, fontsize=12, color=cbar_text_color)
+            cb.ax.tick_params(labelsize=10, colors=cbar_text_color)
+            cb.ax.yaxis.label.set_color(cbar_text_color)
+
+        scalebarSize = 0.25 * numPixels * eff_pixelscale
         if scalebarSize > 60:
             scalebarUnit = '${^{\prime}}$'
-            scalebarSize = np.around(scalebarSize / 60, 2)
-            ps = pixelscale / 60
+            scalebarSize = self.__scalebar_fixed_display(scalebarSize / 60)
+            ps = eff_pixelscale / 60
         else:
             scalebarUnit = '${^{\prime\prime}}$'
-            scalebarSize = np.around(scalebarSize, 2)
-            ps = pixelscale
+            scalebarSize = self.__scalebar_fixed_display(scalebarSize)
+            ps = eff_pixelscale
             
         angle_dim = AngleDimension()
         
         scalebar = ScaleBar(ps, scalebarUnit, dimension=angle_dim, 
                             fixed_value=scalebarSize, fixed_units=scalebarUnit, frameon=False,
                             location='lower right', scale_loc='top',
-                            color='white', font_properties={'size': 12})
+                            color='white', font_properties={'size': 16})
         
         
         if scalebarSize < 1: # 1 in arcsec
             # fall back to show physical scale when pixel scale is too small
-            scalebarSize = 0.25 * numPixels * resolution
+            scalebarSize = 0.25 * numPixels * eff_resolution
             
             if scalebarSize > 10**3:
                 scalebarUnit = 'kpc'
-                scalebarSize = np.around(scalebarSize / 10**3, 2)
-                res = resolution / 10**3
+                scalebarSize = self.__scalebar_fixed_display(scalebarSize / 10**3)
+                res = eff_resolution / 10**3
             else:
                 scalebarUnit = 'pc'
-                scalebarSize = np.around(scalebarSize, 2)
-                res = resolution
+                scalebarSize = self.__scalebar_fixed_display(scalebarSize)
+                res = eff_resolution
             
             parsec_dim = ParsecDimension()
             scalebar = ScaleBar(res, scalebarUnit, dimension=parsec_dim,
                                 fixed_value=scalebarSize, fixed_units=scalebarUnit,
                                 frameon=False, location='lower right', scale_loc='top',
-                                color='white', font_properties={'size': 12})
+                                color='white', font_properties={'size': 16})
         
         ax.add_artist(scalebar)
         ax.text(x=0.05, y=0.15, s=fr'${{\rm log}}M_{{\star}} = {logM}$',
@@ -541,14 +613,199 @@ class PostProcess:
                 transform=ax.transAxes, color='white')
         ax.text(x=0.05, y=0.05, s=f'ID:{self.subhaloID}', fontsize=12,
                 transform=ax.transAxes, color='white')
-        # divider = make_axes_locatable(ax)
-        # cax = divider.append_axes('right', size='5%', pad=0.05)
-        # fig.colorbar(im, cax=cax, label=unit)
+        plt.tight_layout()
         if savedFilename is not None:
             plt.savefig(savedFilename)
             plt.close()
         else:
             plt.show()
+
+    def __save_all_bands_montage(self, images: list, survey: str, filters: list) -> None:
+        """
+        One row per view: all filters side by side with log-scaled flux/e⁻ counts,
+        shared color scale (gray), a colorbar, per-panel angular scalebars,
+        ``{survey}.{band}`` labels (top-right, inset in points), and survey metadata
+        at the lower-left of the first panel only. Figure and panels use a white
+        background; band labels, metadata, and the scalebar on the first panel are
+        white. The colorbar label and ticks use black. Angular scalebar is drawn
+        only on the first band panel.
+        """
+        save_dir = f'mock_{survey}/Subhalo_{self.subhaloID}'
+        os.makedirs(save_dir, exist_ok=True)
+        num_views = self.properties['numViews']
+        nband = len(filters)
+        if nband == 0:
+            return
+
+        if self.properties['viewRedshift'] is not None:
+            z_str = str(np.around(self.properties['viewRedshift'], 2))
+        else:
+            z_str = '0.00'
+        logM = str(np.around(np.log10(self.properties['stellarMass'].value), 1))
+
+        image_unit = self.config['imageUnit']
+        if image_unit == 'electron':
+            cbar_label = r'$\log_{10}\,e$'
+        else:
+            cbar_label = r'$\log_{10}\,F_\nu\ [{\rm Jy}]$'
+
+        enlarge_ratio = self.__survey_enlarge_ratio(survey)
+
+        def add_scalebar(ax, num_pixels: int, pixelscale: float, resolution: float,
+                         bar_color: str):
+            scalebar_size = 0.25 * num_pixels * pixelscale
+            if scalebar_size > 60:
+                scalebar_unit = r'${^{\prime}}$'
+                scalebar_size = self.__scalebar_fixed_display(scalebar_size / 60)
+                ps = pixelscale / 60
+            else:
+                scalebar_unit = r'${^{\prime\prime}}$'
+                scalebar_size = self.__scalebar_fixed_display(scalebar_size)
+                ps = pixelscale
+            angle_dim = AngleDimension()
+            scalebar = ScaleBar(
+                ps,
+                scalebar_unit,
+                dimension=angle_dim,
+                fixed_value=scalebar_size,
+                fixed_units=scalebar_unit,
+                frameon=False,
+                location='lower right',
+                scale_loc='top',
+                color=bar_color,
+                font_properties={'size': 16},
+            )
+            if scalebar_size < 1:
+                scalebar_size = 0.25 * num_pixels * resolution
+                if scalebar_size > 10**3:
+                    scalebar_unit = 'kpc'
+                    scalebar_size = self.__scalebar_fixed_display(scalebar_size / 10**3)
+                    res = resolution / 10**3
+                else:
+                    scalebar_unit = 'pc'
+                    scalebar_size = self.__scalebar_fixed_display(scalebar_size)
+                    res = resolution
+                parsec_dim = ParsecDimension()
+                scalebar = ScaleBar(
+                    res,
+                    scalebar_unit,
+                    dimension=parsec_dim,
+                    fixed_value=scalebar_size,
+                    fixed_units=scalebar_unit,
+                    frameon=False,
+                    location='lower right',
+                    scale_loc='top',
+                    color=bar_color,
+                    font_properties={'size': 16},
+                )
+            ax.add_artist(scalebar)
+
+        overlay_color = 'white'
+        band_labels = [f'{survey}.{f}' for f in filters]
+        band_font = 20
+
+        for view_i in range(num_views):
+            band_stack = images[view_i]
+            show_imgs = []
+            mins = []
+            maxs = []
+            for j in range(nband):
+                show_img = np.asarray(band_stack[j], dtype=float).copy()
+                show_img[show_img < 0] = 0.0
+                show_img = show_img + 1e-5
+                show_img = self.__center_enlarge_for_display(show_img, enlarge_ratio)
+                show_imgs.append(show_img)
+                mins.append(np.min(show_img))
+                maxs.append(np.max(show_img))
+            vmin = np.log10(np.min(mins))
+            vmax = np.log10(np.max(maxs))
+
+            total_width = nband * 4 + 1
+            height = 4
+            fig = plt.figure(figsize=(total_width, height))
+            fig.patch.set_facecolor('white')
+            gs = GridSpec(height, total_width, figure=fig)
+            im_last = None
+            for j in range(nband):
+                ax = fig.add_subplot(gs[:, 4 * j : 4 * (j + 1)])
+                ax.set_axis_off()
+                ax.set_facecolor('white')
+                im_last = ax.imshow(
+                    np.log10(show_imgs[j]),
+                    vmin=vmin,
+                    vmax=vmax,
+                    cmap='gray',
+                    origin='lower',
+                    aspect='equal',
+                )
+                if j == 0:
+                    pixelscale = self.properties[f'angleRes_{survey}'][j].value
+                    resolution = self.properties[f'resolution_{survey}'][j].value
+                    add_scalebar(ax, show_imgs[j].shape[0], pixelscale, resolution,
+                                 bar_color=overlay_color)
+                ax.annotate(
+                    band_labels[j],
+                    xy=(1.0, 1.0),
+                    xycoords='axes fraction',
+                    xytext=(-8, -8),
+                    textcoords='offset points',
+                    ha='right',
+                    va='top',
+                    fontsize=band_font,
+                    fontstyle='italic',
+                    color=overlay_color,
+                )
+                if j == 0:
+                    ax.annotate(
+                        fr'${{\rm log}}M_{{\star}} = {logM}$',
+                        xy=(0.0, 0.0),
+                        xycoords='axes fraction',
+                        xytext=(8, 40),
+                        textcoords='offset points',
+                        ha='left',
+                        va='bottom',
+                        fontsize=16,
+                        color=overlay_color,
+                    )
+                    ax.annotate(
+                        fr'$z$ = {z_str}',
+                        xy=(0.0, 0.0),
+                        xycoords='axes fraction',
+                        xytext=(8, 24),
+                        textcoords='offset points',
+                        ha='left',
+                        va='bottom',
+                        fontsize=16,
+                        color=overlay_color,
+                    )
+                    ax.annotate(
+                        f'ID:{self.subhaloID}',
+                        xy=(0.0, 0.0),
+                        xycoords='axes fraction',
+                        xytext=(8, 8),
+                        textcoords='offset points',
+                        ha='left',
+                        va='bottom',
+                        fontsize=16,
+                        color=overlay_color,
+                    )
+            cbar_ax = fig.add_subplot(gs[:, 4 * nband :])
+            cbar_ax.set_facecolor('white')
+            cbar = fig.colorbar(im_last, cax=cbar_ax)
+            cbar_text_color = 'black'
+            cbar.set_label(cbar_label, fontsize=12, color=cbar_text_color)
+            cbar.ax.tick_params(labelsize=10, colors=cbar_text_color)
+            cbar.ax.yaxis.label.set_color(cbar_text_color)
+            plt.subplots_adjust(wspace=0, hspace=0)
+            out_path = os.path.join(save_dir, f'all_bands_view_{view_i:02d}.png')
+            fig.savefig(
+                out_path,
+                dpi=150,
+                facecolor=fig.get_facecolor(),
+                bbox_inches='tight',
+                pad_inches=0.05,
+            )
+            plt.close(fig)
 
     def __plot_sed(self, sed: np.ndarray, waveRange: list, logscale: bool=True,
                    savedFilename: Union[str, None]=None):
@@ -568,6 +825,8 @@ class PostProcess:
         plt.xlabel(r'Wavelength $[\AA]$')
         plt.ylabel(r'$F_{\nu}\ [Jy]$')
         plt.xlim(waveRange[0], waveRange[1]) # SED is redshifted.
+        plt.title(f'SubhaloID: {self.subhaloID}', fontsize=16)
+        plt.tight_layout()
         
         if savedFilename is not None:
             plt.savefig(savedFilename)
@@ -595,9 +854,10 @@ class PostProcess:
 
             fig, ax = plt.subplots()
             ax.axis('off')
-            plt.imshow(combined_img, origin='lower')
-            plt.suptitle(f'SubhaloID: {subhaloID} ({survey} View {i:02d})', 
-                         fontsize=12, y=0.7)
+            plt.imshow(combined_img)
+            # plt.suptitle(f'SubhaloID: {subhaloID} ({survey} View {i:02d})', 
+            #              fontsize=12, y=0.7)
+            plt.tight_layout()
             plt.show()
             
     def __get_environment(self) -> str:
@@ -700,20 +960,16 @@ class PostProcess:
                                         'exposureTime': self.properties[f'exposureTime_{survey}'],
                                         'numExposure': self.properties[f'numExposure_{survey}']}                   
 
-                    # start_time = time.time()
                     images = []
                     for i in range(self.properties['numViews']):
                         self.logger.info(f'Generating images for view {i}.')
                         images.append(self.__bandpass_images(dataCubeFilenames[i], survey,
                                                         throughputs, PSFs, bkgNoise))
-                    # end_time = time.time()
-                    # print(f'Time taken to generate images: {end_time - start_time} seconds')
-                    
-                    # start_time = time.time()
+
                     self.logger.info('Saving bandpass images.')
                     self.__saveBandpassImages(images, survey)
-                    # end_time = time.time()
-                    # print(f'Time taken to save images: {end_time - start_time} seconds')
+                    self.__save_all_bands_montage(images, survey, filters)
+
 
                     sedFilenames = [self.dataCubeDir + f'/skirt_view_{i:02d}_sed.dat' 
                                     for i in range(self.properties['numViews'])]
@@ -721,6 +977,7 @@ class PostProcess:
                     self.__saveSEDs(sedFilenames, survey)
 
                     if self.config[f'imgDisplay_{survey}']:
+                        enlarge_ratio = self.__survey_enlarge_ratio(survey)
 
                         if self.config[f'RGBImg_{survey}']:
                             RGBFilters = self.config[f'RGBFilters_{survey}']
@@ -732,19 +989,25 @@ class PostProcess:
                             for i in range(self.properties['numViews']):
                                 
                                 RGBImg = convert_to_rgb(images[i], RGBidx)
+
+                                # from PIL import Image
+                                # Image.fromarray(RGBImg).save(f'mock_{survey}/Subhalo_{self.subhaloID}/galaxy_view_{i:02d}_RGB.png')
+
                                 savedFilename = f'mock_{survey}/Subhalo_{self.subhaloID}/galaxy_view_{i:02d}.png'
-                                self.__plot_image(RGBImg, pixelscale, resolution, savedFilename=savedFilename)
+                                self.__plot_image(RGBImg, pixelscale, resolution, savedFilename=savedFilename,
+                                                  enlarge_ratio=enlarge_ratio)
                         
                         else:
                             displayFilter = self.config[f'displayFilter_{survey}']
                             filteridx = filters.index(displayFilter)
-                            # res = self.properties[f'resolution_{survey}'][filteridx]
                             pixelscale = self.properties[f'angleRes_{survey}'][filteridx].value # pixel scale in arcsec
+                            resolution = self.properties[f'resolution_{survey}'][filteridx].value # resolution in pc
                         
                             for i in range(self.properties['numViews']):
                                 img = images[i][filteridx]
                                 savedFilename = f'mock_{survey}/Subhalo_{self.subhaloID}/galaxy_view_{i:02d}.png'
-                                self.__plot_image(img, pixelscale, resolution, savedFilename=savedFilename)
+                                self.__plot_image(img, pixelscale, resolution, savedFilename=savedFilename,
+                                                  enlarge_ratio=enlarge_ratio)
 
                     if self.config['displaySED']:
                         
