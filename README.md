@@ -144,8 +144,6 @@ for i, ID in enumerate(subhaloIDs):
 ```  
 then `python run.py`. 
 
-Or you can interactively run in jupyter as illustrated in [Notebooks/tutorial.ipynb](https://github.com/xczhou-astro/galaxyGenius/blob/main/Notebooks/tutorial.ipynb).  
-
 ### Particle Input Methods
 
 The `PreProcess` stage supports five distinct methods for obtaining subhalo and particle data:
@@ -239,6 +237,10 @@ archivePrefix = {arXiv},
 ```
 
 ## Updates  
+- 2026-05-15:
+1. Add visualization for all band images.
+2. Fix several bugs.  
+
 - 2026-01-03  
 1. Fix loggging functionality.  
 2. Add Toddlers SED family ([Kapoor et al. 2023](https://academic.oup.com/mnras/article/526/3/3871/7287615), [2024](https://www.aanda.org/10.1051/0004-6361/202451207)) to process star forming regions.  
@@ -276,7 +278,3 @@ archivePrefix = {arXiv},
 
 - 2025-02-20:  
 1. Add check and retry features for requests to handle failure of Web-based API.  
-
-- 2026-05-15:
-1. Add visualization for all band images.
-2. Fix several bugs.
