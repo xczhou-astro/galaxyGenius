@@ -150,7 +150,7 @@ The `PreProcess` stage supports five distinct methods for obtaining subhalo and 
 
 1. **From Local TNG Snapshots**: The default behavior when `requests = False` in the configuration. The pipeline uses `illustris_python` to automatically extract subhalos and particles from a local TNG snapshot directory.
 2. **From TNG Web API**: Activated by setting `requests = True` in the configuration. The pipeline will query the TNG project's API to download subhalo cutouts dynamically. This is slower but requires no local snapshot data.
-3. **From a Local Subhalo File (For TNG)**: If you have downloaded an individual cutout and metadata for a TNG subhalo in advance, you can load the local HDF5 file directly using `preprocess.inputSubhaloParticleFile(filepath, subhaloInfo)`. See `Examples/2-input_subhalo_file.py`.
+3. **From a Local Subhalo File (For TNG)**: If you have downloaded an individual cutout and metadata for a TNG subhalo in advance, you can load the local HDF5 file directly using `preprocess.inputSubhaloParticleFile(filepath, subhaloInfo)`. See `Examples/2-input_subhalo_file.py`. For downloading subhalo cutout and metadata, see `helper/download_subhalos.py`.
 
 For other simulations (e.g., EAGLE), two additional methods are available:
 
