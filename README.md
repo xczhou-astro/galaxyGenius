@@ -158,6 +158,7 @@ For other simulations (e.g., EAGLE), two additional methods are available:
 5. **From Particle Files Created in Advance (`preprocess.inputs`)**: If you have already generated the `stars.txt`, `dusts.txt`, and `starforming_regions.txt` files independently, use `preprocess.inputs(data)` to point the pipeline to them. The `data` argument is a `dict` requiring three metadata keys: `['SubhaloID', 'stellarMass', 'halfStellarMassRadius']`.
 
 ## Example for EAGLE
+Two subhalos 20695120 and 21109761 from snapshot 27 (z=0.101) of EAGLE RefL0100N1504 simulation. 
 
 ### SED
 <p float="left">
