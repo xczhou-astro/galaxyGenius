@@ -170,6 +170,7 @@ Two subhalos 20695120 and 21109761 from snapshot 27 (z=0.101) of EAGLE RefL0100N
 ![CSST](assets/CSST_eagle_all_bands_view_00_21109761.png)
 ![CSST](assets/CSST_eagle_all_bands_view_00_20695120.png)
 
+RGB by CSST g, r, z: 
 <p float="left">
   <img src="assets/CSST_eagle_RGB_2.png" width="49%" />
   <img src="assets/CSST_eagle_RGB.png" width="49%" /> 
@@ -183,7 +184,7 @@ Two subhalos 20695120 and 21109761 from snapshot 27 (z=0.101) of EAGLE RefL0100N
 ![JWST](assets/JWST_eagle_all_bands_view_00_21109761.png)
 ![JWST](assets/JWST_eagle_all_bands_view_00_20695120.png)
 
-
+RGB by JWST F070W, F150W, F2100W:
 <p float="left">
   <img src="assets/JWST_eagle_RGB_2.png" width="49%" />
   <img src="assets/JWST_eagle_RGB.png" width="49%" />
