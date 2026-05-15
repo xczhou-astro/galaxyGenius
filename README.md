@@ -170,6 +170,11 @@ Two subhalos 20695120 and 21109761 from snapshot 27 (z=0.101) of EAGLE RefL0100N
 ![CSST](assets/CSST_eagle_all_bands_view_00_21109761.png)
 ![CSST](assets/CSST_eagle_all_bands_view_00_20695120.png)
 
+<p float="left">
+  <img src="assets/CSST_eagle_RGB_2.png" width="49%" />
+  <img src="assets/CSST_eagle_RGB.png" width="49%" /> 
+</p>
+
 ### Euclid
 ![Euclid](assets/Euclid_eagle_all_bands_view_00_21109761.png)
 ![Euclid](assets/Euclid_eagle_all_bands_view_00_20695120.png)
@@ -178,14 +183,7 @@ Two subhalos 20695120 and 21109761 from snapshot 27 (z=0.101) of EAGLE RefL0100N
 ![JWST](assets/JWST_eagle_all_bands_view_00_21109761.png)
 ![JWST](assets/JWST_eagle_all_bands_view_00_20695120.png)
 
-### RGB Images
-CSST
-<p float="left">
-  <img src="assets/CSST_eagle_RGB_2.png" width="49%" />
-  <img src="assets/CSST_eagle_RGB.png" width="49%" /> 
-</p>
 
-JWST
 <p float="left">
   <img src="assets/JWST_eagle_RGB_2.png" width="49%" />
   <img src="assets/JWST_eagle_RGB.png" width="49%" />
